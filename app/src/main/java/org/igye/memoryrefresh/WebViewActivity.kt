@@ -1,4 +1,4 @@
-package org.igye.taggednotes
+package org.igye.memoryrefresh
 
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity

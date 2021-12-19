@@ -1,9 +1,9 @@
-package org.igye.taggednotes
+package org.igye.memoryrefresh
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import kotlinx.coroutines.runBlocking
-import org.igye.taggednotes.DataManager.*
+import org.igye.memoryrefresh.DataManager.*
 import org.junit.Assert.*
 import org.junit.Test
 import org.junit.runner.RunWith

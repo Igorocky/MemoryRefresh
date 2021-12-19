@@ -1,4 +1,4 @@
-package org.igye.taggednotes
+package org.igye.memoryrefresh
 
 import org.junit.Test
 

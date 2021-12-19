@@ -1,4 +1,4 @@
-package org.igye.taggednotes
+package org.igye.memoryrefresh
 
 import java.lang.annotation.Retention
 import java.lang.annotation.RetentionPolicy

@@ -1,4 +1,4 @@
-package org.igye.taggednotes
+package org.igye.memoryrefresh
 
 import android.util.Log
 import org.slf4j.Logger

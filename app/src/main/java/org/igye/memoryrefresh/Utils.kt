@@ -1,11 +1,7 @@
-package org.igye.taggednotes
+package org.igye.memoryrefresh
 
 import android.content.Context
 import com.google.gson.Gson
-import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.async
 import java.io.File
 import java.net.InetAddress
 import java.net.NetworkInterface

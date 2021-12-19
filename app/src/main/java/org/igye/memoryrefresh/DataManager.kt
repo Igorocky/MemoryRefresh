@@ -1,10 +1,10 @@
-package org.igye.taggednotes
+package org.igye.memoryrefresh
 
 import android.content.Context
 import android.database.sqlite.SQLiteStatement
 import android.net.Uri
 import androidx.core.content.FileProvider
-import org.igye.taggednotes.Utils.isNotEmpty
+import org.igye.memoryrefresh.Utils.isNotEmpty
 import java.io.File
 import java.io.FileOutputStream
 import java.time.Instant

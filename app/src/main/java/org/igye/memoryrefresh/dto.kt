@@ -1,4 +1,4 @@
-package org.igye.taggednotes
+package org.igye.memoryrefresh
 
 data class BeErr(val code:Int, val msg: String)
 data class BeRespose<T>(val data: T? = null, val err: BeErr? = null) {

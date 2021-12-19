@@ -1,6 +1,6 @@
-package org.igye.taggednotes.tools
+package org.igye.memoryrefresh.tools
 
-import org.igye.taggednotes.Utils
+import org.igye.memoryrefresh.Utils
 import java.io.BufferedReader
 import java.io.File
 import java.io.InputStreamReader

@@ -1,4 +1,4 @@
-package org.igye.taggednotes
+package org.igye.memoryrefresh
 
 import android.content.Context
 import android.database.sqlite.SQLiteDatabase

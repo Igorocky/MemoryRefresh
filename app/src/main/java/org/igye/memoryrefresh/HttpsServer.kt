@@ -1,19 +1,17 @@
-package org.igye.taggednotes
+package org.igye.memoryrefresh
 
 import android.content.Context
 import io.ktor.application.*
 import io.ktor.http.*
-import io.ktor.network.tls.certificates.*
 import io.ktor.request.*
 import io.ktor.response.*
 import io.ktor.routing.*
 import io.ktor.server.engine.*
 import io.ktor.server.netty.*
-import io.ktor.util.*
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import org.igye.taggednotes.Utils.createMethodMap
+import org.igye.memoryrefresh.Utils.createMethodMap
 import java.io.File
 import java.security.KeyStore
 import java.util.*
