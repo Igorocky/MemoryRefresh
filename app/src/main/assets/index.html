@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="minimum-scale=1, initial-scale=1, width=device-width, shrink-to-fit=no">
+
+    <link rel="stylesheet" href="css/local-version/roboto-300-400-500.css" />
+    <link rel="stylesheet" href="css/local-version/mui-icons.css">
+    <link rel="stylesheet" href="css/style.css">
+
+    <script src="js/lib/react.development-17.0.2.js"></script>
+    <script src="js/lib/react-dom.development-17.0.2.js"></script>
+    <script src="js/lib/material-ui.development-4.12.1.js"></script>
+
+    <script src="js/react-imports.js"></script>
+    <script src="js/data-functions.js"></script>
+    <script src="js/svg-functions.js"></script>
+
+    <script src="js/mock-fe-be-bridge.js"></script>
+    <script src="js/backend-functions.js"></script>
+
+    <script src="js/components/Pagination.js"></script>
+    <script src="js/components/TagSelector.js"></script>
+    <script src="js/components/ButtonWithCircularProgress.js"></script>
+    <script src="js/components/TreeView.js"></script>
+    <script src="js/components/KeyPad.js"></script>
+
+    <script src="js/components/CreateNewTagCmp.js"></script>
+    <script src="js/components/TextParamView.js"></script>
+    <script src="js/components/UpdateTagCmp.js"></script>
+    <script src="js/components/UpdateNoteCmp.js"></script>
+    <script src="js/components/TagsView.js"></script>
+    <script src="js/components/BackupsView.js"></script>
+    <script src="js/components/SearchNotesView.js"></script>
+    <script src="js/components/AddNotesView.js"></script>
+    <script src="js/components/HttpServerView.js"></script>
+    <script src="js/components/HomePage.js"></script>
+    <script src="js/components/DebugPage.js"></script>
+    <script src="js/components/ViewSelector.js"></script>
+    <script src="js/components/SharedFileReceiver.js"></script>
+</head>
+<body style="background-color: lightseagreen">
+<div id="react-container"></div>
+</body>
+<script>
+    const ROOT_REACT_COMPONENT = null
+    ReactDOM.render(
+        re(ROOT_REACT_COMPONENT??ViewSelector),
+        document.getElementById('react-container')
+    )
+</script>
+</html>
