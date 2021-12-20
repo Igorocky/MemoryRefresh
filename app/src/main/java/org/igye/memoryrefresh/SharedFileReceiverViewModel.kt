@@ -3,6 +3,9 @@ package org.igye.memoryrefresh
 import android.content.Context
 import android.net.Uri
 import android.provider.OpenableColumns
+import org.igye.memoryrefresh.dto.BeErr
+import org.igye.memoryrefresh.dto.BeRespose
+import org.igye.memoryrefresh.dto.SharedFileType
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
@@ -56,7 +59,7 @@ class SharedFileReceiverViewModel(appContext: Context, beThreadPool: ExecutorSer
         } else if (fileName.endsWith(".zip")) {
             SharedFileType.BACKUP
         } else {
-            throw TaggedNotesException("unsupported file type.")
+            throw MemoryRefreshException("unsupported file type.")
         }
     }
 

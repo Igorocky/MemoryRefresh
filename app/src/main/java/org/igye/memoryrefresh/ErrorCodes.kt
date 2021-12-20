@@ -1,0 +1,7 @@
+package org.igye.memoryrefresh
+
+object ErrorCodes {
+    val SAVE_NEW_TRANSLATE_CARD_EXCEPTION = 3L
+    val SAVE_NEW_TRANSLATE_CARD_TRANSLATION_IS_EMPTY = 2L
+    val SAVE_NEW_TRANSLATE_CARD_TEXT_TO_TRANSLATE_IS_EMPTY = 1L
+}

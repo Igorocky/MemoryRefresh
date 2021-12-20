@@ -1,6 +1,8 @@
 package org.igye.memoryrefresh
 
 import android.content.Context
+import org.igye.memoryrefresh.dto.AppSettings
+import org.igye.memoryrefresh.dto.HttpServerSettings
 import java.io.File
 import java.io.FileOutputStream
 

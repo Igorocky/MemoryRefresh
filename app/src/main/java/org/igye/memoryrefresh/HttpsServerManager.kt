@@ -2,6 +2,10 @@ package org.igye.memoryrefresh
 
 import android.content.Context
 import android.content.Intent
+import org.igye.memoryrefresh.dto.BeErr
+import org.igye.memoryrefresh.dto.BeRespose
+import org.igye.memoryrefresh.dto.HttpServerSettings
+import org.igye.memoryrefresh.dto.HttpServerState
 import java.util.concurrent.atomic.AtomicReference
 
 class HttpsServerManager(
@@ -43,7 +47,7 @@ class HttpsServerManager(
             try {
                 httpsServer.set(HttpsServer(
                     appContext = appContext,
-                    keyStoreFile = keyStorFile!!,
+                    keyStoreFile = keyStorFile,
                     keyStorePassword = serverSettings.keyStorePassword,
                     keyAlias = serverSettings.keyAlias,
                     privateKeyPassword = serverSettings.privateKeyPassword,

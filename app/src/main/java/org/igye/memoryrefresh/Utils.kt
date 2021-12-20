@@ -26,7 +26,7 @@ object Utils {
                 .filter { it.getAnnotation(BeMethod::class.java) != null }
                 .forEach { method ->
                     if (resultMap.containsKey(method.name)) {
-                        throw TaggedNotesException("resultMap.containsKey('${method.name}')")
+                        throw MemoryRefreshException("resultMap.containsKey('${method.name}')")
                     } else {
                         resultMap.put(method.name) { argStr ->
                             val parameterTypes = method.parameterTypes

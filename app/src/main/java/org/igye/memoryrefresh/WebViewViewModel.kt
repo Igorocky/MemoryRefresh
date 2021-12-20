@@ -9,6 +9,8 @@ import androidx.lifecycle.ViewModel
 import androidx.webkit.WebViewAssetLoader
 import androidx.webkit.WebViewClientCompat
 import com.google.gson.Gson
+import org.igye.memoryrefresh.dto.BeErr
+import org.igye.memoryrefresh.dto.BeRespose
 import java.util.concurrent.ExecutorService
 
 abstract class WebViewViewModel(
