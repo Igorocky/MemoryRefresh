@@ -4,10 +4,10 @@ import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import org.igye.memoryrefresh.database.Repository
-import org.igye.memoryrefresh.database.tables.v1.CardsScheduleTable
-import org.igye.memoryrefresh.database.tables.v1.CardsTable
-import org.igye.memoryrefresh.database.tables.v1.TranslationCardsLogTable
-import org.igye.memoryrefresh.database.tables.v1.TranslationCardsTable
+import org.igye.memoryrefresh.database.tables.CardsScheduleTable
+import org.igye.memoryrefresh.database.tables.CardsTable
+import org.igye.memoryrefresh.database.tables.TranslationCardsLogTable
+import org.igye.memoryrefresh.database.tables.TranslationCardsTable
 import java.time.Clock
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors

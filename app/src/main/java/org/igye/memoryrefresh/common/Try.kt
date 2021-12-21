@@ -23,6 +23,8 @@ sealed class Try<out T> {
         }
     }
 
+    fun <B> apply(operations: (Try<T>) -> B): B = operations(this)
+
     companion object {
         operator fun <T> invoke(body: () -> T): Try<T> {
             return try {

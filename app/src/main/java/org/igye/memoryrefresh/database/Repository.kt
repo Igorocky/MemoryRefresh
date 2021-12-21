@@ -4,10 +4,10 @@ import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
 import androidx.core.database.sqlite.transaction
-import org.igye.memoryrefresh.database.tables.v1.CardsScheduleTable
-import org.igye.memoryrefresh.database.tables.v1.CardsTable
-import org.igye.memoryrefresh.database.tables.v1.TranslationCardsLogTable
-import org.igye.memoryrefresh.database.tables.v1.TranslationCardsTable
+import org.igye.memoryrefresh.database.tables.CardsScheduleTable
+import org.igye.memoryrefresh.database.tables.CardsTable
+import org.igye.memoryrefresh.database.tables.TranslationCardsLogTable
+import org.igye.memoryrefresh.database.tables.TranslationCardsTable
 
 class Repository(
     context: Context,

@@ -4,13 +4,16 @@ import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
 import androidx.core.database.getLongOrNull
 import androidx.core.database.getStringOrNull
-import org.igye.memoryrefresh.common.Failure
 import org.igye.memoryrefresh.common.Try
 
 fun <T> SQLiteDatabase.doInTransaction(body: SQLiteDatabase.() -> T): Try<T> {
+    return doInTransactionTry { Try { body() } }
+}
+
+fun <T> SQLiteDatabase.doInTransactionTry(body: SQLiteDatabase.() -> Try<T>): Try<T> {
     beginTransaction()
     try {
-        val result = Try { body() }
+        val result = body()
         if (result.isSuccess()) {
             setTransactionSuccessful()
         }
@@ -33,7 +36,7 @@ fun <T> SQLiteOpenHelper.select(
     query:String,
     args:Array<String>? = null,
     rowsMax:Long? = null,
-    columnNames:List<String>,
+    columnNames:Array<String>,
     rowMapper:(SelectedRow) -> T,
 ): SelectedRows<T> {
     return this.readableDatabase.rawQuery(

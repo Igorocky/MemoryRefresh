@@ -1,4 +1,4 @@
-package org.igye.memoryrefresh.database.tables.v1
+package org.igye.memoryrefresh.database.tables
 
 import android.database.sqlite.SQLiteDatabase
 import org.igye.memoryrefresh.MemoryRefreshException

@@ -3,9 +3,9 @@ package org.igye.memoryrefresh
 import android.content.Context
 import android.net.Uri
 import androidx.core.content.FileProvider
-import org.igye.memoryrefresh.database.CardType
-import org.igye.memoryrefresh.database.Repository
-import org.igye.memoryrefresh.database.doInTransaction
+import org.igye.memoryrefresh.ErrorCode.*
+import org.igye.memoryrefresh.common.Try
+import org.igye.memoryrefresh.database.*
 import org.igye.memoryrefresh.dto.Backup
 import org.igye.memoryrefresh.dto.BeErr
 import org.igye.memoryrefresh.dto.BeRespose
@@ -35,13 +35,14 @@ class DataManager(
 
     data class SaveNewTranslateCardArgs(val textToTranslate:String, val translation:String)
     @BeMethod
+    @Synchronized
     fun saveNewTranslateCard(args:SaveNewTranslateCardArgs): BeRespose<TranslateCard> {
         val textToTranslate = args.textToTranslate.trim()
         val translation = args.translation.trim()
         return if (textToTranslate.isBlank()) {
-            BeRespose(err = BeErr(code = ErrorCodes.SAVE_NEW_TRANSLATE_CARD_TEXT_TO_TRANSLATE_IS_EMPTY, msg = "Text to translate should not be empty."))
+            BeRespose(err = BeErr(code = SAVE_NEW_TRANSLATE_CARD_TEXT_TO_TRANSLATE_IS_EMPTY.code, msg = "Text to translate should not be empty."))
         } else if (translation.isBlank()) {
-            BeRespose(err = BeErr(code = ErrorCodes.SAVE_NEW_TRANSLATE_CARD_TRANSLATION_IS_EMPTY, msg = "Translation should not be empty."))
+            BeRespose(err = BeErr(code = SAVE_NEW_TRANSLATE_CARD_TRANSLATION_IS_EMPTY.code, msg = "Translation should not be empty."))
         } else {
             val repo = getRepo()
             repo.writableDatabase.doInTransaction {
@@ -49,22 +50,79 @@ class DataManager(
                 val currTime = clock.instant().toEpochMilli()
                 repo.cardsSchedule.insertStmt(cardId = cardId, lastAccessedAt = currTime, nextAccessInSec = 0, nextAccessAt = currTime)
                 repo.translationCards.insertStmt(cardId = cardId, textToTranslate = textToTranslate, translation = translation)
-                BeRespose(data = TranslateCard(
-                        id = cardId,
-                        textToTranslate = textToTranslate,
-                        translation = translation,
-                        lastAccessedAt = currTime,
-                        nextAccessInSec = 0,
-                        nextAccessAt = currTime,
-                    ))
-            }.getIfSuccessOrElse(failureToBeResponse(ErrorCodes.SAVE_NEW_TRANSLATE_CARD_EXCEPTION))
+                TranslateCard(
+                    id = cardId,
+                    textToTranslate = textToTranslate,
+                    translation = translation,
+                    lastAccessedAt = currTime,
+                    nextAccessInSec = 0,
+                    nextAccessAt = currTime,
+                )
+            }.apply(toBeResponse(SAVE_NEW_TRANSLATE_CARD_EXCEPTION))
         }
     }
 
-    private fun <T> failureToBeResponse(errCode: Long): (Throwable) -> BeRespose<T> = {
-        BeRespose(
-            err = BeErr(code = errCode, msg = it.message?:it.javaClass.canonicalName)
-        )
+    data class EditTranslateCardArgs(val cardId:Long, val textToTranslate:String, val translation:String)
+    @BeMethod
+    @Synchronized
+    fun editTranslateCard(args:EditTranslateCardArgs): BeRespose<TranslateCard> {
+        val textToTranslate = args.textToTranslate.trim()
+        val translation = args.translation.trim()
+        return if (textToTranslate.isBlank()) {
+            BeRespose(err = BeErr(code = EDIT_TRANSLATE_CARD_TEXT_TO_TRANSLATE_IS_EMPTY.code, msg = "Text to translate should not be empty."))
+        } else if (translation.isBlank()) {
+            BeRespose(err = BeErr(code = EDIT_TRANSLATE_CARD_TRANSLATION_IS_EMPTY.code, msg = "Translation should not be empty."))
+        } else {
+            val repo = getRepo()
+            repo.writableDatabase.doInTransactionTry {
+                selectTranslateCardById(cardId = args.cardId).map { existingCard: TranslateCard ->
+                    if (existingCard.textToTranslate == textToTranslate && existingCard.translation == translation) {
+                        existingCard
+                    } else {
+                        repo.translationCards.updateStmt(cardId = args.cardId, textToTranslate = textToTranslate, translation = translation)
+                        existingCard.copy(textToTranslate = textToTranslate, translation = translation)
+                    }
+                }
+            }.apply(toBeResponse(EDIT_TRANSLATE_CARD_EXCEPTION))
+        }
+    }
+
+    @Synchronized
+    private fun selectTranslateCardById(cardId: Long): Try<TranslateCard> {
+        val repo = getRepo()
+        return repo.readableDatabase.doInTransaction {
+            val t = repo.translationCards
+            val s = repo.cardsSchedule
+            val queryArgs = arrayOf(cardId.toString())
+            val (textToTranslate, translation) = repo.select(
+                query = "select ${t.textToTranslate}, ${t.translation} from $t where ${t.cardId} = ?",
+                args = queryArgs,
+                columnNames = arrayOf(t.textToTranslate, t.translation),
+                rowMapper = { arrayOf(it.getString(), it.getString()) }
+            ).rows[0]
+            val (lastAccessedAt, nextAccessInSec, nextAccessAt) = repo.select(
+                query = "select ${s.lastAccessedAt}, ${s.nextAccessInSec}, ${s.nextAccessAt} from $s where ${s.cardId} = ?",
+                args = queryArgs,
+                columnNames = arrayOf(s.lastAccessedAt, s.nextAccessInSec, s.nextAccessAt),
+                rowMapper = { arrayOf(it.getLong(), it.getLong(), it.getLong()) }
+            ).rows[0]
+            TranslateCard(
+                id = cardId,
+                textToTranslate = textToTranslate,
+                translation = translation,
+                lastAccessedAt = lastAccessedAt,
+                nextAccessInSec = nextAccessInSec,
+                nextAccessAt = nextAccessAt,
+            )
+        }
+    }
+
+    private fun <T> toBeResponse(errCode: ErrorCode): (Try<T>) -> BeRespose<T> = {
+        it
+            .map { BeRespose(data = it) }
+            .getIfSuccessOrElse {
+                BeRespose(err = BeErr(code = errCode.code, msg = it.message ?: it.javaClass.canonicalName))
+            }
     }
 
     @BeMethod

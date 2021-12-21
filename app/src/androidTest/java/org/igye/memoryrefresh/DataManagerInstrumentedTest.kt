@@ -6,11 +6,12 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import org.igye.memoryrefresh.DataManager.*
 import org.igye.memoryrefresh.database.CardType
+import org.igye.memoryrefresh.database.ChangeType
 import org.igye.memoryrefresh.database.Repository
-import org.igye.memoryrefresh.database.tables.v1.CardsScheduleTable
-import org.igye.memoryrefresh.database.tables.v1.CardsTable
-import org.igye.memoryrefresh.database.tables.v1.TranslationCardsLogTable
-import org.igye.memoryrefresh.database.tables.v1.TranslationCardsTable
+import org.igye.memoryrefresh.database.tables.CardsScheduleTable
+import org.igye.memoryrefresh.database.tables.CardsTable
+import org.igye.memoryrefresh.database.tables.TranslationCardsLogTable
+import org.igye.memoryrefresh.database.tables.TranslationCardsTable
 import org.igye.memoryrefresh.dto.TranslateCard
 import org.junit.Assert.*
 import org.junit.Test
@@ -46,14 +47,14 @@ class DataManagerInstrumentedTest {
         val t = repo.translationCards
         val s = repo.cardsSchedule
         val l = repo.translationCardsLog
+        val expectedTextToTranslate = "A"
+        val expectedTranslation = "a"
         val time1 = 1000L
         testClock.setFixedTime(time1)
 
         //when
-        val expectedTextToTranslate = "A"
-        val expectedTranslation = "a"
         val actualTranslateCardResp = dm.saveNewTranslateCard(
-            SaveNewTranslateCardArgs(textToTranslate = expectedTextToTranslate, translation = expectedTranslation)
+            SaveNewTranslateCardArgs(textToTranslate = " $expectedTextToTranslate\t", translation = "  \t$expectedTranslation    \t  ")
         )
 
         //then
@@ -76,6 +77,120 @@ class DataManagerInstrumentedTest {
 
         assertTableContent(repo = repo, tableName = s.name, matchColumn = s.cardId, expectedRows = listOf(
             listOf(s.cardId to translateCard.id, s.lastAccessedAt to time1, s.nextAccessInSec to 0L, s.nextAccessAt to time1)
+        ))
+        assertTableContent(repo = repo, tableName = s.ver.name, exactMatch = true, expectedRows = listOf())
+
+        assertTableContent(repo = repo, tableName = l.name, exactMatch = true, expectedRows = listOf())
+    }
+
+    @Test
+    fun test_scenario_1_create_card_and_edit_it_twice() {
+        //given
+        val dm = createInmemoryDataManager()
+        val repo = dm.getRepo()
+        val c = repo.cards
+        val t = repo.translationCards
+        val s = repo.cardsSchedule
+        val l = repo.translationCardsLog
+        val expectedTextToTranslate1 = "A"
+        val expectedTranslation1 = "a"
+        val expectedTextToTranslate2 = "B"
+        val expectedTranslation2 = "b"
+        val timeCrt = 1000L
+        val timeEdt1 = timeCrt + 5000
+        val timeEdt2 = timeEdt1 + 5000
+
+        //when: create a new translation card
+        testClock.setFixedTime(timeCrt)
+        val responseAfterCreate = dm.saveNewTranslateCard(
+            SaveNewTranslateCardArgs(textToTranslate = expectedTextToTranslate1, translation = expectedTranslation1)
+        )
+
+        //then: a new card is created successfully
+        val actualCreatedCard: TranslateCard = responseAfterCreate.data!!
+        assertEquals(expectedTextToTranslate1, actualCreatedCard.textToTranslate)
+        assertEquals(expectedTranslation1, actualCreatedCard.translation)
+        assertEquals(timeCrt, actualCreatedCard.lastAccessedAt)
+        assertEquals(0, actualCreatedCard.nextAccessInSec)
+        assertEquals(timeCrt, actualCreatedCard.nextAccessAt)
+
+        assertTableContent(repo = repo, tableName = c.name, matchColumn = c.id, expectedRows = listOf(
+            listOf(c.id to actualCreatedCard.id, c.type to TR_TP, c.createdAt to timeCrt)
+        ))
+        assertTableContent(repo = repo, tableName = c.ver.name, exactMatch = true, expectedRows = listOf())
+
+        assertTableContent(repo = repo, tableName = t.name, matchColumn = t.cardId, expectedRows = listOf(
+            listOf(t.cardId to actualCreatedCard.id, t.textToTranslate to expectedTextToTranslate1, t.translation to expectedTranslation1)
+        ))
+        assertTableContent(repo = repo, tableName = t.ver.name, exactMatch = true, expectedRows = listOf())
+
+        assertTableContent(repo = repo, tableName = s.name, matchColumn = s.cardId, expectedRows = listOf(
+            listOf(s.cardId to actualCreatedCard.id, s.lastAccessedAt to timeCrt, s.nextAccessInSec to 0L, s.nextAccessAt to timeCrt)
+        ))
+        assertTableContent(repo = repo, tableName = s.ver.name, exactMatch = true, expectedRows = listOf())
+
+        assertTableContent(repo = repo, tableName = l.name, exactMatch = true, expectedRows = listOf())
+
+        //when: edit the card but provide same values
+        testClock.setFixedTime(timeEdt1)
+        val responseAfterEdit1 = dm.editTranslateCard(
+            EditTranslateCardArgs(cardId = actualCreatedCard.id, textToTranslate = "$expectedTextToTranslate1  ", translation = "\t$expectedTranslation1")
+        )
+
+        //then: the card stays in the same state - no actual edit was done
+        val translateCardAfterEdit1: TranslateCard = responseAfterEdit1.data!!
+        assertEquals(expectedTextToTranslate1, translateCardAfterEdit1.textToTranslate)
+        assertEquals(expectedTranslation1, translateCardAfterEdit1.translation)
+        assertEquals(timeCrt, translateCardAfterEdit1.lastAccessedAt)
+        assertEquals(0, translateCardAfterEdit1.nextAccessInSec)
+        assertEquals(timeCrt, translateCardAfterEdit1.nextAccessAt)
+
+        assertTableContent(repo = repo, tableName = c.name, matchColumn = c.id, expectedRows = listOf(
+            listOf(c.id to translateCardAfterEdit1.id, c.type to TR_TP, c.createdAt to timeCrt)
+        ))
+        assertTableContent(repo = repo, tableName = c.ver.name, exactMatch = true, expectedRows = listOf())
+
+        assertTableContent(repo = repo, tableName = t.name, matchColumn = t.cardId, expectedRows = listOf(
+            listOf(t.cardId to translateCardAfterEdit1.id, t.textToTranslate to expectedTextToTranslate1, t.translation to expectedTranslation1)
+        ))
+        assertTableContent(repo = repo, tableName = t.ver.name, exactMatch = true, expectedRows = listOf())
+
+        assertTableContent(repo = repo, tableName = s.name, matchColumn = s.cardId, expectedRows = listOf(
+            listOf(s.cardId to translateCardAfterEdit1.id, s.lastAccessedAt to timeCrt, s.nextAccessInSec to 0L, s.nextAccessAt to timeCrt)
+        ))
+        assertTableContent(repo = repo, tableName = s.ver.name, exactMatch = true, expectedRows = listOf())
+
+        assertTableContent(repo = repo, tableName = l.name, exactMatch = true, expectedRows = listOf())
+
+        //when: provide new values when editing the card
+        testClock.setFixedTime(timeEdt2)
+        val responseAfterEdit2 = dm.editTranslateCard(
+            EditTranslateCardArgs(cardId = actualCreatedCard.id, textToTranslate = "  $expectedTextToTranslate2  ", translation = "\t$expectedTranslation2  ")
+        )
+
+        //then: the values of card are updated and the previous version of the card is saved to the corresponding VER table
+        val translateCardAfterEdit2: TranslateCard = responseAfterEdit2.data!!
+        assertEquals(expectedTextToTranslate2, translateCardAfterEdit2.textToTranslate)
+        assertEquals(expectedTranslation2, translateCardAfterEdit2.translation)
+        assertEquals(timeCrt, translateCardAfterEdit2.lastAccessedAt)
+        assertEquals(0, translateCardAfterEdit2.nextAccessInSec)
+        assertEquals(timeCrt, translateCardAfterEdit2.nextAccessAt)
+
+        assertTableContent(repo = repo, tableName = c.name, matchColumn = c.id, expectedRows = listOf(
+            listOf(c.id to translateCardAfterEdit2.id, c.type to TR_TP, c.createdAt to timeCrt)
+        ))
+        assertTableContent(repo = repo, tableName = c.ver.name, exactMatch = true, expectedRows = listOf())
+
+        assertTableContent(repo = repo, tableName = t.name, matchColumn = t.cardId, expectedRows = listOf(
+            listOf(t.cardId to translateCardAfterEdit2.id, t.textToTranslate to expectedTextToTranslate2, t.translation to expectedTranslation2)
+        ))
+        assertTableContent(repo = repo, tableName = t.ver.name, exactMatch = true, expectedRows = listOf(
+            listOf(t.cardId to translateCardAfterEdit2.id, t.textToTranslate to expectedTextToTranslate1, t.translation to expectedTranslation1,
+                t.ver.timestamp to timeEdt2, t.ver.changeType to ChangeType.UPDATE.intValue)
+        ))
+
+        assertTableContent(repo = repo, tableName = s.name, matchColumn = s.cardId, expectedRows = listOf(
+            listOf(s.cardId to translateCardAfterEdit2.id, s.lastAccessedAt to timeCrt, s.nextAccessInSec to 0L, s.nextAccessAt to timeCrt)
         ))
         assertTableContent(repo = repo, tableName = s.ver.name, exactMatch = true, expectedRows = listOf())
 
@@ -113,7 +228,7 @@ class DataManagerInstrumentedTest {
     }
 
     private fun sort(values: List<Pair<String, Any?>>, sortOrder: Map<String, Int>): List<Pair<String, Any?>> {
-        return values.sortedBy { sortOrder[it.first] }
+        return values.sortedBy { sortOrder[it.first]?:Int.MAX_VALUE }
     }
 
     private fun format(values: List<Pair<String, Any?>>): String {

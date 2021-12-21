@@ -1,4 +1,4 @@
-package org.igye.memoryrefresh.database.tables.v1
+package org.igye.memoryrefresh.database.tables
 
 import android.database.sqlite.SQLiteDatabase
 import org.igye.memoryrefresh.MemoryRefreshException
@@ -35,12 +35,9 @@ class TranslationCardsTable(
         """)
     }
 
-    interface InsertStmt {operator fun invoke(cardId: Long, textToTranslate: String, translation: String): Long }
-        lateinit var insertStmt: InsertStmt
-    interface UpdateStmt {operator fun invoke(cardId: Long, textToTranslate: String, translation: String): Int}
-        lateinit var updateStmt: UpdateStmt
-    interface DeleteStmt {operator fun invoke(cardId: Long): Int }
-        lateinit var deleteStmt: DeleteStmt
+    interface InsertStmt {operator fun invoke(cardId: Long, textToTranslate: String, translation: String): Long }lateinit var insertStmt: InsertStmt
+    interface UpdateStmt {operator fun invoke(cardId: Long, textToTranslate: String, translation: String): Int}lateinit var updateStmt: UpdateStmt
+    interface DeleteStmt {operator fun invoke(cardId: Long): Int }lateinit var deleteStmt: DeleteStmt
 
     override fun prepareStatements(db: SQLiteDatabase) {
         val self = this
