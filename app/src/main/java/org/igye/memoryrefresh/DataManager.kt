@@ -1,10 +1,8 @@
 package org.igye.memoryrefresh
 
 import android.content.Context
-import android.database.sqlite.SQLiteStatement
 import android.net.Uri
 import androidx.core.content.FileProvider
-import org.igye.memoryrefresh.Utils.isNotEmpty
 import org.igye.memoryrefresh.database.CardType
 import org.igye.memoryrefresh.database.Repository
 import org.igye.memoryrefresh.database.doInTransaction
@@ -14,7 +12,7 @@ import org.igye.memoryrefresh.dto.BeRespose
 import org.igye.memoryrefresh.dto.TranslateCard
 import java.io.File
 import java.io.FileOutputStream
-import java.time.Instant
+import java.time.Clock
 import java.time.ZoneId
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
@@ -26,6 +24,7 @@ import java.util.zip.ZipOutputStream
 
 class DataManager(
     private val context: Context,
+    private val clock: Clock,
     private val repositoryProvider: () -> Repository,
 ) {
     val shareFile: AtomicReference<((Uri) -> Unit)?> = AtomicReference(null)
@@ -40,14 +39,14 @@ class DataManager(
         val textToTranslate = args.textToTranslate.trim()
         val translation = args.translation.trim()
         return if (textToTranslate.isBlank()) {
-            BeRespose(err = BeErr(code = ErrorCodes.SAVE_NEW_TRANSLATE_CARD_TEXT_TO_TRANSLATE_IS_EMPTY, msg = "Text to transalte should not be empty."))
+            BeRespose(err = BeErr(code = ErrorCodes.SAVE_NEW_TRANSLATE_CARD_TEXT_TO_TRANSLATE_IS_EMPTY, msg = "Text to translate should not be empty."))
         } else if (translation.isBlank()) {
             BeRespose(err = BeErr(code = ErrorCodes.SAVE_NEW_TRANSLATE_CARD_TRANSLATION_IS_EMPTY, msg = "Translation should not be empty."))
         } else {
             val repo = getRepo()
             repo.writableDatabase.doInTransaction {
                 val cardId = repo.cards.insertStmt(cardType = CardType.TRANSLATION)
-                val currTime = Instant.now().toEpochMilli()
+                val currTime = clock.instant().toEpochMilli()
                 repo.cardsSchedule.insertStmt(cardId = cardId, lastAccessedAt = currTime, nextAccessInSec = 0, nextAccessAt = currTime)
                 repo.translationCards.insertStmt(cardId = cardId, textToTranslate = textToTranslate, translation = translation)
                 BeRespose(data = TranslateCard(
@@ -153,6 +152,6 @@ class DataManager(
     private val backupDir = Utils.getBackupsDir(context)
 
     private fun createBackupFileName(dbPath: File): String {
-        return "${dbPath.name}-backup-${dateTimeFormatter.format(Instant.now()).replace(":","-")}"
+        return "${dbPath.name}-backup-${dateTimeFormatter.format(clock.instant()).replace(":","-")}"
     }
 }

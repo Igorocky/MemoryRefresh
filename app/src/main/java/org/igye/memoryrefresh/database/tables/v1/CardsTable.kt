@@ -5,9 +5,9 @@ import org.igye.memoryrefresh.MemoryRefreshException
 import org.igye.memoryrefresh.database.CardType
 import org.igye.memoryrefresh.database.ChangeType
 import org.igye.memoryrefresh.database.TableWithVersioning
-import java.time.Instant
+import java.time.Clock
 
-class CardsTable: TableWithVersioning(name = "CARDS") {
+class CardsTable(private val clock: Clock): TableWithVersioning(name = "CARDS") {
     val id = "ID"
     val type = "TYPE"
     val createdAt = "CREATED_AT"
@@ -42,7 +42,7 @@ class CardsTable: TableWithVersioning(name = "CARDS") {
         val stmtVer = db.compileStatement("insert into $ver (${ver.timestamp},${ver.changeType},$id,$type,$createdAt) " +
                 "select ?, ?, $id, $type, $createdAt from $self where $id = ?")
         fun saveCurrentVersion(id: Long, changeType: ChangeType) {
-            stmtVer.bindLong(1, Instant.now().toEpochMilli())
+            stmtVer.bindLong(1, clock.instant().toEpochMilli())
             stmtVer.bindLong(2, changeType.intValue)
             stmtVer.bindLong(3, id)
             if (stmtVer.executeUpdateDelete() != 1) {
@@ -52,7 +52,7 @@ class CardsTable: TableWithVersioning(name = "CARDS") {
         insertStmt = object : InsertStmt {
             val stmt = db.compileStatement("insert into $self ($type,$createdAt) values (?,?)")
             override fun invoke(cardType: CardType): Long {
-                val currTime = Instant.now().toEpochMilli()
+                val currTime = clock.instant().toEpochMilli()
                 stmt.bindLong(1, cardType.intValue)
                 stmt.bindLong(2, currTime)
                 return stmt.executeInsert()

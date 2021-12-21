@@ -4,9 +4,9 @@ import android.database.sqlite.SQLiteDatabase
 import org.igye.memoryrefresh.MemoryRefreshException
 import org.igye.memoryrefresh.database.ChangeType
 import org.igye.memoryrefresh.database.TableWithVersioning
-import java.time.Instant
+import java.time.Clock
 
-class CardsScheduleTable(private val cards: CardsTable): TableWithVersioning(name = "CARDS_SCHEDULE") {
+class CardsScheduleTable(private val clock: Clock, private val cards: CardsTable): TableWithVersioning(name = "CARDS_SCHEDULE") {
     val cardId = "CARD_ID"
     val lastAccessedAt = "LAST_ACCESSED_AT"
     val nextAccessInSec = "NEXT_ACCESS_IN_SEC"
@@ -47,7 +47,7 @@ class CardsScheduleTable(private val cards: CardsTable): TableWithVersioning(nam
         val stmtVer = db.compileStatement("insert into $ver (${ver.timestamp},${ver.changeType},$cardId,$lastAccessedAt,$nextAccessInSec,$nextAccessAt) " +
                 "select ?, ?, $cardId, $lastAccessedAt, $nextAccessInSec, $nextAccessAt from $self where $cardId = ?")
         fun saveCurrentVersion(cardId: Long, changeType: ChangeType) {
-            stmtVer.bindLong(1, Instant.now().toEpochMilli())
+            stmtVer.bindLong(1, clock.instant().toEpochMilli())
             stmtVer.bindLong(2, changeType.intValue)
             stmtVer.bindLong(3, cardId)
             if (stmtVer.executeUpdateDelete() != 1) {

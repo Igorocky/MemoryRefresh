@@ -4,9 +4,12 @@ import android.database.sqlite.SQLiteDatabase
 import org.igye.memoryrefresh.MemoryRefreshException
 import org.igye.memoryrefresh.database.ChangeType
 import org.igye.memoryrefresh.database.TableWithVersioning
-import java.time.Instant
+import java.time.Clock
 
-class TranslationCardsTable(private val cards: CardsTable): TableWithVersioning(name = "TRANSLATION_CARDS") {
+class TranslationCardsTable(
+    private val clock: Clock,
+    private val cards: CardsTable,
+): TableWithVersioning(name = "TRANSLATION_CARDS") {
     val cardId = "CARD_ID"
     val textToTranslate = "TEXT_TO_TRANSLATE"
     val translation = "TRANSLATION"
@@ -44,7 +47,7 @@ class TranslationCardsTable(private val cards: CardsTable): TableWithVersioning(
         val stmtVer = db.compileStatement("insert into $ver (${ver.timestamp},${ver.changeType},$cardId,$textToTranslate,$translation) " +
                 "select ?, ?, $cardId, $textToTranslate, $translation from $self where $cardId = ?")
         fun saveCurrentVersion(cardId: Long, changeType: ChangeType) {
-            stmtVer.bindLong(1, Instant.now().toEpochMilli())
+            stmtVer.bindLong(1, clock.instant().toEpochMilli())
             stmtVer.bindLong(2, changeType.intValue)
             stmtVer.bindLong(3, cardId)
             if (stmtVer.executeUpdateDelete() != 1) {

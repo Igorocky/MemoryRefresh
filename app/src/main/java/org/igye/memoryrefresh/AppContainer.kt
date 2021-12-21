@@ -8,6 +8,7 @@ import org.igye.memoryrefresh.database.tables.v1.CardsScheduleTable
 import org.igye.memoryrefresh.database.tables.v1.CardsTable
 import org.igye.memoryrefresh.database.tables.v1.TranslationCardsLogTable
 import org.igye.memoryrefresh.database.tables.v1.TranslationCardsTable
+import java.time.Clock
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
@@ -15,15 +16,16 @@ class AppContainer(
     val context: Context,
     val dbName: String = "memory-refresh-db"
 ) {
+    val clock = Clock.systemDefaultZone()
     val beThreadPool: ExecutorService = Executors.newFixedThreadPool(4)
-    val dataManager = DataManager(context = context, repositoryProvider = {createNewRepo()})
+    val dataManager = DataManager(context = context, clock = clock, repositoryProvider = {createNewRepo()})
     val settingsManager = SettingsManager(context = context)
     val httpsServerManager = HttpsServerManager(appContext = context, settingsManager = settingsManager, javascriptInterface = listOf(dataManager))
 
-    val cards = CardsTable()
-    val cardsSchedule = CardsScheduleTable(cards = cards)
-    val translationCards = TranslationCardsTable(cards = cards)
-    val translationCardsLog = TranslationCardsLogTable(translationCards = translationCards)
+    val cards = CardsTable(clock = clock)
+    val cardsSchedule = CardsScheduleTable(clock = clock, cards = cards)
+    val translationCards = TranslationCardsTable(clock = clock, cards = cards)
+    val translationCardsLog = TranslationCardsLogTable(clock = clock, translationCards = translationCards)
 
     fun createNewRepo(): Repository {
         return Repository(

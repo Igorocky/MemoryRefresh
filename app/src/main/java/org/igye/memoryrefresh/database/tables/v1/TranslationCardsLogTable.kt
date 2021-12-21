@@ -2,9 +2,12 @@ package org.igye.memoryrefresh.database.tables.v1
 
 import android.database.sqlite.SQLiteDatabase
 import org.igye.memoryrefresh.database.Table
-import java.time.Instant
+import java.time.Clock
 
-class TranslationCardsLogTable(private val translationCards: TranslationCardsTable): Table(name = "TRANSLATION_CARDS_LOG") {
+class TranslationCardsLogTable(
+    private val clock: Clock,
+    private val translationCards: TranslationCardsTable
+): Table(name = "TRANSLATION_CARDS_LOG") {
     val histRecId = "REC_ID"
     val timestamp = "TIMESTAMP"
     val cardId = "CARD_ID"
@@ -28,7 +31,7 @@ class TranslationCardsLogTable(private val translationCards: TranslationCardsTab
         insertStmt = object : InsertStmt {
             val stmt = db.compileStatement("insert into $self ($timestamp,$cardId,$translation) values (?,?,?)")
             override fun invoke(cardId: Long, translation: String): Long {
-                val currTime = Instant.now().toEpochMilli()
+                val currTime = clock.instant().toEpochMilli()
                 stmt.bindLong(1, currTime)
                 stmt.bindLong(2, cardId)
                 stmt.bindString(3, translation)
