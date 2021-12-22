@@ -1,6 +1,7 @@
 package org.igye.memoryrefresh
 
 enum class ErrorCode(val code: Long) {
+    DELAY_DURATION_IS_TOO_BIG(12L),
     VALIDATE_TRANSLATE_CARD_EXCEPTION(11L),
     VALIDATE_TRANSLATE_CARD_TRANSLATION_IS_EMPTY(10L),
     GET_TRANSLATE_CARD_BY_ID(9L),

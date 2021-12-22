@@ -133,6 +133,12 @@ object Utils {
             throw MemoryRefreshException(msg = "Pause duration '$pauseDuration' is in incorrect format.", errCode = ErrorCode.GENERAL)
         }
         var amount = matcher.group(1).toLong()
+        if (amount > 365) {
+            throw MemoryRefreshException(
+                msg = "Delay duration of '$amount' is too big.",
+                errCode = ErrorCode.DELAY_DURATION_IS_TOO_BIG
+            )
+        }
         var unit = matcher.group(2)
         if ("M" == unit) {
             amount *= 30
