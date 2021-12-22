@@ -450,8 +450,6 @@ class DataManagerInstrumentedTest {
         assertTrue(nextCard.isCardsRemainExact)
     }
 
-
-
     @Test
     fun getNextCardToRepeat_returns_random_card_if_there_few_cards_with_same_overdue() {
         //given
@@ -488,6 +486,72 @@ class DataManagerInstrumentedTest {
         //then
         assertTrue(counts[expectedCardId1]!! > 400)
         assertTrue(counts[expectedCardId2]!! > 400)
+    }
+
+    @Test
+    fun validateTranslateCard_returns_expected_response_when_translation_is_correct() {
+        //given
+        val dm = createInmemoryDataManager()
+        val repo = dm.getRepo()
+        val c = repo.cards
+        val t = repo.translationCards
+        val l = repo.translationCardsLog
+        val expectedCardId = 1236L
+        val baseTime = 1_000
+        fun createCardRecord(cardId: Long) = listOf(c.id to cardId, c.type to TR_TP, c.createdAt to 0)
+        insert(repo = repo, tableName = c.name, rows = listOf(
+            createCardRecord(cardId = expectedCardId),
+        ))
+        insert(repo = repo, tableName = t.name, rows = listOf(
+            listOf(t.cardId to expectedCardId, t.textToTranslate to "A", t.translation to " a\t"),
+        ))
+        assertTableContent(repo = repo, tableName = l.name, exactMatch = true, expectedRows = listOf())
+
+        //when
+        testClock.setFixedTime(baseTime)
+        val time1 = testClock.instant().toEpochMilli()
+        val actualResp = dm.validateTranslateCard(DataManager.ValidateTranslateCardArgs(cardId = expectedCardId, userProvidedTranslation = "\ta   "))
+
+        //then
+        val actualValidationResults = actualResp.data!!
+        assertTrue(actualValidationResults.isCorrect)
+        assertEquals("a", actualValidationResults.answer)
+        assertTableContent(repo = repo, tableName = l.name, exactMatch = true, expectedRows = listOf(
+            listOf(l.timestamp to time1, l.cardId to expectedCardId, l.translation to "a", l.matched to 1L)
+        ))
+    }
+
+    @Test
+    fun validateTranslateCard_returns_expected_response_when_translation_is_incorrect() {
+        //given
+        val dm = createInmemoryDataManager()
+        val repo = dm.getRepo()
+        val c = repo.cards
+        val t = repo.translationCards
+        val l = repo.translationCardsLog
+        val expectedCardId = 1236L
+        val baseTime = 1_000
+        fun createCardRecord(cardId: Long) = listOf(c.id to cardId, c.type to TR_TP, c.createdAt to 0)
+        insert(repo = repo, tableName = c.name, rows = listOf(
+            createCardRecord(cardId = expectedCardId),
+        ))
+        insert(repo = repo, tableName = t.name, rows = listOf(
+            listOf(t.cardId to expectedCardId, t.textToTranslate to "A", t.translation to " a\t"),
+        ))
+        assertTableContent(repo = repo, tableName = l.name, exactMatch = true, expectedRows = listOf())
+
+        //when
+        testClock.setFixedTime(baseTime)
+        val time1 = testClock.instant().toEpochMilli()
+        val actualResp = dm.validateTranslateCard(DataManager.ValidateTranslateCardArgs(cardId = expectedCardId, userProvidedTranslation = "b"))
+
+        //then
+        val actualValidationResults = actualResp.data!!
+        assertFalse(actualValidationResults.isCorrect)
+        assertEquals("a", actualValidationResults.answer)
+        assertTableContent(repo = repo, tableName = l.name, exactMatch = true, expectedRows = listOf(
+            listOf(l.timestamp to time1, l.cardId to expectedCardId, l.translation to "b", l.matched to 0L)
+        ))
     }
 
     private fun insert(repo: Repository, tableName: String, rows: List<List<Pair<String,Any?>>>) {

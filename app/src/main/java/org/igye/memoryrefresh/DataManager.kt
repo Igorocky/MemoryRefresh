@@ -5,10 +5,7 @@ import org.igye.memoryrefresh.common.Try
 import org.igye.memoryrefresh.database.*
 import org.igye.memoryrefresh.dto.common.BeErr
 import org.igye.memoryrefresh.dto.common.BeRespose
-import org.igye.memoryrefresh.dto.domain.CardOverdue
-import org.igye.memoryrefresh.dto.domain.CardSchedule
-import org.igye.memoryrefresh.dto.domain.GetNextCardToRepeatResp
-import org.igye.memoryrefresh.dto.domain.TranslateCard
+import org.igye.memoryrefresh.dto.domain.*
 import java.time.Clock
 import java.util.*
 import kotlin.random.Random
@@ -89,6 +86,44 @@ class DataManager(
                 GetNextCardToRepeatResp(cardsRemain = 0, nextCardIn = selectMinNextAccessAt().map { Utils.millisToDurationStr(it) }.orElse(""))
             }
         }.apply(toBeResponse(GET_NEXT_CARD_TO_REPEAT))
+    }
+
+    data class GetTranslateCardByIdArgs(val cardId: Long)
+    @BeMethod
+    @Synchronized
+    fun getTranslateCardById(args: GetTranslateCardByIdArgs): BeRespose<TranslateCard> {
+        return selectTranslateCardById(cardId = args.cardId).apply(toBeResponse(GET_TRANSLATE_CARD_BY_ID))
+    }
+
+    data class ValidateTranslateCardArgs(val cardId:Long, val userProvidedTranslation:String)
+    private val validateTranslateCardQuery = "select ${t.translation} expectedTranslation from $t where ${t.cardId} = ?"
+    @BeMethod
+    @Synchronized
+    fun validateTranslateCard(args:ValidateTranslateCardArgs): BeRespose<ValidateTranslateCardAnswerResp> {
+        val userProvidedTranslation = args.userProvidedTranslation.trim()
+        return if (userProvidedTranslation.isBlank()) {
+            BeRespose(err = BeErr(code = VALIDATE_TRANSLATE_CARD_TRANSLATION_IS_EMPTY.code, msg = "Translation should not be empty."))
+        } else {
+            val repo = getRepo()
+            repo.writableDatabase.doInTransaction {
+                val expectedTranslation = select(
+                    query = validateTranslateCardQuery,
+                    args = arrayOf(args.cardId.toString()),
+                    columnNames = arrayOf("expectedTranslation"),
+                    rowMapper = {it.getString()}
+                ).rows[0].trim()
+                val translationIsCorrect = userProvidedTranslation == expectedTranslation
+                repo.translationCardsLog.insertStmt(
+                    cardId = args.cardId,
+                    translation = userProvidedTranslation,
+                    matched = translationIsCorrect
+                )
+                ValidateTranslateCardAnswerResp(
+                    isCorrect = translationIsCorrect,
+                    answer = expectedTranslation
+                )
+            }.apply(toBeResponse(EDIT_TRANSLATE_CARD_EXCEPTION))
+        }
     }
 
     private val selectCurrScheduleForCardQuery =
