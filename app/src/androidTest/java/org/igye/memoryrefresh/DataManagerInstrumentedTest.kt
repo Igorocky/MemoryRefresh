@@ -17,6 +17,7 @@ import org.junit.Assert.*
 import org.junit.Test
 import org.junit.runner.RunWith
 import java.util.*
+import kotlin.collections.HashMap
 
 /**
  * Instrumented test, which will execute on an Android device.
@@ -315,6 +316,178 @@ class DataManagerInstrumentedTest {
         assertEquals(cardIdWithZeroOverdue, actualOverdue[3].cardId)
         assertEquals(0.0, actualOverdue[3].overdue, 0.000001)
 
+    }
+
+    @Test
+    fun getNextCardToRepeat_returns_correct_card_if_there_is_one_card_only_in_the_database() {
+        //given
+        val dm = createInmemoryDataManager()
+        val repo = dm.getRepo()
+        val c = repo.cards
+        val s = repo.cardsSchedule
+        val expectedCardId = 1236L
+        val baseTime = 1_000
+        val timeElapsed = 27_000
+        fun createCardRecord(cardId: Long) = listOf(c.id to cardId, c.type to TR_TP, c.createdAt to 0)
+        insert(repo = repo, tableName = c.name, rows = listOf(
+            createCardRecord(cardId = expectedCardId),
+        ))
+        fun createScheduleRecord(cardId: Long, nextAccessIn: Int) =
+            listOf(s.cardId to cardId, s.lastAccessedAt to baseTime, s.nextAccessInMillis to nextAccessIn, s.nextAccessAt to baseTime + nextAccessIn)
+        insert(repo = repo, tableName = s.name, rows = listOf(
+            createScheduleRecord(cardId = expectedCardId, nextAccessIn = timeElapsed-1_000),
+        ))
+
+        //when
+        testClock.setFixedTime(baseTime + timeElapsed)
+        val cardToRepeatResp = dm.getNextCardToRepeat()
+
+        //then
+        val nextCard = cardToRepeatResp.data!!
+        assertEquals(expectedCardId, nextCard.cardId)
+        assertEquals(CardType.TRANSLATION, nextCard.cardType)
+        assertEquals(1, nextCard.cardsRemain)
+        assertTrue(nextCard.isCardsRemainExact)
+    }
+
+    @Test
+    fun getNextCardToRepeat_returns_time_to_wait_str() {
+        //given
+        val dm = createInmemoryDataManager()
+        val repo = dm.getRepo()
+        val c = repo.cards
+        val s = repo.cardsSchedule
+        val expectedCardId = 1236L
+        val baseTime = 1_000
+        val timeElapsed = 27_000
+        fun createCardRecord(cardId: Long) = listOf(c.id to cardId, c.type to TR_TP, c.createdAt to 0)
+        insert(repo = repo, tableName = c.name, rows = listOf(
+            createCardRecord(cardId = expectedCardId),
+        ))
+        fun createScheduleRecord(cardId: Long, nextAccessIn: Int) =
+            listOf(s.cardId to cardId, s.lastAccessedAt to baseTime, s.nextAccessInMillis to nextAccessIn, s.nextAccessAt to baseTime + nextAccessIn)
+        insert(repo = repo, tableName = s.name, rows = listOf(
+            createScheduleRecord(cardId = expectedCardId, nextAccessIn = (timeElapsed+2*Utils.MILLIS_IN_HOUR+3*Utils.MILLIS_IN_MINUTE+39*Utils.MILLIS_IN_SECOND).toInt()),
+        ))
+
+        //when
+        testClock.setFixedTime(baseTime + timeElapsed)
+        val cardToRepeatResp = dm.getNextCardToRepeat()
+
+        //then
+        val nextCard = cardToRepeatResp.data!!
+        assertEquals(0, nextCard.cardsRemain)
+        assertEquals("2h 4m", nextCard.nextCardIn)
+    }
+
+    @Test
+    fun getNextCardToRepeat_returns_empty_time_to_wait_str_if_there_are_no_cards_at_all() {
+        //given
+        val dm = createInmemoryDataManager()
+        val baseTime = 1_000
+        val timeElapsed = 27_000
+
+        //when
+        testClock.setFixedTime(baseTime + timeElapsed)
+        val cardToRepeatResp = dm.getNextCardToRepeat()
+
+        //then
+        val nextCard = cardToRepeatResp.data!!
+        assertEquals(0, nextCard.cardsRemain)
+        assertEquals("", nextCard.nextCardIn)
+    }
+
+    @Test
+    fun getNextCardToRepeat_returns_correct_card_if_there_are_many_cards_in_the_database() {
+        //given
+        val dm = createInmemoryDataManager()
+        val repo = dm.getRepo()
+        val c = repo.cards
+        val s = repo.cardsSchedule
+        val cardIdWithoutOverdue1 = 1L
+        val cardIdWithBigOverdue = 2L
+        val cardIdWithZeroOverdue = 3L
+        val cardIdWithoutOverdue2 = 4L
+        val cardIdWithSmallOverdue = 5L
+        val cardIdWithoutOverdue3 = 6L
+        val cardIdWithLargeOverdue = 7L
+        val cardIdWithoutOverdue4 = 8L
+        val baseTime = 1_000
+        val timeElapsed = 27_000
+        fun createCardRecord(cardId: Long) = listOf(c.id to cardId, c.type to TR_TP, c.createdAt to 0)
+        insert(repo = repo, tableName = c.name, rows = listOf(
+            createCardRecord(cardId = cardIdWithoutOverdue1),
+            createCardRecord(cardId = cardIdWithBigOverdue),
+            createCardRecord(cardId = cardIdWithZeroOverdue),
+            createCardRecord(cardId = cardIdWithoutOverdue2),
+            createCardRecord(cardId = cardIdWithSmallOverdue),
+            createCardRecord(cardId = cardIdWithoutOverdue3),
+            createCardRecord(cardId = cardIdWithLargeOverdue),
+            createCardRecord(cardId = cardIdWithoutOverdue4),
+        ))
+        fun createScheduleRecord(cardId: Long, nextAccessIn: Int) =
+            listOf(s.cardId to cardId, s.lastAccessedAt to baseTime, s.nextAccessInMillis to nextAccessIn, s.nextAccessAt to baseTime + nextAccessIn)
+        insert(repo = repo, tableName = s.name, rows = listOf(
+            createScheduleRecord(cardId = cardIdWithoutOverdue1, nextAccessIn = timeElapsed+1_000),
+            createScheduleRecord(cardId = cardIdWithLargeOverdue, nextAccessIn = timeElapsed-26_000),
+            createScheduleRecord(cardId = cardIdWithoutOverdue2, nextAccessIn = timeElapsed+10_000),
+            createScheduleRecord(cardId = cardIdWithZeroOverdue, nextAccessIn = timeElapsed),
+            createScheduleRecord(cardId = cardIdWithBigOverdue, nextAccessIn = timeElapsed-10_000),
+            createScheduleRecord(cardId = cardIdWithoutOverdue3, nextAccessIn = timeElapsed+20_000),
+            createScheduleRecord(cardId = cardIdWithSmallOverdue, nextAccessIn = timeElapsed-1_000),
+            createScheduleRecord(cardId = cardIdWithoutOverdue4, nextAccessIn = timeElapsed+2_000),
+        ))
+
+        //when
+        testClock.setFixedTime(baseTime + timeElapsed)
+        val cardToRepeatResp = dm.getNextCardToRepeat()
+
+        //then
+        val nextCard = cardToRepeatResp.data!!
+        assertEquals(cardIdWithLargeOverdue, nextCard.cardId)
+        assertEquals(CardType.TRANSLATION, nextCard.cardType)
+        assertEquals(4, nextCard.cardsRemain)
+        assertTrue(nextCard.isCardsRemainExact)
+    }
+
+
+
+    @Test
+    fun getNextCardToRepeat_returns_random_card_if_there_few_cards_with_same_overdue() {
+        //given
+        val dm = createInmemoryDataManager()
+        val repo = dm.getRepo()
+        val c = repo.cards
+        val s = repo.cardsSchedule
+        val expectedCardId1 = 1236L
+        val expectedCardId2 = 1244L
+        val baseTime = 1_000
+        val timeElapsed = 27_000
+        fun createCardRecord(cardId: Long) = listOf(c.id to cardId, c.type to TR_TP, c.createdAt to 0)
+        insert(repo = repo, tableName = c.name, rows = listOf(
+            createCardRecord(cardId = expectedCardId1),
+            createCardRecord(cardId = expectedCardId2),
+        ))
+        fun createScheduleRecord(cardId: Long, nextAccessIn: Int) =
+            listOf(s.cardId to cardId, s.lastAccessedAt to baseTime, s.nextAccessInMillis to nextAccessIn, s.nextAccessAt to baseTime + nextAccessIn)
+        insert(repo = repo, tableName = s.name, rows = listOf(
+            createScheduleRecord(cardId = expectedCardId1, nextAccessIn = timeElapsed-1_000),
+            createScheduleRecord(cardId = expectedCardId2, nextAccessIn = timeElapsed-1_000),
+        ))
+        val counts = HashMap<Long,Int>()
+        counts[expectedCardId1] = 0
+        counts[expectedCardId2] = 0
+
+        //when
+        testClock.setFixedTime(baseTime + timeElapsed)
+        for (i in 1..1000) {
+            val cnt = counts[dm.getNextCardToRepeat().data!!.cardId]!!
+            counts[dm.getNextCardToRepeat().data!!.cardId] = cnt + 1
+        }
+
+        //then
+        assertTrue(counts[expectedCardId1]!! > 400)
+        assertTrue(counts[expectedCardId2]!! > 400)
     }
 
     private fun insert(repo: Repository, tableName: String, rows: List<List<Pair<String,Any?>>>) {

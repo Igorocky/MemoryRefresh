@@ -7,8 +7,11 @@ import org.igye.memoryrefresh.dto.common.BeErr
 import org.igye.memoryrefresh.dto.common.BeRespose
 import org.igye.memoryrefresh.dto.domain.CardOverdue
 import org.igye.memoryrefresh.dto.domain.CardSchedule
+import org.igye.memoryrefresh.dto.domain.GetNextCardToRepeatResp
 import org.igye.memoryrefresh.dto.domain.TranslateCard
 import java.time.Clock
+import java.util.*
+import kotlin.random.Random
 
 
 class DataManager(
@@ -68,6 +71,26 @@ class DataManager(
         }
     }
 
+    @BeMethod
+    @Synchronized
+    fun getNextCardToRepeat(): BeRespose<GetNextCardToRepeatResp> {
+        return selectTopOverdueCards(maxCardsNum = Int.MAX_VALUE).map { cardsToRepeat ->
+            val rows = cardsToRepeat.rows
+            if (rows.isNotEmpty()) {
+                val topCards = rows.asSequence().filter { it.overdue >= rows[0].overdue }.toList()
+                val nextCard = topCards[Random.nextInt(topCards.size)]
+                GetNextCardToRepeatResp(
+                    cardId = nextCard.cardId,
+                    cardType = nextCard.cardType,
+                    cardsRemain = rows.size,
+                    isCardsRemainExact = cardsToRepeat.allRawsRead
+                )
+            } else {
+                GetNextCardToRepeatResp(cardsRemain = 0, nextCardIn = selectMinNextAccessAt().map { Utils.millisToDurationStr(it) }.orElse(""))
+            }
+        }.apply(toBeResponse(GET_NEXT_CARD_TO_REPEAT))
+    }
+
     private val selectCurrScheduleForCardQuery =
         "select ${s.lastAccessedAt}, ${s.nextAccessInMillis}, ${s.nextAccessAt} from $s where ${s.cardId} = ?"
     @Synchronized
@@ -92,8 +115,7 @@ class DataManager(
     private val selectTranslateCardByIdQuery = "select ${t.textToTranslate}, ${t.translation} from $t where ${t.cardId} = ?"
     @Synchronized
     private fun selectTranslateCardById(cardId: Long): Try<TranslateCard> {
-        val repo = getRepo()
-        return repo.readableDatabase.doInTransaction {
+        return getRepo().readableDatabase.doInTransaction {
             select(
                 query = selectTranslateCardByIdQuery,
                 args = arrayOf(cardId.toString()),
@@ -108,6 +130,20 @@ class DataManager(
                 }
             ).rows[0]
         }
+    }
+
+    private val selectMinNextAccessAtQuery = "select count(1) cnt, min(${s.nextAccessAt}) nextAccessAt from $s"
+    @Synchronized
+    private fun selectMinNextAccessAt(): Optional<Long> {
+        return getRepo().readableDatabase.doInTransaction {
+            select(
+                query = selectMinNextAccessAtQuery,
+                columnNames = arrayOf("cnt", "nextAccessAt"),
+                rowMapper = { Pair(it.getLong(), it.getLong()) }
+            )
+        }
+            .map { if (it.rows[0].first == 0L) Optional.empty() else Optional.of(it.rows[0].second) }
+            .get()
     }
 
     private val selectTopOverdueCardsQuery = """

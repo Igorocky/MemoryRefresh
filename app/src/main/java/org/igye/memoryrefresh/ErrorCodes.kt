@@ -1,6 +1,7 @@
 package org.igye.memoryrefresh
 
 enum class ErrorCode(val code: Long) {
+    GET_NEXT_CARD_TO_REPEAT(7L),
     EDIT_TRANSLATE_CARD_EXCEPTION(6L),
     EDIT_TRANSLATE_CARD_TRANSLATION_IS_EMPTY(5L),
     EDIT_TRANSLATE_CARD_TEXT_TO_TRANSLATE_IS_EMPTY(4L),
