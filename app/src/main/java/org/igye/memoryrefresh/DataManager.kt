@@ -36,7 +36,7 @@ class DataManager(
             repo.writableDatabase.doInTransactionTry {
                 val cardId = repo.cards.insertStmt(cardType = CardType.TRANSLATION)
                 val currTime = clock.instant().toEpochMilli()
-                repo.cardsSchedule.insertStmt(cardId = cardId, lastAccessedAt = currTime, nextAccessInSec = 0, nextAccessAt = currTime)
+                repo.cardsSchedule.insertStmt(cardId = cardId, lastAccessedAt = currTime, nextAccessInMillis = 0, nextAccessAt = currTime)
                 repo.translationCards.insertStmt(cardId = cardId, textToTranslate = textToTranslate, translation = translation)
                 selectTranslateCardById(cardId = cardId)
             }.apply(toBeResponse(SAVE_NEW_TRANSLATE_CARD_EXCEPTION))
@@ -69,14 +69,14 @@ class DataManager(
     }
 
     private val selectCurrScheduleForCardQuery =
-        "select ${s.lastAccessedAt}, ${s.nextAccessInSec}, ${s.nextAccessAt} from $s where ${s.cardId} = ?"
+        "select ${s.lastAccessedAt}, ${s.nextAccessInMillis}, ${s.nextAccessAt} from $s where ${s.cardId} = ?"
     @Synchronized
     private fun selectCurrScheduleForCard(cardId: Long): Try<CardSchedule> {
         return getRepo().readableDatabase.doInTransaction {
             select(
                 query = selectCurrScheduleForCardQuery,
                 args = arrayOf(cardId.toString()),
-                columnNames = arrayOf(s.lastAccessedAt, s.nextAccessInSec, s.nextAccessAt),
+                columnNames = arrayOf(s.lastAccessedAt, s.nextAccessInMillis, s.nextAccessAt),
                 rowMapper = {
                     CardSchedule(
                         cardId = cardId,
@@ -115,7 +115,7 @@ class DataManager(
             select
                 ${c.id} cardId,
                 ${c.type} cardType,
-                case when ? /*1 currTime*/ < ${s.nextAccessAt} then -1.0 else (? /*2 currTime*/ - ${s.nextAccessAt} ) * 1.0 / (${s.nextAccessAt} - ${s.lastAccessedAt}) end overdue
+                case when ? /*1 currTime*/ < ${s.nextAccessAt} then -1.0 else (? /*2 currTime*/ - ${s.nextAccessAt} ) * 1.0 / ${s.nextAccessInMillis} end overdue
             from $c left join $s on ${c.id} = ${s.cardId}
         )
         where overdue >= 0

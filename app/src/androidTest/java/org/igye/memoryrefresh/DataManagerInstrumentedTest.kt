@@ -74,7 +74,7 @@ class DataManagerInstrumentedTest {
         assertTableContent(repo = repo, tableName = t.ver.name, exactMatch = true, expectedRows = listOf())
 
         assertTableContent(repo = repo, tableName = s.name, matchColumn = s.cardId, expectedRows = listOf(
-            listOf(s.cardId to translateCard.id, s.lastAccessedAt to time1, s.nextAccessInSec to 0L, s.nextAccessAt to time1)
+            listOf(s.cardId to translateCard.id, s.lastAccessedAt to time1, s.nextAccessInMillis to 0L, s.nextAccessAt to time1)
         ))
         assertTableContent(repo = repo, tableName = s.ver.name, exactMatch = true, expectedRows = listOf())
 
@@ -121,7 +121,7 @@ class DataManagerInstrumentedTest {
         assertTableContent(repo = repo, tableName = t.ver.name, exactMatch = true, expectedRows = listOf())
 
         assertTableContent(repo = repo, tableName = s.name, matchColumn = s.cardId, expectedRows = listOf(
-            listOf(s.cardId to actualCreatedCard.id, s.lastAccessedAt to timeCrt, s.nextAccessInSec to 0L, s.nextAccessAt to timeCrt)
+            listOf(s.cardId to actualCreatedCard.id, s.lastAccessedAt to timeCrt, s.nextAccessInMillis to 0L, s.nextAccessAt to timeCrt)
         ))
         assertTableContent(repo = repo, tableName = s.ver.name, exactMatch = true, expectedRows = listOf())
 
@@ -152,7 +152,7 @@ class DataManagerInstrumentedTest {
         assertTableContent(repo = repo, tableName = t.ver.name, exactMatch = true, expectedRows = listOf())
 
         assertTableContent(repo = repo, tableName = s.name, matchColumn = s.cardId, expectedRows = listOf(
-            listOf(s.cardId to translateCardAfterEdit1.id, s.lastAccessedAt to timeCrt, s.nextAccessInSec to 0L, s.nextAccessAt to timeCrt)
+            listOf(s.cardId to translateCardAfterEdit1.id, s.lastAccessedAt to timeCrt, s.nextAccessInMillis to 0L, s.nextAccessAt to timeCrt)
         ))
         assertTableContent(repo = repo, tableName = s.ver.name, exactMatch = true, expectedRows = listOf())
 
@@ -187,7 +187,7 @@ class DataManagerInstrumentedTest {
         ))
 
         assertTableContent(repo = repo, tableName = s.name, matchColumn = s.cardId, expectedRows = listOf(
-            listOf(s.cardId to translateCardAfterEdit2.id, s.lastAccessedAt to timeCrt, s.nextAccessInSec to 0L, s.nextAccessAt to timeCrt)
+            listOf(s.cardId to translateCardAfterEdit2.id, s.lastAccessedAt to timeCrt, s.nextAccessInMillis to 0L, s.nextAccessAt to timeCrt)
         ))
         assertTableContent(repo = repo, tableName = s.ver.name, exactMatch = true, expectedRows = listOf())
 
@@ -200,9 +200,7 @@ class DataManagerInstrumentedTest {
         val dm = createInmemoryDataManager()
         val repo = dm.getRepo()
         val c = repo.cards
-        val t = repo.translationCards
         val s = repo.cardsSchedule
-        val l = repo.translationCardsLog
         val expectedCardId = 1L
         val expectedCardType = CardType.TRANSLATION
         val baseTime = 27000
@@ -210,7 +208,7 @@ class DataManagerInstrumentedTest {
             listOf(c.id to expectedCardId, c.type to TR_TP, c.createdAt to 0)
         ))
         insert(repo = repo, tableName = s.name, rows = listOf(
-            listOf(s.cardId to expectedCardId, s.lastAccessedAt to baseTime, s.nextAccessInSec to 100, s.nextAccessAt to baseTime + 100)
+            listOf(s.cardId to expectedCardId, s.lastAccessedAt to baseTime, s.nextAccessInMillis to 100, s.nextAccessAt to baseTime + 100)
         ))
 
         //when
@@ -231,17 +229,14 @@ class DataManagerInstrumentedTest {
         val dm = createInmemoryDataManager()
         val repo = dm.getRepo()
         val c = repo.cards
-        val t = repo.translationCards
         val s = repo.cardsSchedule
-        val l = repo.translationCardsLog
         val expectedCardId = 1L
-        val expectedCardType = CardType.TRANSLATION
         val baseTime = 27000
         insert(repo = repo, tableName = c.name, rows = listOf(
             listOf(c.id to expectedCardId, c.type to TR_TP, c.createdAt to 0)
         ))
         insert(repo = repo, tableName = s.name, rows = listOf(
-            listOf(s.cardId to expectedCardId, s.lastAccessedAt to baseTime, s.nextAccessInSec to 100, s.nextAccessAt to baseTime + 100)
+            listOf(s.cardId to expectedCardId, s.lastAccessedAt to baseTime, s.nextAccessInMillis to 100, s.nextAccessAt to baseTime + 100)
         ))
 
         //when
@@ -253,10 +248,79 @@ class DataManagerInstrumentedTest {
         assertEquals(0, actualOverdue.size)
     }
 
+    @Test
+    fun selectTopOverdueCards_selects_cards_correctly_when_there_are_many_cards() {
+        //given
+        val dm = createInmemoryDataManager()
+        val repo = dm.getRepo()
+        val c = repo.cards
+        val s = repo.cardsSchedule
+        val cardIdWithoutOverdue1 = 1L
+        val cardIdWithBigOverdue = 2L
+        val cardIdWithZeroOverdue = 3L
+        val cardIdWithoutOverdue2 = 4L
+        val cardIdWithSmallOverdue = 5L
+        val cardIdWithoutOverdue3 = 6L
+        val cardIdWithLargeOverdue = 7L
+        val cardIdWithoutOverdue4 = 8L
+        val baseTime = 1_000
+        val timeElapsed = 27_000
+        fun createCardRecord(cardId: Long) = listOf(c.id to cardId, c.type to TR_TP, c.createdAt to 0)
+        insert(repo = repo, tableName = c.name, rows = listOf(
+            createCardRecord(cardId = cardIdWithoutOverdue1),
+            createCardRecord(cardId = cardIdWithBigOverdue),
+            createCardRecord(cardId = cardIdWithZeroOverdue),
+            createCardRecord(cardId = cardIdWithoutOverdue2),
+            createCardRecord(cardId = cardIdWithSmallOverdue),
+            createCardRecord(cardId = cardIdWithoutOverdue3),
+            createCardRecord(cardId = cardIdWithLargeOverdue),
+            createCardRecord(cardId = cardIdWithoutOverdue4),
+        ))
+        fun createScheduleRecord(cardId: Long, nextAccessIn: Int) =
+            listOf(s.cardId to cardId, s.lastAccessedAt to baseTime, s.nextAccessInMillis to nextAccessIn, s.nextAccessAt to baseTime + nextAccessIn)
+        insert(repo = repo, tableName = s.name, rows = listOf(
+            createScheduleRecord(cardId = cardIdWithoutOverdue1, nextAccessIn = timeElapsed+1_000),
+            createScheduleRecord(cardId = cardIdWithLargeOverdue, nextAccessIn = timeElapsed-26_000),
+            createScheduleRecord(cardId = cardIdWithoutOverdue2, nextAccessIn = timeElapsed+10_000),
+            createScheduleRecord(cardId = cardIdWithZeroOverdue, nextAccessIn = timeElapsed),
+            createScheduleRecord(cardId = cardIdWithBigOverdue, nextAccessIn = timeElapsed-10_000),
+            createScheduleRecord(cardId = cardIdWithoutOverdue3, nextAccessIn = timeElapsed+20_000),
+            createScheduleRecord(cardId = cardIdWithSmallOverdue, nextAccessIn = timeElapsed-1_000),
+            createScheduleRecord(cardId = cardIdWithoutOverdue4, nextAccessIn = timeElapsed+2_000),
+        ))
+
+        //when
+        testClock.setFixedTime(baseTime + timeElapsed)
+        val actualTopOverdueCards = dm.selectTopOverdueCards(30)
+
+        //then
+        val actualOverdue = actualTopOverdueCards.get().rows
+        assertEquals(4, actualOverdue.size)
+
+        val actualIds = actualOverdue.map { it.cardId }.toSet()
+        assertFalse(actualIds.contains(cardIdWithoutOverdue1))
+        assertFalse(actualIds.contains(cardIdWithoutOverdue2))
+        assertFalse(actualIds.contains(cardIdWithoutOverdue3))
+        assertFalse(actualIds.contains(cardIdWithoutOverdue4))
+
+        assertEquals(cardIdWithLargeOverdue, actualOverdue[0].cardId)
+        assertEquals(26.0, actualOverdue[0].overdue, 0.0001)
+
+        assertEquals(cardIdWithBigOverdue, actualOverdue[1].cardId)
+        assertEquals(0.5882, actualOverdue[1].overdue, 0.0001)
+
+        assertEquals(cardIdWithSmallOverdue, actualOverdue[2].cardId)
+        assertEquals(0.0385, actualOverdue[2].overdue, 0.0001)
+
+        assertEquals(cardIdWithZeroOverdue, actualOverdue[3].cardId)
+        assertEquals(0.0, actualOverdue[3].overdue, 0.000001)
+
+    }
+
     private fun insert(repo: Repository, tableName: String, rows: List<List<Pair<String,Any?>>>) {
         val query = """
             insert into $tableName (${rows[0].map { it.first }.joinToString(separator = ", ")}) 
-            ${rows.map {row -> row.map { "?" }.joinToString(prefix = "values (", separator = ",", postfix = ")")}.joinToString(separator = ",") }
+            values ${rows.map {row -> row.map { "?" }.joinToString(prefix = "(", separator = ",", postfix = ")")}.joinToString(separator = ",") }
             """.trimIndent()
         val insertStmt = repo.writableDatabase.compileStatement(query)
         var idx = 0
