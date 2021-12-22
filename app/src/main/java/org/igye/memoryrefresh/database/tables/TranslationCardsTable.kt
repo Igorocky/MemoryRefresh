@@ -2,7 +2,6 @@ package org.igye.memoryrefresh.database.tables
 
 import android.database.sqlite.SQLiteDatabase
 import org.igye.memoryrefresh.MemoryRefreshException
-import org.igye.memoryrefresh.database.ChangeType
 import org.igye.memoryrefresh.database.TableWithVersioning
 import java.time.Clock
 
@@ -26,7 +25,6 @@ class TranslationCardsTable(
                 CREATE TABLE $ver (
                     ${ver.verId} integer primary key,
                     ${ver.timestamp} integer not null,
-                    ${ver.changeType} integer not null,
                     
                     $cardId integer not null,
                     $textToTranslate text not null,
@@ -41,12 +39,11 @@ class TranslationCardsTable(
 
     override fun prepareStatements(db: SQLiteDatabase) {
         val self = this
-        val stmtVer = db.compileStatement("insert into $ver (${ver.timestamp},${ver.changeType},$cardId,$textToTranslate,$translation) " +
-                "select ?, ?, $cardId, $textToTranslate, $translation from $self where $cardId = ?")
-        fun saveCurrentVersion(cardId: Long, changeType: ChangeType) {
+        val stmtVer = db.compileStatement("insert into $ver (${ver.timestamp},$cardId,$textToTranslate,$translation) " +
+                "select ?, $cardId, $textToTranslate, $translation from $self where $cardId = ?")
+        fun saveCurrentVersion(cardId: Long) {
             stmtVer.bindLong(1, clock.instant().toEpochMilli())
-            stmtVer.bindLong(2, changeType.intValue)
-            stmtVer.bindLong(3, cardId)
+            stmtVer.bindLong(2, cardId)
             if (stmtVer.executeUpdateDelete() != 1) {
                 throw MemoryRefreshException("stmtVer.executeUpdateDelete() != 1")
             }
@@ -63,7 +60,7 @@ class TranslationCardsTable(
         updateStmt = object : UpdateStmt {
             private val stmt = db.compileStatement("update $self set $textToTranslate = ?, $translation = ?  where $cardId = ?")
             override fun invoke(cardId: Long, textToTranslate: String, translation: String): Int {
-                saveCurrentVersion(cardId = cardId, changeType = ChangeType.UPDATE)
+                saveCurrentVersion(cardId = cardId)
                 stmt.bindString(1, textToTranslate)
                 stmt.bindString(2, translation)
                 stmt.bindLong(3, cardId)
@@ -74,7 +71,7 @@ class TranslationCardsTable(
         deleteStmt = object : DeleteStmt {
             private val stmt = db.compileStatement("delete from $self where $cardId = ?")
             override fun invoke(cardId: Long): Int {
-                saveCurrentVersion(cardId = cardId, changeType = ChangeType.DELETE)
+                saveCurrentVersion(cardId = cardId)
                 stmt.bindLong(1, cardId)
                 return stmt.executeUpdateDelete()
             }

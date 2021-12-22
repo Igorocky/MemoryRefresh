@@ -2,7 +2,6 @@ package org.igye.memoryrefresh.database.tables
 
 import android.database.sqlite.SQLiteDatabase
 import org.igye.memoryrefresh.MemoryRefreshException
-import org.igye.memoryrefresh.database.ChangeType
 import org.igye.memoryrefresh.database.TableWithVersioning
 import java.time.Clock
 
@@ -25,7 +24,6 @@ class CardsScheduleTable(private val clock: Clock, private val cards: CardsTable
                 CREATE TABLE $ver (
                     ${ver.verId} integer primary key,
                     ${ver.timestamp} integer not null,
-                    ${ver.changeType} integer not null,
                     
                     $cardId integer not null,
                     $lastAccessedAt integer not null,
@@ -44,12 +42,11 @@ class CardsScheduleTable(private val clock: Clock, private val cards: CardsTable
 
     override fun prepareStatements(db: SQLiteDatabase) {
         val self = this
-        val stmtVer = db.compileStatement("insert into $ver (${ver.timestamp},${ver.changeType},$cardId,$lastAccessedAt,$nextAccessInSec,$nextAccessAt) " +
-                "select ?, ?, $cardId, $lastAccessedAt, $nextAccessInSec, $nextAccessAt from $self where $cardId = ?")
-        fun saveCurrentVersion(cardId: Long, changeType: ChangeType) {
+        val stmtVer = db.compileStatement("insert into $ver (${ver.timestamp},$cardId,$lastAccessedAt,$nextAccessInSec,$nextAccessAt) " +
+                "select ?, $cardId, $lastAccessedAt, $nextAccessInSec, $nextAccessAt from $self where $cardId = ?")
+        fun saveCurrentVersion(cardId: Long) {
             stmtVer.bindLong(1, clock.instant().toEpochMilli())
-            stmtVer.bindLong(2, changeType.intValue)
-            stmtVer.bindLong(3, cardId)
+            stmtVer.bindLong(2, cardId)
             if (stmtVer.executeUpdateDelete() != 1) {
                 throw MemoryRefreshException("stmtVer.executeUpdateDelete() != 1")
             }
@@ -67,7 +64,7 @@ class CardsScheduleTable(private val clock: Clock, private val cards: CardsTable
         updateStmt = object : UpdateStmt {
             private val stmt = db.compileStatement("update $self set $lastAccessedAt = ?, $nextAccessInSec = ?, $nextAccessAt = ?  where $cardId = ?")
             override fun invoke(cardId: Long, lastAccessedAt: Long, nextAccessInSec: Long, nextAccessAt: Long): Int {
-                saveCurrentVersion(cardId = cardId, changeType = ChangeType.UPDATE)
+                saveCurrentVersion(cardId = cardId)
                 stmt.bindLong(1, lastAccessedAt)
                 stmt.bindLong(2, nextAccessInSec)
                 stmt.bindLong(3, nextAccessAt)
@@ -79,7 +76,7 @@ class CardsScheduleTable(private val clock: Clock, private val cards: CardsTable
         deleteStmt = object : DeleteStmt {
             private val stmt = db.compileStatement("delete from $self where $cardId = ?")
             override fun invoke(cardId: Long): Int {
-                saveCurrentVersion(cardId = cardId, changeType = ChangeType.DELETE)
+                saveCurrentVersion(cardId = cardId)
                 stmt.bindLong(1, cardId)
                 return stmt.executeUpdateDelete()
             }

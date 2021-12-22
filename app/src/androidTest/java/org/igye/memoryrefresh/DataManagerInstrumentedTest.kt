@@ -4,9 +4,9 @@ import android.database.Cursor
 import android.database.Cursor.*
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
-import org.igye.memoryrefresh.DataManager.*
+import org.igye.memoryrefresh.DataManager.EditTranslateCardArgs
+import org.igye.memoryrefresh.DataManager.SaveNewTranslateCardArgs
 import org.igye.memoryrefresh.database.CardType
-import org.igye.memoryrefresh.database.ChangeType
 import org.igye.memoryrefresh.database.Repository
 import org.igye.memoryrefresh.database.tables.CardsScheduleTable
 import org.igye.memoryrefresh.database.tables.CardsTable
@@ -17,8 +17,6 @@ import org.junit.Assert.*
 import org.junit.Test
 import org.junit.runner.RunWith
 import java.util.*
-import kotlin.collections.ArrayList
-import kotlin.collections.HashMap
 
 /**
  * Instrumented test, which will execute on an Android device.
@@ -186,7 +184,7 @@ class DataManagerInstrumentedTest {
         ))
         assertTableContent(repo = repo, tableName = t.ver.name, exactMatch = true, expectedRows = listOf(
             listOf(t.cardId to translateCardAfterEdit2.id, t.textToTranslate to expectedTextToTranslate1, t.translation to expectedTranslation1,
-                t.ver.timestamp to timeEdt2, t.ver.changeType to ChangeType.UPDATE.intValue)
+                t.ver.timestamp to timeEdt2)
         ))
 
         assertTableContent(repo = repo, tableName = s.name, matchColumn = s.cardId, expectedRows = listOf(

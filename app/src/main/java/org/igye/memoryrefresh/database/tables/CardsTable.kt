@@ -3,7 +3,6 @@ package org.igye.memoryrefresh.database.tables
 import android.database.sqlite.SQLiteDatabase
 import org.igye.memoryrefresh.MemoryRefreshException
 import org.igye.memoryrefresh.database.CardType
-import org.igye.memoryrefresh.database.ChangeType
 import org.igye.memoryrefresh.database.TableWithVersioning
 import java.time.Clock
 
@@ -24,7 +23,6 @@ class CardsTable(private val clock: Clock): TableWithVersioning(name = "CARDS") 
                 CREATE TABLE $ver (
                     ${ver.verId} integer primary key,
                     ${ver.timestamp} integer not null,
-                    ${ver.changeType} integer not null,
                     
                     $id integer not null,
                     $type integer not null,
@@ -39,12 +37,11 @@ class CardsTable(private val clock: Clock): TableWithVersioning(name = "CARDS") 
 
     override fun prepareStatements(db: SQLiteDatabase) {
         val self = this
-        val stmtVer = db.compileStatement("insert into $ver (${ver.timestamp},${ver.changeType},$id,$type,$createdAt) " +
-                "select ?, ?, $id, $type, $createdAt from $self where $id = ?")
-        fun saveCurrentVersion(id: Long, changeType: ChangeType) {
+        val stmtVer = db.compileStatement("insert into $ver (${ver.timestamp},$id,$type,$createdAt) " +
+                "select ?, $id, $type, $createdAt from $self where $id = ?")
+        fun saveCurrentVersion(id: Long) {
             stmtVer.bindLong(1, clock.instant().toEpochMilli())
-            stmtVer.bindLong(2, changeType.intValue)
-            stmtVer.bindLong(3, id)
+            stmtVer.bindLong(2, id)
             if (stmtVer.executeUpdateDelete() != 1) {
                 throw MemoryRefreshException("stmtVer.executeUpdateDelete() != 1")
             }
@@ -61,7 +58,7 @@ class CardsTable(private val clock: Clock): TableWithVersioning(name = "CARDS") 
         updateStmt = object : UpdateStmt {
             private val stmt = db.compileStatement("update $self set $type = ? where $id = ?")
             override fun invoke(id: Long, cardType: CardType): Int {
-                saveCurrentVersion(id = id, changeType = ChangeType.UPDATE)
+                saveCurrentVersion(id = id)
                 stmt.bindLong(1, cardType.intValue)
                 stmt.bindLong(2, id)
                 return stmt.executeUpdateDelete()
@@ -71,7 +68,7 @@ class CardsTable(private val clock: Clock): TableWithVersioning(name = "CARDS") 
         deleteStmt = object : DeleteStmt {
             private val stmt = db.compileStatement("delete from $self where $id = ?")
             override fun invoke(id:Long): Int {
-                saveCurrentVersion(id = id, changeType = ChangeType.DELETE)
+                saveCurrentVersion(id = id)
                 stmt.bindLong(1, id)
                 return stmt.executeUpdateDelete()
             }
