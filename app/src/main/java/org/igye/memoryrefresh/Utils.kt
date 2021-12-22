@@ -5,6 +5,8 @@ import com.google.gson.Gson
 import java.io.File
 import java.net.InetAddress
 import java.net.NetworkInterface
+import java.time.temporal.ChronoUnit
+import java.time.temporal.TemporalUnit
 import java.util.*
 import java.util.regex.Matcher
 import java.util.regex.Pattern
@@ -26,7 +28,7 @@ object Utils {
                 .filter { it.getAnnotation(BeMethod::class.java) != null }
                 .forEach { method ->
                     if (resultMap.containsKey(method.name)) {
-                        throw MemoryRefreshException("resultMap.containsKey('${method.name}')")
+                        throw MemoryRefreshException(msg = "resultMap.containsKey('${method.name}')", errCode = ErrorCode.GENERAL)
                     } else {
                         resultMap.put(method.name) { argStr ->
                             val parameterTypes = method.parameterTypes
@@ -122,5 +124,29 @@ object Utils {
             sb.append(" ").append(parts[idx]).append(DURATION_UNITS[idx])
         }
         return sb.toString()
+    }
+
+    private val attemptDelayPattern = Pattern.compile("^(\\d+)(M|d|h|m)$")
+    fun delayStrToMillis(pauseDuration: String): Long {
+        val matcher = attemptDelayPattern.matcher(pauseDuration)
+        if (!matcher.matches()) {
+            throw MemoryRefreshException(msg = "Pause duration '$pauseDuration' is in incorrect format.", errCode = ErrorCode.GENERAL)
+        }
+        var amount = matcher.group(1).toLong()
+        var unit = matcher.group(2)
+        if ("M" == unit) {
+            amount *= 30
+            unit = "d"
+        }
+        return getChronoUnit(unit).getDuration().getSeconds() * amount * 1000
+    }
+
+    private fun getChronoUnit(unit: String): TemporalUnit {
+        return when (unit) {
+            "m" -> ChronoUnit.MINUTES
+            "h" -> ChronoUnit.HOURS
+            "d" -> ChronoUnit.DAYS
+            else -> throw MemoryRefreshException(msg = "Unrecognized time interval unit: $unit", errCode = ErrorCode.GENERAL)
+        }
     }
 }

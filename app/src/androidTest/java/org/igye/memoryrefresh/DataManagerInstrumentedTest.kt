@@ -4,8 +4,9 @@ import android.database.Cursor
 import android.database.Cursor.*
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
-import org.igye.memoryrefresh.DataManager.EditTranslateCardArgs
 import org.igye.memoryrefresh.DataManager.SaveNewTranslateCardArgs
+import org.igye.memoryrefresh.DataManager.UpdateTranslateCardArgs
+import org.igye.memoryrefresh.ErrorCode.GENERAL
 import org.igye.memoryrefresh.database.CardType
 import org.igye.memoryrefresh.database.Repository
 import org.igye.memoryrefresh.database.tables.CardsScheduleTable
@@ -17,7 +18,6 @@ import org.junit.Assert.*
 import org.junit.Test
 import org.junit.runner.RunWith
 import java.util.*
-import kotlin.collections.HashMap
 
 /**
  * Instrumented test, which will execute on an Android device.
@@ -60,8 +60,8 @@ class DataManagerInstrumentedTest {
         val translateCard: TranslateCard = actualTranslateCardResp.data!!
         assertEquals(expectedTextToTranslate, translateCard.textToTranslate)
         assertEquals(expectedTranslation, translateCard.translation)
-        assertEquals(time1, translateCard.schedule.lastAccessedAt)
-        assertEquals(0, translateCard.schedule.nextAccessInSec)
+        assertEquals("0m", translateCard.schedule.delay)
+        assertEquals(0, translateCard.schedule.nextAccessInMillis)
         assertEquals(time1, translateCard.schedule.nextAccessAt)
 
         assertTableContent(repo = repo, tableName = c.name, matchColumn = c.id, expectedRows = listOf(
@@ -75,7 +75,7 @@ class DataManagerInstrumentedTest {
         assertTableContent(repo = repo, tableName = t.ver.name, exactMatch = true, expectedRows = listOf())
 
         assertTableContent(repo = repo, tableName = s.name, matchColumn = s.cardId, expectedRows = listOf(
-            listOf(s.cardId to translateCard.id, s.lastAccessedAt to time1, s.nextAccessInMillis to 0L, s.nextAccessAt to time1)
+            listOf(s.cardId to translateCard.id, s.delay to "0m", s.nextAccessInMillis to 0L, s.nextAccessAt to time1)
         ))
         assertTableContent(repo = repo, tableName = s.ver.name, exactMatch = true, expectedRows = listOf())
 
@@ -107,8 +107,8 @@ class DataManagerInstrumentedTest {
         val actualCreatedCard: TranslateCard = responseAfterCreate.data!!
         assertEquals(expectedTextToTranslate1, actualCreatedCard.textToTranslate)
         assertEquals(expectedTranslation1, actualCreatedCard.translation)
-        assertEquals(timeCrt, actualCreatedCard.schedule.lastAccessedAt)
-        assertEquals(0, actualCreatedCard.schedule.nextAccessInSec)
+        assertEquals("0m", actualCreatedCard.schedule.delay)
+        assertEquals(0, actualCreatedCard.schedule.nextAccessInMillis)
         assertEquals(timeCrt, actualCreatedCard.schedule.nextAccessAt)
 
         assertTableContent(repo = repo, tableName = c.name, matchColumn = c.id, expectedRows = listOf(
@@ -122,7 +122,7 @@ class DataManagerInstrumentedTest {
         assertTableContent(repo = repo, tableName = t.ver.name, exactMatch = true, expectedRows = listOf())
 
         assertTableContent(repo = repo, tableName = s.name, matchColumn = s.cardId, expectedRows = listOf(
-            listOf(s.cardId to actualCreatedCard.id, s.lastAccessedAt to timeCrt, s.nextAccessInMillis to 0L, s.nextAccessAt to timeCrt)
+            listOf(s.cardId to actualCreatedCard.id, s.delay to "0m", s.nextAccessInMillis to 0L, s.nextAccessAt to timeCrt)
         ))
         assertTableContent(repo = repo, tableName = s.ver.name, exactMatch = true, expectedRows = listOf())
 
@@ -130,16 +130,16 @@ class DataManagerInstrumentedTest {
 
         //when: edit the card but provide same values
         testClock.plus(5000)
-        val responseAfterEdit1 = dm.editTranslateCard(
-            EditTranslateCardArgs(cardId = actualCreatedCard.id, textToTranslate = "$expectedTextToTranslate1  ", translation = "\t$expectedTranslation1")
+        val responseAfterEdit1 = dm.updateTranslateCard(
+            UpdateTranslateCardArgs(cardId = actualCreatedCard.id, textToTranslate = "$expectedTextToTranslate1  ", translation = "\t$expectedTranslation1")
         )
 
         //then: the card stays in the same state - no actual edit was done
         val translateCardAfterEdit1: TranslateCard = responseAfterEdit1.data!!
         assertEquals(expectedTextToTranslate1, translateCardAfterEdit1.textToTranslate)
         assertEquals(expectedTranslation1, translateCardAfterEdit1.translation)
-        assertEquals(timeCrt, translateCardAfterEdit1.schedule.lastAccessedAt)
-        assertEquals(0, translateCardAfterEdit1.schedule.nextAccessInSec)
+        assertEquals("0m", translateCardAfterEdit1.schedule.delay)
+        assertEquals(0, translateCardAfterEdit1.schedule.nextAccessInMillis)
         assertEquals(timeCrt, translateCardAfterEdit1.schedule.nextAccessAt)
 
         assertTableContent(repo = repo, tableName = c.name, matchColumn = c.id, expectedRows = listOf(
@@ -153,7 +153,7 @@ class DataManagerInstrumentedTest {
         assertTableContent(repo = repo, tableName = t.ver.name, exactMatch = true, expectedRows = listOf())
 
         assertTableContent(repo = repo, tableName = s.name, matchColumn = s.cardId, expectedRows = listOf(
-            listOf(s.cardId to translateCardAfterEdit1.id, s.lastAccessedAt to timeCrt, s.nextAccessInMillis to 0L, s.nextAccessAt to timeCrt)
+            listOf(s.cardId to translateCardAfterEdit1.id, s.delay to "0m", s.nextAccessInMillis to 0L, s.nextAccessAt to timeCrt)
         ))
         assertTableContent(repo = repo, tableName = s.ver.name, exactMatch = true, expectedRows = listOf())
 
@@ -162,16 +162,16 @@ class DataManagerInstrumentedTest {
         //when: provide new values when editing the card
         testClock.plus(5000)
         val timeEdt2 = testClock.instant().toEpochMilli()
-        val responseAfterEdit2 = dm.editTranslateCard(
-            EditTranslateCardArgs(cardId = actualCreatedCard.id, textToTranslate = "  $expectedTextToTranslate2  ", translation = "\t$expectedTranslation2  ")
+        val responseAfterEdit2 = dm.updateTranslateCard(
+            UpdateTranslateCardArgs(cardId = actualCreatedCard.id, textToTranslate = "  $expectedTextToTranslate2  ", translation = "\t$expectedTranslation2  ")
         )
 
         //then: the values of card are updated and the previous version of the card is saved to the corresponding VER table
         val translateCardAfterEdit2: TranslateCard = responseAfterEdit2.data!!
         assertEquals(expectedTextToTranslate2, translateCardAfterEdit2.textToTranslate)
         assertEquals(expectedTranslation2, translateCardAfterEdit2.translation)
-        assertEquals(timeCrt, translateCardAfterEdit2.schedule.lastAccessedAt)
-        assertEquals(0, translateCardAfterEdit2.schedule.nextAccessInSec)
+        assertEquals("0m", translateCardAfterEdit2.schedule.delay)
+        assertEquals(0, translateCardAfterEdit2.schedule.nextAccessInMillis)
         assertEquals(timeCrt, translateCardAfterEdit2.schedule.nextAccessAt)
 
         assertTableContent(repo = repo, tableName = c.name, matchColumn = c.id, expectedRows = listOf(
@@ -188,11 +188,30 @@ class DataManagerInstrumentedTest {
         ))
 
         assertTableContent(repo = repo, tableName = s.name, matchColumn = s.cardId, expectedRows = listOf(
-            listOf(s.cardId to translateCardAfterEdit2.id, s.lastAccessedAt to timeCrt, s.nextAccessInMillis to 0L, s.nextAccessAt to timeCrt)
+            listOf(s.cardId to translateCardAfterEdit2.id, s.delay to "0m", s.nextAccessInMillis to 0L, s.nextAccessAt to timeCrt)
         ))
         assertTableContent(repo = repo, tableName = s.ver.name, exactMatch = true, expectedRows = listOf())
 
         assertTableContent(repo = repo, tableName = l.name, exactMatch = true, expectedRows = listOf())
+    }
+
+    @Test
+    fun updateTranslateCard_should_correctly_apply_random_permutation_to_actual_delay() {
+        recalculationOfDelayShuoldBeEvenlyDistributedInsideOfPlusMinusRange(
+            delayStr = "1h",
+            baseDurationMillis = Utils.MILLIS_IN_HOUR,
+            bucketWidthMillis = 2 * Utils.MILLIS_IN_MINUTE
+        )
+        recalculationOfDelayShuoldBeEvenlyDistributedInsideOfPlusMinusRange(
+            delayStr = "15d",
+            baseDurationMillis = 15 * Utils.MILLIS_IN_DAY,
+            bucketWidthMillis = 12 * Utils.MILLIS_IN_HOUR
+        )
+        recalculationOfDelayShuoldBeEvenlyDistributedInsideOfPlusMinusRange(
+            delayStr = "60M",
+            baseDurationMillis = 60 * Utils.MILLIS_IN_MONTH,
+            bucketWidthMillis = 2 * Utils.MILLIS_IN_MONTH
+        )
     }
 
     @Test
@@ -209,7 +228,7 @@ class DataManagerInstrumentedTest {
             listOf(c.id to expectedCardId, c.type to TR_TP, c.createdAt to 0)
         ))
         insert(repo = repo, tableName = s.name, rows = listOf(
-            listOf(s.cardId to expectedCardId, s.lastAccessedAt to baseTime, s.nextAccessInMillis to 100, s.nextAccessAt to baseTime + 100)
+            listOf(s.cardId to expectedCardId, s.delay to "1m", s.nextAccessInMillis to 100, s.nextAccessAt to baseTime + 100)
         ))
 
         //when
@@ -237,7 +256,7 @@ class DataManagerInstrumentedTest {
             listOf(c.id to expectedCardId, c.type to TR_TP, c.createdAt to 0)
         ))
         insert(repo = repo, tableName = s.name, rows = listOf(
-            listOf(s.cardId to expectedCardId, s.lastAccessedAt to baseTime, s.nextAccessInMillis to 100, s.nextAccessAt to baseTime + 100)
+            listOf(s.cardId to expectedCardId, s.delay to "1m", s.nextAccessInMillis to 100, s.nextAccessAt to baseTime + 100)
         ))
 
         //when
@@ -278,7 +297,7 @@ class DataManagerInstrumentedTest {
             createCardRecord(cardId = cardIdWithoutOverdue4),
         ))
         fun createScheduleRecord(cardId: Long, nextAccessIn: Int) =
-            listOf(s.cardId to cardId, s.lastAccessedAt to baseTime, s.nextAccessInMillis to nextAccessIn, s.nextAccessAt to baseTime + nextAccessIn)
+            listOf(s.cardId to cardId, s.delay to "1m", s.nextAccessInMillis to nextAccessIn, s.nextAccessAt to baseTime + nextAccessIn)
         insert(repo = repo, tableName = s.name, rows = listOf(
             createScheduleRecord(cardId = cardIdWithoutOverdue1, nextAccessIn = timeElapsed+1_000),
             createScheduleRecord(cardId = cardIdWithLargeOverdue, nextAccessIn = timeElapsed-26_000),
@@ -333,7 +352,7 @@ class DataManagerInstrumentedTest {
             createCardRecord(cardId = expectedCardId),
         ))
         fun createScheduleRecord(cardId: Long, nextAccessIn: Int) =
-            listOf(s.cardId to cardId, s.lastAccessedAt to baseTime, s.nextAccessInMillis to nextAccessIn, s.nextAccessAt to baseTime + nextAccessIn)
+            listOf(s.cardId to cardId, s.delay to "1m", s.nextAccessInMillis to nextAccessIn, s.nextAccessAt to baseTime + nextAccessIn)
         insert(repo = repo, tableName = s.name, rows = listOf(
             createScheduleRecord(cardId = expectedCardId, nextAccessIn = timeElapsed-1_000),
         ))
@@ -365,7 +384,7 @@ class DataManagerInstrumentedTest {
             createCardRecord(cardId = expectedCardId),
         ))
         fun createScheduleRecord(cardId: Long, nextAccessIn: Int) =
-            listOf(s.cardId to cardId, s.lastAccessedAt to baseTime, s.nextAccessInMillis to nextAccessIn, s.nextAccessAt to baseTime + nextAccessIn)
+            listOf(s.cardId to cardId, s.delay to "1m", s.nextAccessInMillis to nextAccessIn, s.nextAccessAt to baseTime + nextAccessIn)
         insert(repo = repo, tableName = s.name, rows = listOf(
             createScheduleRecord(cardId = expectedCardId, nextAccessIn = (timeElapsed+2*Utils.MILLIS_IN_HOUR+3*Utils.MILLIS_IN_MINUTE+39*Utils.MILLIS_IN_SECOND).toInt()),
         ))
@@ -426,7 +445,7 @@ class DataManagerInstrumentedTest {
             createCardRecord(cardId = cardIdWithoutOverdue4),
         ))
         fun createScheduleRecord(cardId: Long, nextAccessIn: Int) =
-            listOf(s.cardId to cardId, s.lastAccessedAt to baseTime, s.nextAccessInMillis to nextAccessIn, s.nextAccessAt to baseTime + nextAccessIn)
+            listOf(s.cardId to cardId, s.delay to "1m", s.nextAccessInMillis to nextAccessIn, s.nextAccessAt to baseTime + nextAccessIn)
         insert(repo = repo, tableName = s.name, rows = listOf(
             createScheduleRecord(cardId = cardIdWithoutOverdue1, nextAccessIn = timeElapsed+1_000),
             createScheduleRecord(cardId = cardIdWithLargeOverdue, nextAccessIn = timeElapsed-26_000),
@@ -467,7 +486,7 @@ class DataManagerInstrumentedTest {
             createCardRecord(cardId = expectedCardId2),
         ))
         fun createScheduleRecord(cardId: Long, nextAccessIn: Int) =
-            listOf(s.cardId to cardId, s.lastAccessedAt to baseTime, s.nextAccessInMillis to nextAccessIn, s.nextAccessAt to baseTime + nextAccessIn)
+            listOf(s.cardId to cardId, s.delay to "1m", s.nextAccessInMillis to nextAccessIn, s.nextAccessAt to baseTime + nextAccessIn)
         insert(repo = repo, tableName = s.name, rows = listOf(
             createScheduleRecord(cardId = expectedCardId1, nextAccessIn = timeElapsed-1_000),
             createScheduleRecord(cardId = expectedCardId2, nextAccessIn = timeElapsed-1_000),
@@ -665,7 +684,7 @@ class DataManagerInstrumentedTest {
             FIELD_TYPE_NULL -> null
             FIELD_TYPE_INTEGER -> cursor.getLong(columnIndex)
             FIELD_TYPE_STRING -> cursor.getString(columnIndex)
-            else -> throw MemoryRefreshException("Unexpected type '$type'")
+            else -> throw MemoryRefreshException(msg = "Unexpected type '$type'", errCode = GENERAL)
         }
     }
 
@@ -692,5 +711,83 @@ class DataManagerInstrumentedTest {
                 }
             )
         )
+    }
+
+    private fun recalculationOfDelayShuoldBeEvenlyDistributedInsideOfPlusMinusRange(
+        delayStr: String, baseDurationMillis: Long, bucketWidthMillis: Long
+    ) {
+        //given
+        val dm = createInmemoryDataManager()
+        val repo = dm.getRepo()
+        val c = repo.cards
+        val s = repo.cardsSchedule
+        val t = repo.translationCards
+        val cardId = 12L
+        insert(repo = repo, tableName = c.name, rows = listOf(
+            listOf(c.id to cardId, c.type to TR_TP, c.createdAt to 0)
+        ))
+        insert(repo = repo, tableName = s.name, rows = listOf(
+            listOf(s.cardId to cardId, s.delay to "0m", s.nextAccessInMillis to 0, s.nextAccessAt to 0)
+        ))
+        insert(repo = repo, tableName = t.name, rows = listOf(
+            listOf(t.cardId to cardId, t.textToTranslate to "A", t.translation to "B")
+        ))
+
+        val proc = 0.15
+        val left: Long = (baseDurationMillis * (1.0 - proc)).toLong()
+        val right: Long = (baseDurationMillis * (1.0 + proc)).toLong()
+        val range = right - left
+        val expectedNumOfBuckets: Int = Math.round(range * 1.0 / bucketWidthMillis).toInt()
+        val counts = HashMap<Int, Int>()
+        val expectedAvg = 500
+        val numOfCalcs = expectedNumOfBuckets * expectedAvg
+
+        //when
+        for (i in 0 until numOfCalcs) {
+            val beRespose = dm.updateTranslateCard(UpdateTranslateCardArgs(cardId = cardId, delay = delayStr, recalculateDelay = true))
+            val actualDelay = beRespose.data!!.schedule.nextAccessInMillis
+            val diff = actualDelay - left
+            var bucketNum: Int = (diff / bucketWidthMillis).toInt()
+            if (bucketNum == expectedNumOfBuckets) {
+                bucketNum = expectedNumOfBuckets - 1
+            }
+            inc(counts, bucketNum)
+        }
+
+        //then
+        if (expectedNumOfBuckets != counts.size) {
+            printCounts(counts)
+        }
+        assertEquals(expectedNumOfBuckets, counts.size)
+        for ((bucketIdx, cnt) in counts) {
+            val deltaPct: Double = Math.abs((expectedAvg - cnt) / (expectedAvg * 1.0))
+            if (deltaPct > 0.2) {
+                printCounts(counts)
+                fail(
+                    "bucketIdx = " + bucketIdx + ", expectedAvg = " + expectedAvg
+                            + ", actualCount = " + cnt + ", deltaPct = " + deltaPct
+                )
+            }
+        }
+
+        val allSchedules = readAllDataFrom(repo, s.ver.name).filter { it[s.delay] != "0m" }
+        assertEquals(numOfCalcs-1, allSchedules.size)
+        val baseTime = testClock.instant().toEpochMilli()
+        assertEquals(
+            numOfCalcs-1,
+            allSchedules.filter { baseTime + (it[s.nextAccessInMillis] as Long) == it[s.nextAccessAt] }.size
+        )
+    }
+
+    private fun inc(counts: MutableMap<Int, Int>, key: Int) {
+        var cnt = counts[key]
+        if (cnt == null) {
+            cnt = 0
+        }
+        counts[key] = cnt + 1
+    }
+
+    private fun printCounts(counts: Map<Int, Int>) {
+        counts.keys.stream().sorted().forEach { key: Int -> println(key.toString() + " -> " + counts[key]) }
     }
 }

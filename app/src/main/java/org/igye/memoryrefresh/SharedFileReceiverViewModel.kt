@@ -59,7 +59,7 @@ class SharedFileReceiverViewModel(appContext: Context, beThreadPool: ExecutorSer
         } else if (fileName.endsWith(".zip")) {
             SharedFileType.BACKUP
         } else {
-            throw MemoryRefreshException("unsupported file type.")
+            throw MemoryRefreshException(msg = "unsupported file type.", errCode = ErrorCode.GENERAL)
         }
     }
 

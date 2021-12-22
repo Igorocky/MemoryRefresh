@@ -1,5 +1,9 @@
 package org.igye.memoryrefresh
 
+import org.igye.memoryrefresh.Utils.MILLIS_IN_DAY
+import org.igye.memoryrefresh.Utils.MILLIS_IN_HOUR
+import org.igye.memoryrefresh.Utils.MILLIS_IN_MONTH
+import org.igye.memoryrefresh.Utils.delayStrToMillis
 import org.igye.memoryrefresh.Utils.millisToDurationStr
 import org.junit.Assert
 import org.junit.Test
@@ -25,6 +29,18 @@ class UtilsTest {
         Assert.assertEquals("- 1M 4d", millisToDurationStr((instantToMillis(now) - instantToMillis(now.plus(34, ChronoUnit.DAYS)))))
         Assert.assertEquals("- 1d 1h",
             millisToDurationStr((instantToMillis(now) - instantToMillis(now.plus(1, ChronoUnit.DAYS).plus(119, ChronoUnit.MINUTES)))))
+    }
+
+    @Test
+    fun delayStrToMillis_correctly_translates_strings_to_millis() {
+        Assert.assertEquals(60_000L, delayStrToMillis("1m"))
+        Assert.assertEquals(300_000L, delayStrToMillis("5m"))
+        Assert.assertEquals(MILLIS_IN_HOUR, delayStrToMillis("1h"))
+        Assert.assertEquals(MILLIS_IN_HOUR*12, delayStrToMillis("12h"))
+        Assert.assertEquals(MILLIS_IN_DAY, delayStrToMillis("1d"))
+        Assert.assertEquals(MILLIS_IN_DAY*10, delayStrToMillis("10d"))
+        Assert.assertEquals(MILLIS_IN_MONTH, delayStrToMillis("1M"))
+        Assert.assertEquals(MILLIS_IN_MONTH*3, delayStrToMillis("3M"))
     }
 
     private fun instantToMillis(inst: Instant): Long = inst.toEpochMilli()

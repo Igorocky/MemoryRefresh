@@ -36,36 +36,51 @@ class DataManager(
             repo.writableDatabase.doInTransactionTry {
                 val cardId = repo.cards.insertStmt(cardType = CardType.TRANSLATION)
                 val currTime = clock.instant().toEpochMilli()
-                repo.cardsSchedule.insertStmt(cardId = cardId, lastAccessedAt = currTime, nextAccessInMillis = 0, nextAccessAt = currTime)
+                repo.cardsSchedule.insertStmt(cardId = cardId, delay = "0m", nextAccessInMillis = 0, nextAccessAt = currTime)
                 repo.translationCards.insertStmt(cardId = cardId, textToTranslate = textToTranslate, translation = translation)
                 selectTranslateCardById(cardId = cardId)
             }.apply(toBeResponse(SAVE_NEW_TRANSLATE_CARD_EXCEPTION))
         }
     }
 
-    data class EditTranslateCardArgs(val cardId:Long, val textToTranslate:String, val translation:String)
+    data class UpdateTranslateCardArgs(
+        val cardId:Long, val textToTranslate:String? = null, val translation:String? = null,
+        val delay: String? = null, val recalculateDelay: Boolean? = null
+    )
     @BeMethod
     @Synchronized
-    fun editTranslateCard(args:EditTranslateCardArgs): BeRespose<TranslateCard> {
-        val textToTranslate = args.textToTranslate.trim()
-        val translation = args.translation.trim()
-        return if (textToTranslate.isBlank()) {
-            BeRespose(err = BeErr(code = EDIT_TRANSLATE_CARD_TEXT_TO_TRANSLATE_IS_EMPTY.code, msg = "Text to translate should not be empty."))
-        } else if (translation.isBlank()) {
-            BeRespose(err = BeErr(code = EDIT_TRANSLATE_CARD_TRANSLATION_IS_EMPTY.code, msg = "Translation should not be empty."))
-        } else {
-            val repo = getRepo()
-            repo.writableDatabase.doInTransactionTry {
-                selectTranslateCardById(cardId = args.cardId).map { existingCard: TranslateCard ->
-                    if (existingCard.textToTranslate == textToTranslate && existingCard.translation == translation) {
-                        existingCard
-                    } else {
-                        repo.translationCards.updateStmt(cardId = args.cardId, textToTranslate = textToTranslate, translation = translation)
-                        existingCard.copy(textToTranslate = textToTranslate, translation = translation)
-                    }
+    fun updateTranslateCard(args:UpdateTranslateCardArgs): BeRespose<TranslateCard> {
+        val repo = getRepo()
+        return repo.writableDatabase.doInTransactionTry {
+            selectTranslateCardById(cardId = args.cardId).map { existingCard: TranslateCard ->
+                val newTextToTranslate = args.textToTranslate?.trim()?:existingCard.textToTranslate
+                val newTranslation = args.translation?.trim()?:existingCard.translation
+                val newDelay = args.delay?.trim()?:existingCard.schedule.delay
+                if (newTextToTranslate.isEmpty()) {
+                    throw MemoryRefreshException(errCode = EDIT_TRANSLATE_CARD_TEXT_TO_TRANSLATE_IS_EMPTY, msg = "Text to translate should not be empty.")
+                } else if (newTranslation.isEmpty()) {
+                    throw MemoryRefreshException(errCode = EDIT_TRANSLATE_CARD_TRANSLATION_IS_EMPTY, msg = "Translation should not be empty.")
+                } else if (newDelay.isEmpty()) {
+                    throw MemoryRefreshException(errCode = EDIT_TRANSLATE_CARD_DELAY_IS_EMPTY, msg = "Delay should not be empty.")
                 }
-            }.apply(toBeResponse(EDIT_TRANSLATE_CARD_EXCEPTION))
-        }
+                var dataWasUpdated = false
+                if (newTextToTranslate != existingCard.textToTranslate || newTranslation != existingCard.translation) {
+                    repo.translationCards.updateStmt(cardId = args.cardId, textToTranslate = newTextToTranslate, translation = newTranslation)
+                    dataWasUpdated = true
+                }
+                if (args.recalculateDelay == true || newDelay != existingCard.schedule.delay) {
+                    val nextAccessInMillis = (Utils.delayStrToMillis(newDelay)*(0.85 + Random.nextDouble(from = 0.0, until = 0.30001))).toLong()
+                    val nextAccessAt = clock.instant().toEpochMilli() + nextAccessInMillis
+                    repo.cardsSchedule.updateStmt(cardId = args.cardId, delay = newDelay, nextAccessInMillis = nextAccessInMillis, nextAccessAt = nextAccessAt)
+                    dataWasUpdated = true
+                }
+                if (dataWasUpdated) {
+                    selectTranslateCardById(cardId = existingCard.id).get()
+                } else {
+                    existingCard
+                }
+            }
+        }.apply(toBeResponse(EDIT_TRANSLATE_CARD_EXCEPTION))
     }
 
     @BeMethod
@@ -122,24 +137,24 @@ class DataManager(
                     isCorrect = translationIsCorrect,
                     answer = expectedTranslation
                 )
-            }.apply(toBeResponse(EDIT_TRANSLATE_CARD_EXCEPTION))
+            }.apply(toBeResponse(VALIDATE_TRANSLATE_CARD_EXCEPTION))
         }
     }
 
     private val selectCurrScheduleForCardQuery =
-        "select ${s.lastAccessedAt}, ${s.nextAccessInMillis}, ${s.nextAccessAt} from $s where ${s.cardId} = ?"
+        "select ${s.delay}, ${s.nextAccessInMillis}, ${s.nextAccessAt} from $s where ${s.cardId} = ?"
     @Synchronized
     private fun selectCurrScheduleForCard(cardId: Long): Try<CardSchedule> {
         return getRepo().readableDatabase.doInTransaction {
             select(
                 query = selectCurrScheduleForCardQuery,
                 args = arrayOf(cardId.toString()),
-                columnNames = arrayOf(s.lastAccessedAt, s.nextAccessInMillis, s.nextAccessAt),
+                columnNames = arrayOf(s.delay, s.nextAccessInMillis, s.nextAccessAt),
                 rowMapper = {
                     CardSchedule(
                         cardId = cardId,
-                        lastAccessedAt = it.getLong(),
-                        nextAccessInSec = it.getLong(),
+                        delay = it.getString(),
+                        nextAccessInMillis = it.getLong(),
                         nextAccessAt = it.getLong()
                     )
                 }
@@ -216,7 +231,12 @@ class DataManager(
         it
             .map { BeRespose(data = it) }
             .getIfSuccessOrElse {
-                BeRespose(err = BeErr(code = errCode.code, msg = it.message ?: it.javaClass.canonicalName))
+                BeRespose(
+                    err = BeErr(
+                        code = (if (it is MemoryRefreshException) it.errCode.code else null)?:errCode.code,
+                        msg = it.javaClass.canonicalName + ": " + it.message
+                    )
+                )
             }
     }
 

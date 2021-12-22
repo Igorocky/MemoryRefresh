@@ -1,3 +1,3 @@
 package org.igye.memoryrefresh
 
-class MemoryRefreshException(msg: String): Exception(msg)
+class MemoryRefreshException(msg: String, val errCode: ErrorCode): Exception(msg)

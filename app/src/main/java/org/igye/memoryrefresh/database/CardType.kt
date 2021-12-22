@@ -1,5 +1,6 @@
 package org.igye.memoryrefresh.database
 
+import org.igye.memoryrefresh.ErrorCode
 import org.igye.memoryrefresh.MemoryRefreshException
 
 enum class CardType(val intValue: Long) {
@@ -12,7 +13,7 @@ enum class CardType(val intValue: Long) {
                     return value
                 }
             }
-            throw MemoryRefreshException("Unexpected CardType code of '$intValue'")
+            throw MemoryRefreshException(msg = "Unexpected CardType code of '$intValue'", errCode = ErrorCode.GENERAL)
         }
     }
 }

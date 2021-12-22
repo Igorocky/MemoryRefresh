@@ -1,6 +1,7 @@
 package org.igye.memoryrefresh.database.tables
 
 import android.database.sqlite.SQLiteDatabase
+import org.igye.memoryrefresh.ErrorCode
 import org.igye.memoryrefresh.MemoryRefreshException
 import org.igye.memoryrefresh.database.CardType
 import org.igye.memoryrefresh.database.TableWithVersioning
@@ -43,7 +44,7 @@ class CardsTable(private val clock: Clock): TableWithVersioning(name = "CARDS") 
             stmtVer.bindLong(1, clock.instant().toEpochMilli())
             stmtVer.bindLong(2, id)
             if (stmtVer.executeUpdateDelete() != 1) {
-                throw MemoryRefreshException("stmtVer.executeUpdateDelete() != 1")
+                throw MemoryRefreshException(msg = "stmtVer.executeUpdateDelete() != 1", errCode = ErrorCode.GENERAL)
             }
         }
         insertStmt = object : InsertStmt {
