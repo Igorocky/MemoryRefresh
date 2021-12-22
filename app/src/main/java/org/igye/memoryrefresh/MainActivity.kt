@@ -12,11 +12,11 @@ class MainActivity : WebViewActivity<MainActivityViewModel>() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        (application as MemoryRefreshApp).appContainer.dataManager.shareFile.set { shareFile(it) }
+        (application as MemoryRefreshApp).appContainer.repositoryManager.shareFile.set { shareFile(it) }
     }
 
     override fun onDestroy() {
-        (application as MemoryRefreshApp).appContainer.dataManager.shareFile.set { null }
+        (application as MemoryRefreshApp).appContainer.repositoryManager.shareFile.set { null }
         super.onDestroy()
     }
 

@@ -1,4 +1,4 @@
-package org.igye.memoryrefresh.dto
+package org.igye.memoryrefresh.dto.common
 
 enum class SharedFileType {
     BACKUP, KEYSTORE

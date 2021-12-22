@@ -4,6 +4,7 @@ import java.time.Clock
 import java.time.Instant
 import java.time.ZoneId
 import java.time.ZonedDateTime
+import java.time.temporal.ChronoUnit
 import java.time.temporal.TemporalUnit
 
 class TestClock(private var fixedTime: ZonedDateTime) : Clock() {
@@ -18,7 +19,11 @@ class TestClock(private var fixedTime: ZonedDateTime) : Clock() {
         this.fixedTime = millisToZdt(epochMilli)
     }
 
-    fun plus(amountToAdd: Long, unit: TemporalUnit?) {
+    fun setFixedTime(epochMilli: Int) {
+        this.fixedTime = millisToZdt(epochMilli.toLong())
+    }
+
+    fun plus(amountToAdd: Long, unit: TemporalUnit = ChronoUnit.MILLIS) {
         fixedTime = fixedTime.plus(amountToAdd, unit)
     }
 

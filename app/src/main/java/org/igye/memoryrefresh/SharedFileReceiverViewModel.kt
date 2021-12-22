@@ -3,9 +3,9 @@ package org.igye.memoryrefresh
 import android.content.Context
 import android.net.Uri
 import android.provider.OpenableColumns
-import org.igye.memoryrefresh.dto.BeErr
-import org.igye.memoryrefresh.dto.BeRespose
-import org.igye.memoryrefresh.dto.SharedFileType
+import org.igye.memoryrefresh.dto.common.BeErr
+import org.igye.memoryrefresh.dto.common.BeRespose
+import org.igye.memoryrefresh.dto.common.SharedFileType
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream

@@ -8,7 +8,7 @@ class MemoryRefreshApp: Application() {
 
     override fun onTerminate() {
         log.debug("Terminating.")
-        appContainer.dataManager.close()
+        appContainer.repositoryManager.close()
         super.onTerminate()
     }
 }

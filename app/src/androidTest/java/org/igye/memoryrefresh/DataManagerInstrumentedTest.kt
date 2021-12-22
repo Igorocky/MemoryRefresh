@@ -12,7 +12,7 @@ import org.igye.memoryrefresh.database.tables.CardsScheduleTable
 import org.igye.memoryrefresh.database.tables.CardsTable
 import org.igye.memoryrefresh.database.tables.TranslationCardsLogTable
 import org.igye.memoryrefresh.database.tables.TranslationCardsTable
-import org.igye.memoryrefresh.dto.TranslateCard
+import org.igye.memoryrefresh.dto.domain.TranslateCard
 import org.junit.Assert.*
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -59,9 +59,9 @@ class DataManagerInstrumentedTest {
         val translateCard: TranslateCard = actualTranslateCardResp.data!!
         assertEquals(expectedTextToTranslate, translateCard.textToTranslate)
         assertEquals(expectedTranslation, translateCard.translation)
-        assertEquals(time1, translateCard.lastAccessedAt)
-        assertEquals(0, translateCard.nextAccessInSec)
-        assertEquals(time1, translateCard.nextAccessAt)
+        assertEquals(time1, translateCard.schedule.lastAccessedAt)
+        assertEquals(0, translateCard.schedule.nextAccessInSec)
+        assertEquals(time1, translateCard.schedule.nextAccessAt)
 
         assertTableContent(repo = repo, tableName = c.name, matchColumn = c.id, expectedRows = listOf(
             listOf(c.id to translateCard.id, c.type to TR_TP, c.createdAt to time1)
@@ -94,12 +94,10 @@ class DataManagerInstrumentedTest {
         val expectedTranslation1 = "a"
         val expectedTextToTranslate2 = "B"
         val expectedTranslation2 = "b"
-        val timeCrt = 1000L
-        val timeEdt1 = timeCrt + 5000
-        val timeEdt2 = timeEdt1 + 5000
 
         //when: create a new translation card
-        testClock.setFixedTime(timeCrt)
+        testClock.setFixedTime(1000L)
+        val timeCrt = testClock.instant().toEpochMilli()
         val responseAfterCreate = dm.saveNewTranslateCard(
             SaveNewTranslateCardArgs(textToTranslate = expectedTextToTranslate1, translation = expectedTranslation1)
         )
@@ -108,9 +106,9 @@ class DataManagerInstrumentedTest {
         val actualCreatedCard: TranslateCard = responseAfterCreate.data!!
         assertEquals(expectedTextToTranslate1, actualCreatedCard.textToTranslate)
         assertEquals(expectedTranslation1, actualCreatedCard.translation)
-        assertEquals(timeCrt, actualCreatedCard.lastAccessedAt)
-        assertEquals(0, actualCreatedCard.nextAccessInSec)
-        assertEquals(timeCrt, actualCreatedCard.nextAccessAt)
+        assertEquals(timeCrt, actualCreatedCard.schedule.lastAccessedAt)
+        assertEquals(0, actualCreatedCard.schedule.nextAccessInSec)
+        assertEquals(timeCrt, actualCreatedCard.schedule.nextAccessAt)
 
         assertTableContent(repo = repo, tableName = c.name, matchColumn = c.id, expectedRows = listOf(
             listOf(c.id to actualCreatedCard.id, c.type to TR_TP, c.createdAt to timeCrt)
@@ -130,7 +128,7 @@ class DataManagerInstrumentedTest {
         assertTableContent(repo = repo, tableName = l.name, exactMatch = true, expectedRows = listOf())
 
         //when: edit the card but provide same values
-        testClock.setFixedTime(timeEdt1)
+        testClock.plus(5000)
         val responseAfterEdit1 = dm.editTranslateCard(
             EditTranslateCardArgs(cardId = actualCreatedCard.id, textToTranslate = "$expectedTextToTranslate1  ", translation = "\t$expectedTranslation1")
         )
@@ -139,9 +137,9 @@ class DataManagerInstrumentedTest {
         val translateCardAfterEdit1: TranslateCard = responseAfterEdit1.data!!
         assertEquals(expectedTextToTranslate1, translateCardAfterEdit1.textToTranslate)
         assertEquals(expectedTranslation1, translateCardAfterEdit1.translation)
-        assertEquals(timeCrt, translateCardAfterEdit1.lastAccessedAt)
-        assertEquals(0, translateCardAfterEdit1.nextAccessInSec)
-        assertEquals(timeCrt, translateCardAfterEdit1.nextAccessAt)
+        assertEquals(timeCrt, translateCardAfterEdit1.schedule.lastAccessedAt)
+        assertEquals(0, translateCardAfterEdit1.schedule.nextAccessInSec)
+        assertEquals(timeCrt, translateCardAfterEdit1.schedule.nextAccessAt)
 
         assertTableContent(repo = repo, tableName = c.name, matchColumn = c.id, expectedRows = listOf(
             listOf(c.id to translateCardAfterEdit1.id, c.type to TR_TP, c.createdAt to timeCrt)
@@ -161,7 +159,8 @@ class DataManagerInstrumentedTest {
         assertTableContent(repo = repo, tableName = l.name, exactMatch = true, expectedRows = listOf())
 
         //when: provide new values when editing the card
-        testClock.setFixedTime(timeEdt2)
+        testClock.plus(5000)
+        val timeEdt2 = testClock.instant().toEpochMilli()
         val responseAfterEdit2 = dm.editTranslateCard(
             EditTranslateCardArgs(cardId = actualCreatedCard.id, textToTranslate = "  $expectedTextToTranslate2  ", translation = "\t$expectedTranslation2  ")
         )
@@ -170,9 +169,9 @@ class DataManagerInstrumentedTest {
         val translateCardAfterEdit2: TranslateCard = responseAfterEdit2.data!!
         assertEquals(expectedTextToTranslate2, translateCardAfterEdit2.textToTranslate)
         assertEquals(expectedTranslation2, translateCardAfterEdit2.translation)
-        assertEquals(timeCrt, translateCardAfterEdit2.lastAccessedAt)
-        assertEquals(0, translateCardAfterEdit2.nextAccessInSec)
-        assertEquals(timeCrt, translateCardAfterEdit2.nextAccessAt)
+        assertEquals(timeCrt, translateCardAfterEdit2.schedule.lastAccessedAt)
+        assertEquals(0, translateCardAfterEdit2.schedule.nextAccessInSec)
+        assertEquals(timeCrt, translateCardAfterEdit2.schedule.nextAccessAt)
 
         assertTableContent(repo = repo, tableName = c.name, matchColumn = c.id, expectedRows = listOf(
             listOf(c.id to translateCardAfterEdit2.id, c.type to TR_TP, c.createdAt to timeCrt)
@@ -193,6 +192,82 @@ class DataManagerInstrumentedTest {
         assertTableContent(repo = repo, tableName = s.ver.name, exactMatch = true, expectedRows = listOf())
 
         assertTableContent(repo = repo, tableName = l.name, exactMatch = true, expectedRows = listOf())
+    }
+
+    @Test
+    fun selectTopOverdueCards_returns_correct_results_when_only_one_card_is_present_in_the_database() {
+        //given
+        val dm = createInmemoryDataManager()
+        val repo = dm.getRepo()
+        val c = repo.cards
+        val t = repo.translationCards
+        val s = repo.cardsSchedule
+        val l = repo.translationCardsLog
+        val expectedCardId = 1L
+        val expectedCardType = CardType.TRANSLATION
+        val baseTime = 27000
+        insert(repo = repo, tableName = c.name, rows = listOf(
+            listOf(c.id to expectedCardId, c.type to TR_TP, c.createdAt to 0)
+        ))
+        insert(repo = repo, tableName = s.name, rows = listOf(
+            listOf(s.cardId to expectedCardId, s.lastAccessedAt to baseTime, s.nextAccessInSec to 100, s.nextAccessAt to baseTime + 100)
+        ))
+
+        //when
+        testClock.setFixedTime(baseTime + 145)
+        val actualTopOverdueCards = dm.selectTopOverdueCards(30)
+
+        //then
+        val actualOverdue = actualTopOverdueCards.get().rows
+        assertEquals(1, actualOverdue.size)
+        assertEquals(expectedCardId, actualOverdue[0].cardId)
+        assertEquals(expectedCardType, actualOverdue[0].cardType)
+        assertEquals(0.45, actualOverdue[0].overdue, 0.000001)
+    }
+
+    @Test
+    fun selectTopOverdueCards_doesnt_return_cards_without_overdue() {
+        //given
+        val dm = createInmemoryDataManager()
+        val repo = dm.getRepo()
+        val c = repo.cards
+        val t = repo.translationCards
+        val s = repo.cardsSchedule
+        val l = repo.translationCardsLog
+        val expectedCardId = 1L
+        val expectedCardType = CardType.TRANSLATION
+        val baseTime = 27000
+        insert(repo = repo, tableName = c.name, rows = listOf(
+            listOf(c.id to expectedCardId, c.type to TR_TP, c.createdAt to 0)
+        ))
+        insert(repo = repo, tableName = s.name, rows = listOf(
+            listOf(s.cardId to expectedCardId, s.lastAccessedAt to baseTime, s.nextAccessInSec to 100, s.nextAccessAt to baseTime + 100)
+        ))
+
+        //when
+        testClock.setFixedTime(baseTime + 99)
+        val actualTopOverdueCards = dm.selectTopOverdueCards(30)
+
+        //then
+        val actualOverdue = actualTopOverdueCards.get().rows
+        assertEquals(0, actualOverdue.size)
+    }
+
+    private fun insert(repo: Repository, tableName: String, rows: List<List<Pair<String,Any?>>>) {
+        val query = """
+            insert into $tableName (${rows[0].map { it.first }.joinToString(separator = ", ")}) 
+            ${rows.map {row -> row.map { "?" }.joinToString(prefix = "values (", separator = ",", postfix = ")")}.joinToString(separator = ",") }
+            """.trimIndent()
+        val insertStmt = repo.writableDatabase.compileStatement(query)
+        var idx = 0
+        rows.flatMap { it }.map { it.second }.forEach {
+            when (it) {
+                is Long -> insertStmt.bindLong(++idx, it)
+                is Int -> insertStmt.bindLong(++idx, it.toLong())
+                is String -> insertStmt.bindString(++idx, it)
+            }
+        }
+        insertStmt.executeUpdateDelete()
     }
 
     private fun assertTableContent(
@@ -300,18 +375,21 @@ class DataManagerInstrumentedTest {
         val translationCardsLog = TranslationCardsLogTable(clock = testClock, translationCards = translationCards)
 
         return DataManager(
-            context = appContext,
             clock = testClock,
-            repositoryProvider = {
-                Repository(
-                    context = appContext,
-                    dbName = null,
-                    cards = cards,
-                    cardsSchedule = cardsSchedule,
-                    translationCards = translationCards,
-                    translationCardsLog = translationCardsLog,
-                )
-            }
+            repositoryManager = RepositoryManager(
+                context = appContext,
+                clock = testClock,
+                repositoryProvider = {
+                    Repository(
+                        context = appContext,
+                        dbName = null,
+                        cards = cards,
+                        cardsSchedule = cardsSchedule,
+                        translationCards = translationCards,
+                        translationCardsLog = translationCardsLog,
+                    )
+                }
+            )
         )
     }
 }

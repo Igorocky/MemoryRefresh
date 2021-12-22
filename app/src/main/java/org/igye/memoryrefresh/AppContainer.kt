@@ -18,7 +18,8 @@ class AppContainer(
 ) {
     val clock = Clock.systemDefaultZone()
     val beThreadPool: ExecutorService = Executors.newFixedThreadPool(4)
-    val dataManager = DataManager(context = context, clock = clock, repositoryProvider = {createNewRepo()})
+    val repositoryManager = RepositoryManager(context = context, clock = clock, repositoryProvider = {createNewRepo()})
+    val dataManager = DataManager(clock = clock, repositoryManager = repositoryManager)
     val settingsManager = SettingsManager(context = context)
     val httpsServerManager = HttpsServerManager(appContext = context, settingsManager = settingsManager, javascriptInterface = listOf(dataManager))
 

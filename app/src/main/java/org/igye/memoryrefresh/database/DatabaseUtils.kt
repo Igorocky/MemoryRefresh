@@ -1,7 +1,7 @@
 package org.igye.memoryrefresh.database
 
 import android.database.sqlite.SQLiteDatabase
-import android.database.sqlite.SQLiteOpenHelper
+import androidx.core.database.getDoubleOrNull
 import androidx.core.database.getLongOrNull
 import androidx.core.database.getStringOrNull
 import org.igye.memoryrefresh.common.Try
@@ -28,21 +28,20 @@ interface SelectedRow {
     fun getLongOrNull():Long?
     fun getString():String
     fun getStringOrNull():String?
+    fun getDouble(): Double
+    fun getDoubleOrNull(): Double?
 }
 
 data class SelectedRows<T>(val allRawsRead: Boolean, val rows: List<T>)
 
-fun <T> SQLiteOpenHelper.select(
+fun <T> SQLiteDatabase.select(
     query:String,
     args:Array<String>? = null,
-    rowsMax:Long? = null,
+    rowsMax:Int? = null,
     columnNames:Array<String>,
     rowMapper:(SelectedRow) -> T,
 ): SelectedRows<T> {
-    return this.readableDatabase.rawQuery(
-        query,
-        args
-    ).use { cursor ->
+    return rawQuery(query, args).use { cursor ->
         val result = ArrayList<T>()
         if (cursor.moveToFirst()) {
             val columnIndexes = columnNames.map { cursor.getColumnIndexOrThrow(it) }
@@ -55,11 +54,17 @@ fun <T> SQLiteOpenHelper.select(
                     override fun getString():String {
                         return cursor.getString(columnIndexes[curColumn++])
                     }
+                    override fun getDouble():Double {
+                        return cursor.getDouble(columnIndexes[curColumn++])
+                    }
                     override fun getLongOrNull(): Long? {
                         return cursor.getLongOrNull(columnIndexes[curColumn++])
                     }
                     override fun getStringOrNull():String? {
                         return cursor.getStringOrNull(columnIndexes[curColumn++])
+                    }
+                    override fun getDoubleOrNull():Double? {
+                        return cursor.getDoubleOrNull(columnIndexes[curColumn++])
                     }
                 }))
                 cursor.moveToNext()

@@ -2,10 +2,10 @@ package org.igye.memoryrefresh
 
 import android.content.Context
 import android.content.Intent
-import org.igye.memoryrefresh.dto.BeErr
-import org.igye.memoryrefresh.dto.BeRespose
-import org.igye.memoryrefresh.dto.HttpServerSettings
-import org.igye.memoryrefresh.dto.HttpServerState
+import org.igye.memoryrefresh.dto.common.BeErr
+import org.igye.memoryrefresh.dto.common.BeRespose
+import org.igye.memoryrefresh.dto.common.HttpServerSettings
+import org.igye.memoryrefresh.dto.common.HttpServerState
 import java.util.concurrent.atomic.AtomicReference
 
 class HttpsServerManager(

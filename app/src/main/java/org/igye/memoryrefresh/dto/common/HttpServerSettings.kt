@@ -1,4 +1,4 @@
-package org.igye.memoryrefresh.dto
+package org.igye.memoryrefresh.dto.common
 
 data class HttpServerSettings(
     val keyStoreName: String = "", val keyStorePassword: String = "", val keyAlias: String = "", val privateKeyPassword: String = "",
