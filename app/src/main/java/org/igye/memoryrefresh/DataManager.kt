@@ -210,7 +210,12 @@ class DataManager(
             select
                 ${c.id} cardId,
                 ${c.type} cardType,
-                case when ? /*1 currTime*/ < ${s.nextAccessAt} then -1.0 else (? /*2 currTime*/ - ${s.nextAccessAt} ) * 1.0 / ${s.nextAccessInMillis} end overdue
+                case 
+                    when ? /*1 currTime*/ < ${s.nextAccessAt} 
+                        then -1.0 
+                    else 
+                        (? /*2 currTime*/ - ${s.nextAccessAt} ) * 1.0 / (case when ${s.nextAccessInMillis} = 0 then 1 else ${s.nextAccessInMillis} end) 
+                end overdue
             from $c left join $s on ${c.id} = ${s.cardId}
         )
         where overdue >= 0

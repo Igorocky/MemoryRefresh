@@ -1,6 +1,6 @@
 package org.igye.memoryrefresh.database
 
 open class VersionTable(name: String): Table(name = name) {
-    val verId = "ver_id"
-    val timestamp = "timestamp"
+    val verId = "VER_ID"
+    val timestamp = "TIMESTAMP"
 }

@@ -23,8 +23,9 @@ class TestClock(private var fixedTime: ZonedDateTime) : Clock() {
         this.fixedTime = millisToZdt(epochMilli.toLong())
     }
 
-    fun plus(amountToAdd: Long, unit: TemporalUnit = ChronoUnit.MILLIS) {
+    fun plus(amountToAdd: Long, unit: TemporalUnit = ChronoUnit.MILLIS): Long {
         fixedTime = fixedTime.plus(amountToAdd, unit)
+        return instant().toEpochMilli()
     }
 
     fun setFixedTime(instant: Instant?) {
