@@ -107,7 +107,11 @@ class DataManager(
                     isCardsRemainExact = cardsToRepeat.allRawsRead
                 )
             } else {
-                GetNextCardToRepeatResp(cardsRemain = 0, nextCardIn = selectMinNextAccessAt().map { Utils.millisToDurationStr(it) }.orElse(""))
+                val currTime = clock.instant().toEpochMilli()
+                GetNextCardToRepeatResp(
+                    cardsRemain = 0,
+                    nextCardIn = selectMinNextAccessAt().map { Utils.millisToDurationStr(it - currTime) }.orElse("")
+                )
             }
         }.apply(toBeResponse(GET_NEXT_CARD_TO_REPEAT))
     }
