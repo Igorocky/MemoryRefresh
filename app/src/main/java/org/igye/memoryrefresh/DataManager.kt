@@ -34,10 +34,10 @@ class DataManager(
         } else {
             val repo = getRepo()
             repo.writableDatabase.doInTransactionTry {
-                val cardId = repo.cards.insertStmt(cardType = CardType.TRANSLATION)
+                val cardId = repo.cards.insert(cardType = CardType.TRANSLATION)
                 val currTime = clock.instant().toEpochMilli()
-                repo.cardsSchedule.insertStmt(cardId = cardId, timestamp = currTime, delay = "0m", randomFactor = 1.0, nextAccessInMillis = 0, nextAccessAt = currTime)
-                repo.translationCards.insertStmt(cardId = cardId, textToTranslate = textToTranslate, translation = translation)
+                repo.cardsSchedule.insert(cardId = cardId, timestamp = currTime, delay = "0m", randomFactor = 1.0, nextAccessInMillis = 0, nextAccessAt = currTime)
+                repo.translationCards.insert(cardId = cardId, textToTranslate = textToTranslate, translation = translation)
                 selectTranslateCardById(cardId = cardId)
             }.apply(toBeResponse(SAVE_NEW_TRANSLATE_CARD_EXCEPTION))
         }
@@ -65,7 +65,7 @@ class DataManager(
                 }
                 var dataWasUpdated = false
                 if (newTextToTranslate != existingCard.textToTranslate || newTranslation != existingCard.translation) {
-                    repo.translationCards.updateStmt(cardId = args.cardId, textToTranslate = newTextToTranslate, translation = newTranslation)
+                    repo.translationCards.update(cardId = args.cardId, textToTranslate = newTextToTranslate, translation = newTranslation)
                     dataWasUpdated = true
                 }
                 if (args.recalculateDelay == true || newDelay != existingCard.schedule.delay) {
@@ -73,7 +73,7 @@ class DataManager(
                     val nextAccessInMillis = (Utils.delayStrToMillis(newDelay) * randomFactor).toLong()
                     val timestamp = clock.instant().toEpochMilli()
                     val nextAccessAt = timestamp + nextAccessInMillis
-                    repo.cardsSchedule.updateStmt(
+                    repo.cardsSchedule.update(
                         timestamp = timestamp,
                         cardId = args.cardId,
                         delay = newDelay,
@@ -141,7 +141,7 @@ class DataManager(
                     rowMapper = {it.getString()}
                 ).rows[0].trim()
                 val translationIsCorrect = userProvidedTranslation == expectedTranslation
-                repo.translationCardsLog.insertStmt(
+                repo.translationCardsLog.insert(
                     cardId = args.cardId,
                     translation = userProvidedTranslation,
                     matched = translationIsCorrect
@@ -152,6 +152,19 @@ class DataManager(
                 )
             }.apply(toBeResponse(VALIDATE_TRANSLATE_CARD_EXCEPTION))
         }
+    }
+
+    data class DeleteTranslateCardArgs(val cardId:Long)
+    @BeMethod
+    @Synchronized
+    fun deleteTranslateCard(args:DeleteTranslateCardArgs): BeRespose<Boolean> {
+        val repo = getRepo()
+        return repo.writableDatabase.doInTransaction {
+            repo.translationCards.delete(cardId = args.cardId)
+            repo.cardsSchedule.delete(cardId = args.cardId)
+            repo.cards.delete(id = args.cardId)
+            true
+        }.apply(toBeResponse(DELETE_TRANSLATE_CARD_EXCEPTION))
     }
 
     private val selectCurrScheduleForCardQuery =

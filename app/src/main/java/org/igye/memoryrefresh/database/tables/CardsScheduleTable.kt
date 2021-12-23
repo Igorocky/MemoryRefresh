@@ -41,11 +41,11 @@ class CardsScheduleTable(private val clock: Clock, private val cards: CardsTable
     }
 
     interface InsertStmt {operator fun invoke(cardId: Long, timestamp: Long, delay: String, randomFactor: Double, nextAccessInMillis: Long, nextAccessAt: Long): Long }
-        lateinit var insertStmt: InsertStmt
+        lateinit var insert: InsertStmt
     interface UpdateStmt {operator fun invoke(cardId: Long, timestamp: Long, delay: String, randomFactor: Double, nextAccessInMillis: Long, nextAccessAt: Long): Int}
-        lateinit var updateStmt: UpdateStmt
+        lateinit var update: UpdateStmt
     interface DeleteStmt {operator fun invoke(cardId: Long): Int }
-        lateinit var deleteStmt: DeleteStmt
+        lateinit var delete: DeleteStmt
 
     override fun prepareStatements(db: SQLiteDatabase) {
         val self = this
@@ -58,7 +58,7 @@ class CardsScheduleTable(private val clock: Clock, private val cards: CardsTable
                 throw MemoryRefreshException(msg = "stmtVer.executeUpdateDelete() != 1", errCode = ErrorCode.GENERAL)
             }
         }
-        insertStmt = object : InsertStmt {
+        insert = object : InsertStmt {
             val stmt = db.compileStatement("insert into $self ($cardId,$updatedAt,$delay,$randomFactor,$nextAccessInMillis,$nextAccessAt) values (?,?,?,?,?,?)")
             override fun invoke(cardId: Long, timestamp: Long, delay: String, randomFactor: Double, nextAccessInMillis: Long, nextAccessAt: Long): Long {
                 stmt.bindLong(1, cardId)
@@ -70,7 +70,7 @@ class CardsScheduleTable(private val clock: Clock, private val cards: CardsTable
                 return stmt.executeInsert()
             }
         }
-        updateStmt = object : UpdateStmt {
+        update = object : UpdateStmt {
             private val stmt = db.compileStatement(
                 "update $self set $updatedAt = ?, $delay = ?, $randomFactor = ?, $nextAccessInMillis = ?, $nextAccessAt = ?  where $cardId = ?")
             override fun invoke(cardId: Long, timestamp: Long, delay: String, randomFactor: Double, nextAccessInMillis: Long, nextAccessAt: Long): Int {
@@ -85,7 +85,7 @@ class CardsScheduleTable(private val clock: Clock, private val cards: CardsTable
             }
 
         }
-        deleteStmt = object : DeleteStmt {
+        delete = object : DeleteStmt {
             private val stmt = db.compileStatement("delete from $self where $cardId = ?")
             override fun invoke(cardId: Long): Int {
                 saveCurrentVersion(cardId = cardId, timestamp = clock.instant().toEpochMilli())

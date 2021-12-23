@@ -32,9 +32,9 @@ class CardsTable(private val clock: Clock): TableWithVersioning(name = "CARDS") 
         """)
     }
 
-    interface InsertStmt {operator fun invoke(cardType: CardType): Long } lateinit var insertStmt: InsertStmt
-    interface UpdateStmt {operator fun invoke(id:Long, cardType: CardType): Int} lateinit var updateStmt: UpdateStmt
-    interface DeleteStmt {operator fun invoke(id:Long): Int } lateinit var deleteStmt: DeleteStmt
+    interface InsertStmt {operator fun invoke(cardType: CardType): Long } lateinit var insert: InsertStmt
+    interface UpdateStmt {operator fun invoke(id:Long, cardType: CardType): Int} lateinit var update: UpdateStmt
+    interface DeleteStmt {operator fun invoke(id:Long): Int } lateinit var delete: DeleteStmt
 
     override fun prepareStatements(db: SQLiteDatabase) {
         val self = this
@@ -47,7 +47,7 @@ class CardsTable(private val clock: Clock): TableWithVersioning(name = "CARDS") 
                 throw MemoryRefreshException(msg = "stmtVer.executeUpdateDelete() != 1", errCode = ErrorCode.GENERAL)
             }
         }
-        insertStmt = object : InsertStmt {
+        insert = object : InsertStmt {
             val stmt = db.compileStatement("insert into $self ($type,$createdAt) values (?,?)")
             override fun invoke(cardType: CardType): Long {
                 val currTime = clock.instant().toEpochMilli()
@@ -56,7 +56,7 @@ class CardsTable(private val clock: Clock): TableWithVersioning(name = "CARDS") 
                 return stmt.executeInsert()
             }
         }
-        updateStmt = object : UpdateStmt {
+        update = object : UpdateStmt {
             private val stmt = db.compileStatement("update $self set $type = ? where $id = ?")
             override fun invoke(id: Long, cardType: CardType): Int {
                 saveCurrentVersion(id = id)
@@ -66,7 +66,7 @@ class CardsTable(private val clock: Clock): TableWithVersioning(name = "CARDS") 
             }
 
         }
-        deleteStmt = object : DeleteStmt {
+        delete = object : DeleteStmt {
             private val stmt = db.compileStatement("delete from $self where $id = ?")
             override fun invoke(id:Long): Int {
                 saveCurrentVersion(id = id)

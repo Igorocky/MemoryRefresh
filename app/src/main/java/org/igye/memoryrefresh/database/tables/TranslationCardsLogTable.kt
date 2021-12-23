@@ -17,18 +17,18 @@ class TranslationCardsLogTable(
         db.execSQL("""
                 CREATE TABLE $this (
                     $timestamp integer not null,
-                    $cardId integer references $translationCards(${translationCards.cardId}) on update restrict on delete no action,
+                    $cardId integer not null,
                     $translation text not null,
                     $matched integer not null check ($matched in (0,1))
                 )
         """)
     }
 
-    interface InsertStmt {operator fun invoke(cardId: Long, translation: String, matched: Boolean): Long } lateinit var insertStmt: InsertStmt
+    interface InsertStmt {operator fun invoke(cardId: Long, translation: String, matched: Boolean): Long } lateinit var insert: InsertStmt
 
     override fun prepareStatements(db: SQLiteDatabase) {
         val self = this
-        insertStmt = object : InsertStmt {
+        insert = object : InsertStmt {
             val stmt = db.compileStatement("insert into $self ($timestamp,$cardId,$translation,$matched) values (?,?,?,?)")
             override fun invoke(cardId: Long, translation: String, matched: Boolean): Long {
                 val currTime = clock.instant().toEpochMilli()

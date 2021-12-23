@@ -86,6 +86,48 @@ class DataManagerInstrumentedTest {
     }
 
     @Test
+    fun deleteTranslateCard_deletes_translate_card() {
+        //given
+        val dm = createInmemoryDataManager()
+        val repo = dm.getRepo()
+        val c = repo.cards
+        val t = repo.translationCards
+        val s = repo.cardsSchedule
+        val l = repo.translationCardsLog
+        val expectedTextToTranslate = "A"
+        val expectedTranslation = "a"
+        testClock.setFixedTime(1000)
+        val timeCreated = testClock.instant().toEpochMilli()
+        val cardId = dm.saveNewTranslateCard(
+            SaveNewTranslateCardArgs(textToTranslate = expectedTextToTranslate, translation = expectedTranslation)
+        ).data!!.id
+
+        //when
+        val timeDeleted = testClock.plus(1000)
+        val deleteTranslateCardResp = dm.deleteTranslateCard(DeleteTranslateCardArgs(cardId = cardId))
+
+        //then
+        assertTrue(deleteTranslateCardResp.data!!)
+
+        assertTableContent(repo = repo, tableName = c.name, matchColumn = c.id, exactMatch = true, expectedRows = listOf())
+        assertTableContent(repo = repo, tableName = c.ver.name, exactMatch = true, expectedRows = listOf(
+            listOf(c.ver.timestamp to timeDeleted, c.id to cardId, c.type to TR_TP, c.createdAt to timeCreated)
+        ))
+
+        assertTableContent(repo = repo, tableName = t.name, matchColumn = t.cardId, exactMatch = true, expectedRows = listOf())
+        assertTableContent(repo = repo, tableName = t.ver.name, exactMatch = true, expectedRows = listOf(
+            listOf(t.ver.timestamp to timeDeleted, t.cardId to cardId, t.textToTranslate to expectedTextToTranslate, t.translation to expectedTranslation)
+        ))
+
+        assertTableContent(repo = repo, tableName = s.name, matchColumn = s.cardId, exactMatch = true, expectedRows = listOf())
+        assertTableContent(repo = repo, tableName = s.ver.name, exactMatch = true, expectedRows = listOf(
+            listOf(s.ver.timestamp to timeDeleted, s.cardId to cardId, s.delay to "0m", s.nextAccessInMillis to 0L, s.nextAccessAt to timeCreated)
+        ))
+
+        assertTableContent(repo = repo, tableName = l.name, exactMatch = true, expectedRows = listOf())
+    }
+
+    @Test
     fun test_scenario_1_create_card_and_edit_it_twice() {
         //given
         val dm = createInmemoryDataManager()
@@ -1136,6 +1178,48 @@ class DataManagerInstrumentedTest {
         assertEquals(CardType.TRANSLATION, nextCardResp8.cardType)
         assertEquals(2, nextCardResp8.cardsRemain)
         assertEquals(true, nextCardResp8.isCardsRemainExact)
+
+        //when: 25. delete card1
+        val time25 = testClock.plus(10, ChronoUnit.MINUTES)
+        val deleteTranslateCard = dm.deleteTranslateCard(DeleteTranslateCardArgs(cardId = card1Id))
+        val deleteCard1Resp = deleteTranslateCard.data!!
+
+        //then
+        assertTrue(deleteCard1Resp)
+
+        assertTableContent(repo = repo, tableName = c.name, matchColumn = c.id, exactMatch = true, expectedRows = listOf(
+            listOf(c.id to card2Id, c.type to TR_TP, c.createdAt to time8),
+        ))
+        assertTableContent(repo = repo, tableName = c.ver.name, matchColumn = c.id, exactMatch = true, expectedRows = listOf(
+            listOf(c.ver.timestamp to time25, c.id to card1Id, c.type to TR_TP, c.createdAt to time2),
+        ))
+
+        assertTableContent(repo = repo, tableName = t.name, matchColumn = t.cardId, exactMatch = true, expectedRows = listOf(
+            listOf(t.cardId to card2Id, t.textToTranslate to "karta2+", t.translation to "card2"),
+        ))
+        assertTableContent(repo = repo, tableName = t.ver.name, matchColumn = t.cardId, exactMatch = true, expectedRows = listOf(
+            listOf(t.ver.timestamp to time7, t.cardId to card1Id, t.textToTranslate to "karta1", t.translation to "card1"),
+            listOf(t.ver.timestamp to time25, t.cardId to card1Id, t.textToTranslate to "karta1", t.translation to "card1+"),
+            listOf(t.ver.timestamp to time14, t.cardId to card2Id, t.textToTranslate to "karta2", t.translation to "card2"),
+        ))
+
+        assertTableContent(repo = repo, tableName = s.name, matchColumn = s.cardId, exactMatch = true, expectedRows = listOf(
+            listOf(s.cardId to card2Id, s.updatedAt to time18, s.delay to "5m"),
+        ))
+        assertTableContent(repo = repo, tableName = s.ver.name, matchColumn = s.cardId, exactMatch = true, expectedRows = listOf(
+            listOf(s.ver.timestamp to time6, s.cardId to card1Id, s.updatedAt to time2, s.delay to "0m"),
+            listOf(s.ver.timestamp to time23, s.cardId to card1Id, s.updatedAt to time6, s.delay to "1d"),
+            listOf(s.ver.timestamp to time25, s.cardId to card1Id, s.updatedAt to time23, s.delay to "0m"),
+            listOf(s.ver.timestamp to time12, s.cardId to card2Id, s.updatedAt to time8, s.delay to "0m"),
+            listOf(s.ver.timestamp to time18, s.cardId to card2Id, s.updatedAt to time12, s.delay to "5m"),
+        ))
+
+        assertTableContent(repo = repo, tableName = l.name, matchColumn = l.cardId, exactMatch = true, expectedRows = listOf(
+            listOf(l.cardId to card1Id, l.timestamp to time5, l.translation to "card1", l.matched to 1),
+            listOf(l.cardId to card2Id, l.timestamp to time11, l.translation to "card2-inc", l.matched to 0),
+            listOf(l.cardId to card2Id, l.timestamp to time17, l.translation to "card2", l.matched to 1),
+        ))
+
     }
 
     private fun insert(repo: Repository, tableName: String, rows: List<List<Pair<String,Any?>>>) {
