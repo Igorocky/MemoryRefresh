@@ -1,6 +1,8 @@
 package org.igye.memoryrefresh
 
 import android.content.Context
+import org.igye.memoryrefresh.manager.DataManager
+import org.igye.memoryrefresh.manager.HttpsServerManager
 import java.util.concurrent.ExecutorService
 
 class MainActivityViewModel(

@@ -8,6 +8,10 @@ import org.igye.memoryrefresh.database.tables.CardsScheduleTable
 import org.igye.memoryrefresh.database.tables.CardsTable
 import org.igye.memoryrefresh.database.tables.TranslationCardsLogTable
 import org.igye.memoryrefresh.database.tables.TranslationCardsTable
+import org.igye.memoryrefresh.manager.DataManager
+import org.igye.memoryrefresh.manager.HttpsServerManager
+import org.igye.memoryrefresh.manager.RepositoryManager
+import org.igye.memoryrefresh.manager.SettingsManager
 import java.time.Clock
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
@@ -26,7 +30,7 @@ class AppContainer(
     val cards = CardsTable(clock = clock)
     val cardsSchedule = CardsScheduleTable(clock = clock, cards = cards)
     val translationCards = TranslationCardsTable(clock = clock, cards = cards)
-    val translationCardsLog = TranslationCardsLogTable(clock = clock, translationCards = translationCards)
+    val translationCardsLog = TranslationCardsLogTable(clock = clock)
 
     fun createNewRepo(): Repository {
         return Repository(

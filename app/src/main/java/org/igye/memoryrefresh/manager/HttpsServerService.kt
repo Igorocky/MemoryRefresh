@@ -1,10 +1,12 @@
-package org.igye.memoryrefresh
+package org.igye.memoryrefresh.manager
 
 import android.app.*
 import android.content.Context
 import android.content.Intent
 import android.graphics.Color
 import android.os.IBinder
+import org.igye.memoryrefresh.ui.MainActivity
+import org.igye.memoryrefresh.R
 
 
 class HttpsServerService: Service() {

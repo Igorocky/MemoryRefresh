@@ -6,7 +6,6 @@ import java.time.Clock
 
 class TranslationCardsLogTable(
     private val clock: Clock,
-    private val translationCards: TranslationCardsTable
 ): Table(name = "TRANSLATION_CARDS_LOG") {
     val recId = "REC_ID"
     val timestamp = "TIMESTAMP"
@@ -25,7 +24,7 @@ class TranslationCardsLogTable(
                 )
         """)
         db.execSQL("""
-                CREATE INDEX IDX_${this}_CARD_ID on $this ( $cardId )
+                CREATE INDEX IDX_${this}_CARD_ID on $this ( $cardId, $timestamp desc )
         """)
     }
 

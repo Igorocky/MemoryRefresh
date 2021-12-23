@@ -4,11 +4,13 @@ import android.database.Cursor
 import android.database.Cursor.*
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
-import org.igye.memoryrefresh.DataManager.*
+import org.igye.memoryrefresh.manager.DataManager.*
 import org.igye.memoryrefresh.ErrorCode.GENERAL
-import org.igye.memoryrefresh.Utils.MILLIS_IN_HOUR
-import org.igye.memoryrefresh.Utils.MILLIS_IN_MINUTE
-import org.igye.memoryrefresh.Utils.MILLIS_IN_SECOND
+import org.igye.memoryrefresh.common.Utils.MILLIS_IN_HOUR
+import org.igye.memoryrefresh.common.Utils.MILLIS_IN_MINUTE
+import org.igye.memoryrefresh.common.Utils.MILLIS_IN_SECOND
+import org.igye.memoryrefresh.common.MemoryRefreshException
+import org.igye.memoryrefresh.common.Utils
 import org.igye.memoryrefresh.database.CardType
 import org.igye.memoryrefresh.database.Repository
 import org.igye.memoryrefresh.database.tables.CardsScheduleTable
@@ -16,6 +18,8 @@ import org.igye.memoryrefresh.database.tables.CardsTable
 import org.igye.memoryrefresh.database.tables.TranslationCardsLogTable
 import org.igye.memoryrefresh.database.tables.TranslationCardsTable
 import org.igye.memoryrefresh.dto.domain.TranslateCard
+import org.igye.memoryrefresh.manager.DataManager
+import org.igye.memoryrefresh.manager.RepositoryManager
 import org.junit.Assert.*
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -1410,7 +1414,7 @@ class DataManagerInstrumentedTest {
         val cards = CardsTable(clock = testClock)
         val cardsSchedule = CardsScheduleTable(clock = testClock, cards = cards)
         val translationCards = TranslationCardsTable(clock = testClock, cards = cards)
-        val translationCardsLog = TranslationCardsLogTable(clock = testClock, translationCards = translationCards)
+        val translationCardsLog = TranslationCardsLogTable(clock = testClock)
 
         return DataManager(
             clock = testClock,

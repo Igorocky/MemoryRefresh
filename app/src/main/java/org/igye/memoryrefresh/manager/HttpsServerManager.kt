@@ -1,7 +1,9 @@
-package org.igye.memoryrefresh
+package org.igye.memoryrefresh.manager
 
 import android.content.Context
 import android.content.Intent
+import org.igye.memoryrefresh.common.BeMethod
+import org.igye.memoryrefresh.common.Utils
 import org.igye.memoryrefresh.dto.common.BeErr
 import org.igye.memoryrefresh.dto.common.BeRespose
 import org.igye.memoryrefresh.dto.common.HttpServerSettings

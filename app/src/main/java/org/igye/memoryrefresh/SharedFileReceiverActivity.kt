@@ -5,6 +5,7 @@ import android.net.Uri
 import android.os.Bundle
 import android.os.Parcelable
 import androidx.activity.viewModels
+import org.igye.memoryrefresh.ui.WebViewActivity
 
 class SharedFileReceiverActivity : WebViewActivity<SharedFileReceiverViewModel>() {
     override val viewModel: SharedFileReceiverViewModel by viewModels {

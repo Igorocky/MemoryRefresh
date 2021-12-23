@@ -1,7 +1,11 @@
-package org.igye.memoryrefresh
+package org.igye.memoryrefresh.manager
 
+import org.igye.memoryrefresh.*
 import org.igye.memoryrefresh.ErrorCode.*
+import org.igye.memoryrefresh.common.BeMethod
+import org.igye.memoryrefresh.common.MemoryRefreshException
 import org.igye.memoryrefresh.common.Try
+import org.igye.memoryrefresh.common.Utils
 import org.igye.memoryrefresh.database.*
 import org.igye.memoryrefresh.dto.common.BeErr
 import org.igye.memoryrefresh.dto.common.BeRespose
@@ -25,7 +29,7 @@ class DataManager(
     data class SaveNewTranslateCardArgs(val textToTranslate:String, val translation:String)
     @BeMethod
     @Synchronized
-    fun saveNewTranslateCard(args:SaveNewTranslateCardArgs): BeRespose<TranslateCard> {
+    fun saveNewTranslateCard(args: SaveNewTranslateCardArgs): BeRespose<TranslateCard> {
         val textToTranslate = args.textToTranslate.trim()
         val translation = args.translation.trim()
         return if (textToTranslate.isBlank()) {
@@ -50,7 +54,7 @@ class DataManager(
     )
     @BeMethod
     @Synchronized
-    fun updateTranslateCard(args:UpdateTranslateCardArgs): BeRespose<TranslateCard> {
+    fun updateTranslateCard(args: UpdateTranslateCardArgs): BeRespose<TranslateCard> {
         val repo = getRepo()
         return repo.writableDatabase.doInTransactionTry {
             selectTranslateCardById(cardId = args.cardId).map { existingCard: TranslateCard ->
@@ -129,7 +133,7 @@ class DataManager(
     private val validateTranslateCardQueryColumnNames = arrayOf("expectedTranslation")
     @BeMethod
     @Synchronized
-    fun validateTranslateCard(args:ValidateTranslateCardArgs): BeRespose<ValidateTranslateCardAnswerResp> {
+    fun validateTranslateCard(args: ValidateTranslateCardArgs): BeRespose<ValidateTranslateCardAnswerResp> {
         val userProvidedTranslation = args.userProvidedTranslation.trim()
         return if (userProvidedTranslation.isBlank()) {
             BeRespose(err = BeErr(code = VALIDATE_TRANSLATE_CARD_TRANSLATION_IS_EMPTY.code, msg = "Translation should not be empty."))
@@ -159,7 +163,7 @@ class DataManager(
     data class DeleteTranslateCardArgs(val cardId:Long)
     @BeMethod
     @Synchronized
-    fun deleteTranslateCard(args:DeleteTranslateCardArgs): BeRespose<Boolean> {
+    fun deleteTranslateCard(args: DeleteTranslateCardArgs): BeRespose<Boolean> {
         val repo = getRepo()
         return repo.writableDatabase.doInTransaction {
             repo.translationCards.delete(cardId = args.cardId)
@@ -176,7 +180,7 @@ class DataManager(
     private val getTranslateCardHistoryQueryColumnNames = arrayOf(l.recId, l.cardId, l.timestamp, l.translation, l.matched)
     @BeMethod
     @Synchronized
-    fun getTranslateCardHistory(args:GetTranslateCardHistoryArgs): BeRespose<TranslateCardHistResp> {
+    fun getTranslateCardHistory(args: GetTranslateCardHistoryArgs): BeRespose<TranslateCardHistResp> {
         return getRepo().writableDatabase.doInTransaction {
             val historyRecords = select(
                 rowsMax = 30,

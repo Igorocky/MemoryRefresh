@@ -22,7 +22,7 @@
                     android:name="android.support.FILE_PROVIDER_PATHS"
                     android:resource="@xml/filepaths" />
         </provider>
-        <activity android:name="org.igye.memoryrefresh.MainActivity">
+        <activity android:name="org.igye.memoryrefresh.ui.MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -36,7 +36,7 @@
             </intent-filter>
         </activity>
         <service
-                android:name="org.igye.memoryrefresh.HttpsServerService"
+                android:name="org.igye.memoryrefresh.manager.HttpsServerService"
                 android:exported="false"
         />
     </application>

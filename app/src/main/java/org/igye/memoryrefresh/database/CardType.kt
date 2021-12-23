@@ -1,7 +1,7 @@
 package org.igye.memoryrefresh.database
 
 import org.igye.memoryrefresh.ErrorCode
-import org.igye.memoryrefresh.MemoryRefreshException
+import org.igye.memoryrefresh.common.MemoryRefreshException
 
 enum class CardType(val intValue: Long) {
     TRANSLATION(intValue = 1);

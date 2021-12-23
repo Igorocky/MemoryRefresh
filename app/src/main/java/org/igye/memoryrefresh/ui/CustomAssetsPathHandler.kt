@@ -1,4 +1,4 @@
-package org.igye.memoryrefresh
+package org.igye.memoryrefresh.ui
 
 import android.content.Context
 import android.webkit.WebResourceResponse

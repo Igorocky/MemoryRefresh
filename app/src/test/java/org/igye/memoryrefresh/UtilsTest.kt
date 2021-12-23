@@ -1,10 +1,10 @@
 package org.igye.memoryrefresh
 
-import org.igye.memoryrefresh.Utils.MILLIS_IN_DAY
-import org.igye.memoryrefresh.Utils.MILLIS_IN_HOUR
-import org.igye.memoryrefresh.Utils.MILLIS_IN_MONTH
-import org.igye.memoryrefresh.Utils.delayStrToMillis
-import org.igye.memoryrefresh.Utils.millisToDurationStr
+import org.igye.memoryrefresh.common.Utils.MILLIS_IN_DAY
+import org.igye.memoryrefresh.common.Utils.MILLIS_IN_HOUR
+import org.igye.memoryrefresh.common.Utils.MILLIS_IN_MONTH
+import org.igye.memoryrefresh.common.Utils.delayStrToMillis
+import org.igye.memoryrefresh.common.Utils.millisToDurationStr
 import org.junit.Assert
 import org.junit.Test
 import java.time.Instant

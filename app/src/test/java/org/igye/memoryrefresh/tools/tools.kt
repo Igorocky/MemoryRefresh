@@ -1,6 +1,6 @@
 package org.igye.memoryrefresh.tools
 
-import org.igye.memoryrefresh.Utils
+import org.igye.memoryrefresh.common.Utils
 import java.io.BufferedReader
 import java.io.File
 import java.io.InputStreamReader

@@ -1,8 +1,10 @@
-package org.igye.memoryrefresh
+package org.igye.memoryrefresh.manager
 
 import android.content.Context
 import android.net.Uri
 import androidx.core.content.FileProvider
+import org.igye.memoryrefresh.common.BeMethod
+import org.igye.memoryrefresh.common.Utils
 import org.igye.memoryrefresh.database.Repository
 import org.igye.memoryrefresh.dto.common.Backup
 import org.igye.memoryrefresh.dto.common.BeRespose
@@ -74,7 +76,7 @@ class RepositoryManager(
     data class RestoreFromBackupArgs(val backupName:String)
     @BeMethod
     @Synchronized
-    fun restoreFromBackup(args:RestoreFromBackupArgs): BeRespose<String> {
+    fun restoreFromBackup(args: RestoreFromBackupArgs): BeRespose<String> {
         val dbName = getRepo().dbName
         val databasePath: File = context.getDatabasePath(dbName)
         val backupFile = File(backupDir, args.backupName)
@@ -97,7 +99,7 @@ class RepositoryManager(
     data class DeleteBackupArgs(val backupName:String)
     @BeMethod
     @Synchronized
-    fun deleteBackup(args:DeleteBackupArgs): BeRespose<List<Backup>> {
+    fun deleteBackup(args: DeleteBackupArgs): BeRespose<List<Backup>> {
         File(backupDir, args.backupName).delete()
         return listAvailableBackups()
     }
@@ -105,7 +107,7 @@ class RepositoryManager(
     data class ShareBackupArgs(val backupName:String)
     @BeMethod
     @Synchronized
-    fun shareBackup(args:ShareBackupArgs): BeRespose<Unit> {
+    fun shareBackup(args: ShareBackupArgs): BeRespose<Unit> {
         val fileUri: Uri = FileProvider.getUriForFile(
             context,
             "org.igye.MemoryRefresh.fileprovider",

@@ -2,7 +2,7 @@ package org.igye.memoryrefresh.database.tables
 
 import android.database.sqlite.SQLiteDatabase
 import org.igye.memoryrefresh.ErrorCode
-import org.igye.memoryrefresh.MemoryRefreshException
+import org.igye.memoryrefresh.common.MemoryRefreshException
 import org.igye.memoryrefresh.database.TableWithVersioning
 import java.time.Clock
 

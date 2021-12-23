@@ -1,6 +1,7 @@
-package org.igye.memoryrefresh
+package org.igye.memoryrefresh.manager
 
 import android.content.Context
+import org.igye.memoryrefresh.common.Utils
 import org.igye.memoryrefresh.dto.common.AppSettings
 import org.igye.memoryrefresh.dto.common.HttpServerSettings
 import java.io.File

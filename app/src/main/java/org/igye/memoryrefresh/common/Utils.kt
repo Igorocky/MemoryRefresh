@@ -1,7 +1,8 @@
-package org.igye.memoryrefresh
+package org.igye.memoryrefresh.common
 
 import android.content.Context
 import com.google.gson.Gson
+import org.igye.memoryrefresh.ErrorCode
 import java.io.File
 import java.net.InetAddress
 import java.net.NetworkInterface
