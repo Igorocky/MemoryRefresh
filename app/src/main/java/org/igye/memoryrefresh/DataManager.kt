@@ -20,6 +20,7 @@ class DataManager(
     private val c = getRepo().cards
     private val s = getRepo().cardsSchedule
     private val t = getRepo().translationCards
+    private val l = getRepo().translationCardsLog
 
     data class SaveNewTranslateCardArgs(val textToTranslate:String, val translation:String)
     @BeMethod
@@ -125,6 +126,7 @@ class DataManager(
 
     data class ValidateTranslateCardArgs(val cardId:Long, val userProvidedTranslation:String)
     private val validateTranslateCardQuery = "select ${t.translation} expectedTranslation from $t where ${t.cardId} = ?"
+    private val validateTranslateCardQueryColumnNames = arrayOf("expectedTranslation")
     @BeMethod
     @Synchronized
     fun validateTranslateCard(args:ValidateTranslateCardArgs): BeRespose<ValidateTranslateCardAnswerResp> {
@@ -137,7 +139,7 @@ class DataManager(
                 val expectedTranslation = select(
                     query = validateTranslateCardQuery,
                     args = arrayOf(args.cardId.toString()),
-                    columnNames = arrayOf("expectedTranslation"),
+                    columnNames = validateTranslateCardQueryColumnNames,
                     rowMapper = {it.getString()}
                 ).rows[0].trim()
                 val translationIsCorrect = userProvidedTranslation == expectedTranslation
@@ -167,15 +169,47 @@ class DataManager(
         }.apply(toBeResponse(DELETE_TRANSLATE_CARD_EXCEPTION))
     }
 
+
+    data class GetTranslateCardHistoryArgs(val cardId:Long)
+    private val getTranslateCardHistoryQuery =
+        "select ${l.recId}, ${l.cardId}, ${l.timestamp}, ${l.translation}, ${l.matched} from $l where ${l.cardId} = ? order by ${l.timestamp} desc"
+    private val getTranslateCardHistoryQueryColumnNames = arrayOf(l.recId, l.cardId, l.timestamp, l.translation, l.matched)
+    @BeMethod
+    @Synchronized
+    fun getTranslateCardHistory(args:GetTranslateCardHistoryArgs): BeRespose<TranslateCardHistResp> {
+        return getRepo().writableDatabase.doInTransaction {
+            val historyRecords = select(
+                rowsMax = 30,
+                query = getTranslateCardHistoryQuery,
+                args = arrayOf(args.cardId.toString()),
+                columnNames = getTranslateCardHistoryQueryColumnNames,
+                rowMapper = {
+                    TranslateCardHistRecord(
+                        recId = it.getLong(),
+                        cardId = it.getLong(),
+                        timestamp = it.getLong(),
+                        translation = it.getString(),
+                        isCorrect = it.getLong() == 1L,
+                    )
+                }
+            )
+            TranslateCardHistResp(
+                historyRecords = historyRecords.rows,
+                isHistoryFull = historyRecords.allRawsRead
+            )
+        }.apply(toBeResponse(GET_TRANSLATE_CARD_HISTORY))
+    }
+
     private val selectCurrScheduleForCardQuery =
         "select ${s.delay}, ${s.nextAccessInMillis}, ${s.nextAccessAt} from $s where ${s.cardId} = ?"
+    private val selectCurrScheduleForCardQueryСolumnNames = arrayOf(s.delay, s.nextAccessInMillis, s.nextAccessAt)
     @Synchronized
     private fun selectCurrScheduleForCard(cardId: Long): Try<CardSchedule> {
         return getRepo().readableDatabase.doInTransaction {
             select(
                 query = selectCurrScheduleForCardQuery,
                 args = arrayOf(cardId.toString()),
-                columnNames = arrayOf(s.delay, s.nextAccessInMillis, s.nextAccessAt),
+                columnNames = selectCurrScheduleForCardQueryСolumnNames,
                 rowMapper = {
                     CardSchedule(
                         cardId = cardId,
@@ -189,13 +223,14 @@ class DataManager(
     }
 
     private val selectTranslateCardByIdQuery = "select ${t.textToTranslate}, ${t.translation} from $t where ${t.cardId} = ?"
+    private val selectTranslateCardByIdQueryColumnNames = arrayOf(t.textToTranslate, t.translation)
     @Synchronized
     private fun selectTranslateCardById(cardId: Long): Try<TranslateCard> {
         return getRepo().readableDatabase.doInTransaction {
             select(
                 query = selectTranslateCardByIdQuery,
                 args = arrayOf(cardId.toString()),
-                columnNames = arrayOf(t.textToTranslate, t.translation),
+                columnNames = selectTranslateCardByIdQueryColumnNames,
                 rowMapper = {
                     TranslateCard(
                         id = cardId,
@@ -209,12 +244,13 @@ class DataManager(
     }
 
     private val selectMinNextAccessAtQuery = "select count(1) cnt, min(${s.nextAccessAt}) nextAccessAt from $s"
+    private val selectMinNextAccessAtQueryColumnNames = arrayOf("cnt", "nextAccessAt")
     @Synchronized
     private fun selectMinNextAccessAt(): Optional<Long> {
         return getRepo().readableDatabase.doInTransaction {
             select(
                 query = selectMinNextAccessAtQuery,
-                columnNames = arrayOf("cnt", "nextAccessAt"),
+                columnNames = selectMinNextAccessAtQueryColumnNames,
                 rowMapper = { Pair(it.getLong(), it.getLong()) }
             )
         }
@@ -238,6 +274,7 @@ class DataManager(
         where overdue >= 0
         order by overdue desc
     """.trimIndent()
+    private val selectTopOverdueCardsQueryColumnNames = arrayOf("cardId", "cardType", "overdue")
     @Synchronized
     fun selectTopOverdueCards(maxCardsNum: Int): Try<SelectedRows<CardOverdue>> {
         return getRepo().readableDatabase.doInTransaction {
@@ -245,7 +282,7 @@ class DataManager(
             select(
                 query = selectTopOverdueCardsQuery,
                 args = arrayOf(currTimeStr, currTimeStr),
-                columnNames = arrayOf("cardId", "cardType", "overdue"),
+                columnNames = selectTopOverdueCardsQueryColumnNames,
                 rowMapper = {
                     CardOverdue(
                         cardId = it.getLong(),

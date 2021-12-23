@@ -619,6 +619,50 @@ class DataManagerInstrumentedTest {
     }
 
     @Test
+    fun getTranslateCardHistory_returns_history_of_a_translate_card() {
+        //given
+        val dm = createInmemoryDataManager()
+        val repo = dm.getRepo()
+        val l = repo.translationCardsLog
+        val baseTime = 1_000
+
+        testClock.setFixedTime(baseTime)
+        val cardId = dm.saveNewTranslateCard(SaveNewTranslateCardArgs(textToTranslate = "A", translation = "a")).data!!.id
+
+        val validationTime1 = testClock.plus(3, ChronoUnit.MINUTES)
+        assertTrue(dm.validateTranslateCard(ValidateTranslateCardArgs(cardId = cardId, userProvidedTranslation = "a")).data!!.isCorrect)
+
+        val validationTime2 = testClock.plus(3, ChronoUnit.MINUTES)
+        assertFalse(dm.validateTranslateCard(ValidateTranslateCardArgs(cardId = cardId, userProvidedTranslation = "1")).data!!.isCorrect)
+
+        val validationTime3 = testClock.plus(3, ChronoUnit.MINUTES)
+        assertTrue(dm.validateTranslateCard(ValidateTranslateCardArgs(cardId = cardId, userProvidedTranslation = "a")).data!!.isCorrect)
+
+        val allData = readAllDataFrom(repo, l.name)
+
+        //when
+        val actualHistory = dm.getTranslateCardHistory(GetTranslateCardHistoryArgs(cardId = cardId)).data!!.historyRecords
+
+        //then
+        assertEquals(3, actualHistory.size)
+
+        assertEquals(cardId, actualHistory[0].cardId)
+        assertEquals(validationTime3, actualHistory[0].timestamp)
+        assertEquals("a", actualHistory[0].translation)
+        assertEquals(true, actualHistory[0].isCorrect)
+
+        assertEquals(cardId, actualHistory[1].cardId)
+        assertEquals(validationTime2, actualHistory[1].timestamp)
+        assertEquals("1", actualHistory[1].translation)
+        assertEquals(false, actualHistory[1].isCorrect)
+
+        assertEquals(cardId, actualHistory[2].cardId)
+        assertEquals(validationTime1, actualHistory[2].timestamp)
+        assertEquals("a", actualHistory[2].translation)
+        assertEquals(true, actualHistory[2].isCorrect)
+    }
+
+    @Test
     fun test_scenario_2() {
         //given
         val dm = createInmemoryDataManager()
@@ -1220,6 +1264,21 @@ class DataManagerInstrumentedTest {
             listOf(l.cardId to card2Id, l.timestamp to time17, l.translation to "card2", l.matched to 1),
         ))
 
+        //when: 26. request history for card2
+        val card2History = dm.getTranslateCardHistory(GetTranslateCardHistoryArgs(cardId = card2Id)).data!!.historyRecords
+
+        //then
+        assertEquals(2, card2History.size)
+
+        assertEquals(card2Id, card2History[0].cardId)
+        assertEquals(time17, card2History[0].timestamp)
+        assertEquals("card2", card2History[0].translation)
+        assertEquals(true, card2History[0].isCorrect)
+
+        assertEquals(card2Id, card2History[1].cardId)
+        assertEquals(time11, card2History[1].timestamp)
+        assertEquals("card2-inc", card2History[1].translation)
+        assertEquals(false, card2History[1].isCorrect)
     }
 
     private fun insert(repo: Repository, tableName: String, rows: List<List<Pair<String,Any?>>>) {

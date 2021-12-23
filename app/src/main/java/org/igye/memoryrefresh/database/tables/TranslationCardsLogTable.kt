@@ -8,6 +8,7 @@ class TranslationCardsLogTable(
     private val clock: Clock,
     private val translationCards: TranslationCardsTable
 ): Table(name = "TRANSLATION_CARDS_LOG") {
+    val recId = "REC_ID"
     val timestamp = "TIMESTAMP"
     val cardId = "CARD_ID"
     val translation = "TRANSLATION"
@@ -16,11 +17,15 @@ class TranslationCardsLogTable(
     override fun create(db: SQLiteDatabase) {
         db.execSQL("""
                 CREATE TABLE $this (
+                    $recId integer primary key,
                     $timestamp integer not null,
                     $cardId integer not null,
                     $translation text not null,
                     $matched integer not null check ($matched in (0,1))
                 )
+        """)
+        db.execSQL("""
+                CREATE INDEX IDX_${this}_CARD_ID on $this ( $cardId )
         """)
     }
 
