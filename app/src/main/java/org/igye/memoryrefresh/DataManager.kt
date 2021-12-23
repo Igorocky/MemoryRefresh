@@ -36,7 +36,7 @@ class DataManager(
             repo.writableDatabase.doInTransactionTry {
                 val cardId = repo.cards.insertStmt(cardType = CardType.TRANSLATION)
                 val currTime = clock.instant().toEpochMilli()
-                repo.cardsSchedule.insertStmt(cardId = cardId, delay = "0m", nextAccessInMillis = 0, nextAccessAt = currTime)
+                repo.cardsSchedule.insertStmt(cardId = cardId, timestamp = currTime, delay = "0m", randomFactor = 1.0, nextAccessInMillis = 0, nextAccessAt = currTime)
                 repo.translationCards.insertStmt(cardId = cardId, textToTranslate = textToTranslate, translation = translation)
                 selectTranslateCardById(cardId = cardId)
             }.apply(toBeResponse(SAVE_NEW_TRANSLATE_CARD_EXCEPTION))
@@ -69,9 +69,18 @@ class DataManager(
                     dataWasUpdated = true
                 }
                 if (args.recalculateDelay == true || newDelay != existingCard.schedule.delay) {
-                    val nextAccessInMillis = (Utils.delayStrToMillis(newDelay)*(0.85 + Random.nextDouble(from = 0.0, until = 0.30001))).toLong()
-                    val nextAccessAt = clock.instant().toEpochMilli() + nextAccessInMillis
-                    repo.cardsSchedule.updateStmt(cardId = args.cardId, delay = newDelay, nextAccessInMillis = nextAccessInMillis, nextAccessAt = nextAccessAt)
+                    val randomFactor = 0.85 + Random.nextDouble(from = 0.0, until = 0.30001)
+                    val nextAccessInMillis = (Utils.delayStrToMillis(newDelay) * randomFactor).toLong()
+                    val timestamp = clock.instant().toEpochMilli()
+                    val nextAccessAt = timestamp + nextAccessInMillis
+                    repo.cardsSchedule.updateStmt(
+                        timestamp = timestamp,
+                        cardId = args.cardId,
+                        delay = newDelay,
+                        randomFactor = randomFactor,
+                        nextAccessInMillis = nextAccessInMillis,
+                        nextAccessAt = nextAccessAt
+                    )
                     dataWasUpdated = true
                 }
                 if (dataWasUpdated) {

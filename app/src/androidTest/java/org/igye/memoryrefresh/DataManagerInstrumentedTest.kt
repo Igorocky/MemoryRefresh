@@ -228,7 +228,7 @@ class DataManagerInstrumentedTest {
             listOf(c.id to expectedCardId, c.type to TR_TP, c.createdAt to 0)
         ))
         insert(repo = repo, tableName = s.name, rows = listOf(
-            listOf(s.cardId to expectedCardId, s.delay to "1m", s.nextAccessInMillis to 100, s.nextAccessAt to baseTime + 100)
+            listOf(s.cardId to expectedCardId, s.updatedAt to 0, s.delay to "1m", s.randomFactor to 1.0, s.nextAccessInMillis to 100, s.nextAccessAt to baseTime + 100)
         ))
 
         //when
@@ -256,7 +256,7 @@ class DataManagerInstrumentedTest {
             listOf(c.id to expectedCardId, c.type to TR_TP, c.createdAt to 0)
         ))
         insert(repo = repo, tableName = s.name, rows = listOf(
-            listOf(s.cardId to expectedCardId, s.delay to "1m", s.nextAccessInMillis to 100, s.nextAccessAt to baseTime + 100)
+            listOf(s.cardId to expectedCardId, s.updatedAt to 0, s.delay to "1m", s.randomFactor to 1.0, s.nextAccessInMillis to 100, s.nextAccessAt to baseTime + 100)
         ))
 
         //when
@@ -297,7 +297,7 @@ class DataManagerInstrumentedTest {
             createCardRecord(cardId = cardIdWithoutOverdue4),
         ))
         fun createScheduleRecord(cardId: Long, nextAccessIn: Int) =
-            listOf(s.cardId to cardId, s.delay to "1m", s.nextAccessInMillis to nextAccessIn, s.nextAccessAt to baseTime + nextAccessIn)
+            listOf(s.cardId to cardId, s.updatedAt to 0, s.delay to "1m", s.randomFactor to 1.0, s.nextAccessInMillis to nextAccessIn, s.nextAccessAt to baseTime + nextAccessIn)
         insert(repo = repo, tableName = s.name, rows = listOf(
             createScheduleRecord(cardId = cardIdWithoutOverdue1, nextAccessIn = timeElapsed+1_000),
             createScheduleRecord(cardId = cardIdWithLargeOverdue, nextAccessIn = timeElapsed-26_000),
@@ -352,7 +352,7 @@ class DataManagerInstrumentedTest {
             createCardRecord(cardId = expectedCardId),
         ))
         fun createScheduleRecord(cardId: Long, nextAccessIn: Int) =
-            listOf(s.cardId to cardId, s.delay to "1m", s.nextAccessInMillis to nextAccessIn, s.nextAccessAt to baseTime + nextAccessIn)
+            listOf(s.cardId to cardId, s.updatedAt to 0, s.delay to "1m", s.randomFactor to 1.0, s.nextAccessInMillis to nextAccessIn, s.nextAccessAt to baseTime + nextAccessIn)
         insert(repo = repo, tableName = s.name, rows = listOf(
             createScheduleRecord(cardId = expectedCardId, nextAccessIn = timeElapsed-1_000),
         ))
@@ -384,7 +384,7 @@ class DataManagerInstrumentedTest {
             createCardRecord(cardId = expectedCardId),
         ))
         fun createScheduleRecord(cardId: Long, nextAccessIn: Int) =
-            listOf(s.cardId to cardId, s.delay to "1m", s.nextAccessInMillis to nextAccessIn, s.nextAccessAt to baseTime + nextAccessIn)
+            listOf(s.cardId to cardId, s.updatedAt to 0, s.delay to "1m", s.randomFactor to 1.0, s.nextAccessInMillis to nextAccessIn, s.nextAccessAt to baseTime + nextAccessIn)
         insert(repo = repo, tableName = s.name, rows = listOf(
             createScheduleRecord(cardId = expectedCardId, nextAccessIn = (timeElapsed+2*Utils.MILLIS_IN_HOUR+3*Utils.MILLIS_IN_MINUTE+39*Utils.MILLIS_IN_SECOND).toInt()),
         ))
@@ -445,7 +445,7 @@ class DataManagerInstrumentedTest {
             createCardRecord(cardId = cardIdWithoutOverdue4),
         ))
         fun createScheduleRecord(cardId: Long, nextAccessIn: Int) =
-            listOf(s.cardId to cardId, s.delay to "1m", s.nextAccessInMillis to nextAccessIn, s.nextAccessAt to baseTime + nextAccessIn)
+            listOf(s.cardId to cardId, s.updatedAt to 0, s.delay to "1m", s.randomFactor to 1.0, s.nextAccessInMillis to nextAccessIn, s.nextAccessAt to baseTime + nextAccessIn)
         insert(repo = repo, tableName = s.name, rows = listOf(
             createScheduleRecord(cardId = cardIdWithoutOverdue1, nextAccessIn = timeElapsed+1_000),
             createScheduleRecord(cardId = cardIdWithLargeOverdue, nextAccessIn = timeElapsed-26_000),
@@ -486,7 +486,7 @@ class DataManagerInstrumentedTest {
             createCardRecord(cardId = expectedCardId2),
         ))
         fun createScheduleRecord(cardId: Long, nextAccessIn: Int) =
-            listOf(s.cardId to cardId, s.delay to "1m", s.nextAccessInMillis to nextAccessIn, s.nextAccessAt to baseTime + nextAccessIn)
+            listOf(s.cardId to cardId, s.updatedAt to 0, s.delay to "1m", s.randomFactor to 1.0, s.nextAccessInMillis to nextAccessIn, s.nextAccessAt to baseTime + nextAccessIn)
         insert(repo = repo, tableName = s.name, rows = listOf(
             createScheduleRecord(cardId = expectedCardId1, nextAccessIn = timeElapsed-1_000),
             createScheduleRecord(cardId = expectedCardId2, nextAccessIn = timeElapsed-1_000),
@@ -584,6 +584,7 @@ class DataManagerInstrumentedTest {
             when (it) {
                 is Long -> insertStmt.bindLong(++idx, it)
                 is Int -> insertStmt.bindLong(++idx, it.toLong())
+                is Double -> insertStmt.bindDouble(++idx, it)
                 is String -> insertStmt.bindString(++idx, it)
             }
         }
@@ -684,6 +685,7 @@ class DataManagerInstrumentedTest {
             FIELD_TYPE_NULL -> null
             FIELD_TYPE_INTEGER -> cursor.getLong(columnIndex)
             FIELD_TYPE_STRING -> cursor.getString(columnIndex)
+            FIELD_TYPE_FLOAT -> cursor.getDouble(columnIndex)
             else -> throw MemoryRefreshException(msg = "Unexpected type '$type'", errCode = GENERAL)
         }
     }
@@ -727,7 +729,7 @@ class DataManagerInstrumentedTest {
             listOf(c.id to cardId, c.type to TR_TP, c.createdAt to 0)
         ))
         insert(repo = repo, tableName = s.name, rows = listOf(
-            listOf(s.cardId to cardId, s.delay to "0m", s.nextAccessInMillis to 0, s.nextAccessAt to 0)
+            listOf(s.cardId to cardId, s.updatedAt to 0, s.delay to "0m", s.randomFactor to 1.0, s.nextAccessInMillis to 0, s.nextAccessAt to 0)
         ))
         insert(repo = repo, tableName = t.name, rows = listOf(
             listOf(t.cardId to cardId, t.textToTranslate to "A", t.translation to "B")
@@ -745,7 +747,9 @@ class DataManagerInstrumentedTest {
         //when
         for (i in 0 until numOfCalcs) {
             val beRespose = dm.updateTranslateCard(UpdateTranslateCardArgs(cardId = cardId, delay = delayStr, recalculateDelay = true))
-            val actualDelay = beRespose.data!!.schedule.nextAccessInMillis
+            val schedule = beRespose.data!!.schedule
+            val actualDelay = schedule.nextAccessInMillis
+            assertEquals(testClock.instant().toEpochMilli() + actualDelay, schedule.nextAccessAt)
             val diff = actualDelay - left
             var bucketNum: Int = (diff / bucketWidthMillis).toInt()
             if (bucketNum == expectedNumOfBuckets) {
@@ -772,10 +776,13 @@ class DataManagerInstrumentedTest {
 
         val allSchedules = readAllDataFrom(repo, s.ver.name).filter { it[s.delay] != "0m" }
         assertEquals(numOfCalcs-1, allSchedules.size)
-        val baseTime = testClock.instant().toEpochMilli()
         assertEquals(
             numOfCalcs-1,
-            allSchedules.filter { baseTime + (it[s.nextAccessInMillis] as Long) == it[s.nextAccessAt] }.size
+            allSchedules.filter {
+                assertEquals(baseDurationMillis*(it[s.randomFactor] as Double), (it[s.nextAccessInMillis] as Long).toDouble(), 1.0)
+                assertEquals((it[s.updatedAt] as Long) + (it[s.nextAccessInMillis] as Long), it[s.nextAccessAt])
+                true
+            }.size
         )
     }
 
