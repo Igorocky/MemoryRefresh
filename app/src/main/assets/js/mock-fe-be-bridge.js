@@ -123,6 +123,11 @@ function createFeBeBridgeForUiTestMode() {
         }
     }
 
+    mockedBeFunctions.deleteTranslateCard = ({cardId}) => {
+        removeIf(CARDS, c=>c.id===cardId)
+        return okResponse(true)
+    }
+
     const TAGS = []
     const NOTES = []
     const NOTES_TO_TAGS = []

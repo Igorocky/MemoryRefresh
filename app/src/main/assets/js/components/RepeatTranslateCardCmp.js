@@ -4,7 +4,7 @@ const RepeatTranslateCardCmp = ({cardId,cardsRemain,onDone}) => {
     const USER_INPUT_TEXT_FIELD = 'user-input'
     const CARD_DELAY_TEXT_FIELD = 'card-delay'
 
-    const {showError, showMessage, renderMessagePopup} = useMessagePopup()
+    const {renderMessagePopup, showError, showMessage} = useMessagePopup()
 
     const [errorLoadingCard, setErrorLoadingCard] = useState(null)
     const [card, setCard] = useState(null)
@@ -42,7 +42,6 @@ const RepeatTranslateCardCmp = ({cardId,cardsRemain,onDone}) => {
             setCard(resp.data)
             setDelay(resp.data.schedule.delay)
             if (editMode && hasValue(answerFromBE)) {
-                console.log('resp.data.translation.trim()', resp.data.translation.trim())
                 setAnswerFromBE(resp.data.translation.trim())
             }
         }
@@ -206,7 +205,9 @@ const RepeatTranslateCardCmp = ({cardId,cardsRemain,onDone}) => {
             return re(EditTranslateCardCmp, {
                 card,
                 translationEnabled: hasValue(answerFromBE),
-                onDone: loadCard
+                onCancelled: () => setEditMode(false),
+                onSaved: loadCard,
+                onDeleted: onDone
             })
         } else {
             const shouldRenderExpectedTranslationAbove = hasValue(answerFromBE) && validateButtonWasClicked

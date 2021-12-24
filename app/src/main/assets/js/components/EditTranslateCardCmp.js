@@ -1,11 +1,24 @@
 "use strict";
 
-const EditTranslateCardCmp = ({card,translationEnabled,onDone}) => {
-    const {renderMessagePopup, showMessage, showError} = useMessagePopup()
+const EditTranslateCardCmp = ({card,translationEnabled,onCancelled,onSaved,onDeleted}) => {
+    const {renderMessagePopup, showError, confirmAction} = useMessagePopup()
 
     const [textToTranslate, setTextToTranslate] = useState(card.textToTranslate)
     const [translation, setTranslation] = useState(card.translation)
-    const [delay, setDelay] = useState(card.schedule.delay)
+
+    function isModified({initialValue, currValue}) {
+        return initialValue != currValue
+    }
+
+    const textToTranslateIsModified = isModified({initialValue: card.textToTranslate, currValue:textToTranslate})
+    const translationIsModified = isModified({initialValue: card.translation, currValue:translation})
+    const dataIsModified = textToTranslateIsModified || translationIsModified
+
+    async function cancel() {
+        if (!dataIsModified || dataIsModified && await confirmAction({text: 'Your changes will be lost.'})) {
+            onCancelled()
+        }
+    }
 
     async function saveChanges() {
         const res = await be.updateTranslateCard({
@@ -14,14 +27,25 @@ const EditTranslateCardCmp = ({card,translationEnabled,onDone}) => {
             translation: translationEnabled ? translation : null,
         })
         if (!res.err) {
-            onDone()
+            onSaved()
         } else {
             await showError(res.err)
         }
     }
 
-    function getBgColor({initialValue, currValue}) {
-        if (initialValue != currValue) {
+    async function doDelete() {
+        if (await confirmAction({text: 'Delete this card?'})) {
+            const res = await be.deleteTranslateCard({cardId:card.id})
+            if (res.err) {
+                await showError(res.err)
+            } else {
+                onDeleted()
+            }
+        }
+    }
+
+    function getBgColor(isModified) {
+        if (isModified) {
             return '#ffffcc'
         }
     }
@@ -30,13 +54,15 @@ const EditTranslateCardCmp = ({card,translationEnabled,onDone}) => {
         re(UpdateTranslateCardCmp,{
             textToTranslate,
             textToTranslateOnChange: newValue => setTextToTranslate(newValue),
-            textToTranslateBgColor: getBgColor({initialValue: card.textToTranslate, currValue:textToTranslate}),
+            textToTranslateBgColor: getBgColor(textToTranslateIsModified),
             translation: translationEnabled ? translation : null,
             translationOnChange: newValue => translationEnabled ? setTranslation(newValue) : null,
-            translationBgColor: getBgColor({initialValue: card.translation, currValue:translation}),
+            translationBgColor: getBgColor(translationIsModified),
             onSave: saveChanges,
-            onCancel: onDone,
-            canSave: textToTranslate.length && translation.length && delay.length
+            saveDisabled: !dataIsModified || (textToTranslate.length === 0 || translation.length === 0),
+            onCancel: cancel,
+            onDelete: doDelete
+
         }),
         renderMessagePopup()
     )
