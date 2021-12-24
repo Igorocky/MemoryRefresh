@@ -19,6 +19,33 @@ function createFeBeBridgeForUiTestMode() {
         }
     }
 
+    const CARDS = []
+
+    mockedBeFunctions.saveNewTranslateCard = ({textToTranslate, translation}) => {
+        textToTranslate = textToTranslate?.trim()??''
+        translation = translation?.trim()??''
+        if (textToTranslate == '') {
+            return errResponse(1, 'textToTranslate is empty')
+        } else if (translation == '') {
+            return errResponse(2, 'translation is empty')
+        } else {
+            const id = (CARDS.map(c=>c.id).max()??0)+1
+            const newCard = {
+                id,
+                textToTranslate,
+                translation,
+                schedule: {
+                    cardId: id,
+                    delay: '0m',
+                    nextAccessInMillis: 0,
+                    nextAccessAt: new Date().getTime()
+                }
+            }
+            CARDS.push(newCard)
+            return okResponse(newCard)
+        }
+    }
+
     const TAGS = []
     const NOTES = []
     const NOTES_TO_TAGS = []

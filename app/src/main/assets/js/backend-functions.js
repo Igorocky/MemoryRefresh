@@ -16,6 +16,8 @@ const be = {
     closeSharedFileReceiver: createBeFunction('closeSharedFileReceiver'),
     saveSharedFile: createBeFunction('saveSharedFile'),
 
+    saveNewTranslateCard: createBeFunction('saveNewTranslateCard'),
+
     saveNewTag: createBeFunction('saveNewTag'),
     getAllTags: createBeFunction('getTags'),
     getRemainingTagIds: createBeFunction('getRemainingTagIds'),

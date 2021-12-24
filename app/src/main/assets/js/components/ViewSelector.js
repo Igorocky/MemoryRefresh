@@ -10,7 +10,7 @@ const HTTP_SERVER_VIEW = 'httpserver'
 
 const TAGS_VIEW = 'tags'
 const SEARCH_NOTES_VIEW = 'searchNotes'
-const ADD_NOTES_VIEW = 'addNotes'
+const CREATE_CARD_VIEW = 'CreateCardView'
 
 const DEBUG_VIEW = 'debug'
 const HOME_PAGE_VIEW = 'homePage'
@@ -29,7 +29,7 @@ addView({name: HTTP_SERVER_VIEW, component: HttpServerView})
 
 addView({name: TAGS_VIEW, component: TagsView})
 addView({name: SEARCH_NOTES_VIEW, component: SearchNotesView})
-addView({name: ADD_NOTES_VIEW, component: AddNotesView})
+addView({name: CREATE_CARD_VIEW, component: CreateCardView})
 
 const ViewSelector = ({}) => {
     const [currentViewUrl, setCurrentViewUrl] = useState(null)
@@ -43,7 +43,7 @@ const ViewSelector = ({}) => {
     }, [pageTitle])
 
     useEffect(() => {
-        openView(TAGS_VIEW)
+        openView(CREATE_CARD_VIEW)
     }, [])
 
     function updatePageTitle() {
@@ -81,7 +81,7 @@ const ViewSelector = ({}) => {
         const buttons = [[
             {key:TAGS_VIEW, viewName:TAGS_VIEW, iconName:"sell"},
             {key:SEARCH_NOTES_VIEW, viewName:SEARCH_NOTES_VIEW, iconName:"search"},
-            {key:ADD_NOTES_VIEW, viewName:ADD_NOTES_VIEW, iconName:"add"},
+            {key:CREATE_CARD_VIEW, viewName:CREATE_CARD_VIEW, iconName:"add"},
             getOpenedViewButton(),
             {key:'more', iconName:"more_horiz", onClick: () => setShowMoreControlButtons(old => !old)},
         ].filter(e=>hasValue(e))]
