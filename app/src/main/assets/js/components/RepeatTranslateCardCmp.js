@@ -175,7 +175,7 @@ const RepeatTranslateCardCmp = ({cardId,cardsRemain,onDone,controlsContainer}) =
 
     function renderNextButton() {
         return iconButton({
-            iconName: 'play_arrow',
+            iconName: 'done',
             onClick: updateSchedule,
             iconStyle: {color: 'blue'}
         })
