@@ -5,13 +5,16 @@ function createQueryObjectForView(viewName, params) {
     return {[VIEW_NAME_ATTR]:viewName, ...(hasValue(params)?params:{})}
 }
 
-const HOME_PAGE_VIEW = 'homePage'
-const DEBUG_VIEW = 'debug'
-const TAGS_VIEW = 'tags'
 const BACKUPS_VIEW = 'backups'
 const HTTP_SERVER_VIEW = 'httpserver'
+
+const TAGS_VIEW = 'tags'
 const SEARCH_NOTES_VIEW = 'searchNotes'
 const ADD_NOTES_VIEW = 'addNotes'
+
+const DEBUG_VIEW = 'debug'
+const HOME_PAGE_VIEW = 'homePage'
+
 const VIEWS = {}
 function addView({name, component}) {
     VIEWS[name] = {
@@ -21,17 +24,15 @@ function addView({name, component}) {
         }
     }
 }
-addView({name: HOME_PAGE_VIEW, component: HomePage})
-addView({name: DEBUG_VIEW, component: DebugPage})
 addView({name: BACKUPS_VIEW, component: BackupsView})
 addView({name: HTTP_SERVER_VIEW, component: HttpServerView})
+
 addView({name: TAGS_VIEW, component: TagsView})
 addView({name: SEARCH_NOTES_VIEW, component: SearchNotesView})
 addView({name: ADD_NOTES_VIEW, component: AddNotesView})
 
 const ViewSelector = ({}) => {
     const [currentViewUrl, setCurrentViewUrl] = useState(null)
-    const [environmentName, setEnvironmentName] = useState(null)
     const [pageTitle, setPageTitle] = useState(null)
     const [showMoreControlButtons, setShowMoreControlButtons] = useState(false)
 
@@ -39,14 +40,14 @@ const ViewSelector = ({}) => {
 
     useEffect(() => {
         updatePageTitle()
-    }, [environmentName, pageTitle])
+    }, [pageTitle])
 
     useEffect(() => {
         openView(TAGS_VIEW)
     }, [])
 
     function updatePageTitle() {
-        document.title = `${environmentName == 'PROD' ? '' : '{' + environmentName + '} - '}${pageTitle}`
+        document.title = pageTitle
     }
 
     function openView(viewName,params) {
@@ -70,7 +71,7 @@ const ViewSelector = ({}) => {
 
     function renderControlButtons() {
         const selectedViewName = getSelectedView()?.name
-        const bgColor = viewName => viewName == selectedViewName ? '#00ff72' : undefined
+        const bgColor = viewName => viewName == selectedViewName ? '#00d0ff' : undefined
         const additionalButtons = [
             [
                 {key:BACKUPS_VIEW, viewName:BACKUPS_VIEW, iconName:"backup_table"},
@@ -81,7 +82,6 @@ const ViewSelector = ({}) => {
             {key:TAGS_VIEW, viewName:TAGS_VIEW, iconName:"sell"},
             {key:SEARCH_NOTES_VIEW, viewName:SEARCH_NOTES_VIEW, iconName:"search"},
             {key:ADD_NOTES_VIEW, viewName:ADD_NOTES_VIEW, iconName:"add"},
-            // {key:DEBUG_VIEW, viewName:DEBUG_VIEW, iconName:"adb"},
             getOpenedViewButton(),
             {key:'more', iconName:"more_horiz", onClick: () => setShowMoreControlButtons(old => !old)},
         ].filter(e=>hasValue(e))]

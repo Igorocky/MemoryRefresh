@@ -13,9 +13,7 @@ function createFeBeBridgeForAndroid() {
     function callFeCallback(cbId,result) {
         const idx = feCallbacks.findIndex(cb => cb.id === cbId)
         if (idx >= 0) {
-            const callback = feCallbacks[idx]
-            removeAtIdx(feCallbacks, idx)
-            callback.resultHandler(result)
+            removeAtIdx(feCallbacks, idx).resultHandler(result)
         }
     }
 

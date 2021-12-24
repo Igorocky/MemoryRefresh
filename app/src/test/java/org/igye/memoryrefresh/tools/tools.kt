@@ -22,7 +22,7 @@ object Tools {
     private val DEV_FILE_PROVIDER_NAME = "org.igye.taggednotes.fileprovider.dev"
     private val RELEASE_FILE_PROVIDER_NAME = "org.igye.taggednotes.fileprovider"
 
-    private val DEV_APP_BACKGROUND_COLOR = "<body style=\"background-color: lightseagreen\">"
+    private val DEV_APP_BACKGROUND_COLOR = "<body style=\"background-color: #d5f5e6\">"
     private val RELEASE_APP_BACKGROUND_COLOR = "<body>"
 
     fun release() {
@@ -44,6 +44,7 @@ object Tools {
         changeApplicationName(DEV_APP_NAME, RELEASE_APP_NAME)
         changeFileProviderName(DEV_FILE_PROVIDER_NAME, RELEASE_FILE_PROVIDER_NAME)
         changeAppBackgroundColor(DEV_APP_BACKGROUND_COLOR, RELEASE_APP_BACKGROUND_COLOR)
+        // TODO: 12/24/2021 change js versions from development to production-min
     }
 
     private fun changeNamesFromReleaseToDev() {

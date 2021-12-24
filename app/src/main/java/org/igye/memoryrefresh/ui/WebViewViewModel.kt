@@ -1,4 +1,4 @@
-package org.igye.memoryrefresh
+package org.igye.memoryrefresh.ui
 
 import android.content.Context
 import android.net.Uri
@@ -9,10 +9,11 @@ import androidx.lifecycle.ViewModel
 import androidx.webkit.WebViewAssetLoader
 import androidx.webkit.WebViewClientCompat
 import com.google.gson.Gson
+import org.igye.memoryrefresh.ErrorCode.BACKEND_METHOD_WAS_NOT_FOUND
+import org.igye.memoryrefresh.LoggerImpl
 import org.igye.memoryrefresh.common.Utils
 import org.igye.memoryrefresh.dto.common.BeErr
 import org.igye.memoryrefresh.dto.common.BeRespose
-import org.igye.memoryrefresh.ui.CustomAssetsPathHandler
 import java.util.concurrent.ExecutorService
 
 abstract class WebViewViewModel(
@@ -71,7 +72,12 @@ abstract class WebViewViewModel(
     fun invokeBeMethod(cbId:Long, methodName:String, args:String) {
         beThreadPool.submit {
             if (!beMethods.containsKey(methodName)) {
-                returnDtoToFrontend(cbId, BeRespose<Any>(err = BeErr(code = 1000, msg = "backend method '$methodName' was not found")))
+                returnDtoToFrontend(cbId, BeRespose<Any>(
+                    err = BeErr(
+                        code = BACKEND_METHOD_WAS_NOT_FOUND.code,
+                        msg = "backend method '$methodName' was not found"
+                    )
+                ))
             } else {
                 callFeCallback(cbId, beMethods[methodName]!!.invoke(args))
             }

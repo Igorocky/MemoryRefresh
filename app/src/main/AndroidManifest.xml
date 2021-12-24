@@ -6,7 +6,7 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
 
     <application
-        android:name="org.igye.memoryrefresh.MemoryRefreshApp"
+        android:name="org.igye.memoryrefresh.config.MemoryRefreshApp"
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
@@ -28,7 +28,7 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name="org.igye.memoryrefresh.SharedFileReceiverActivity">
+        <activity android:name="org.igye.memoryrefresh.ui.SharedFileReceiverActivity">
             <intent-filter>
                 <action android:name="android.intent.action.SEND" />
                 <category android:name="android.intent.category.DEFAULT" />

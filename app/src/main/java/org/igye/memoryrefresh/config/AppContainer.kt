@@ -1,4 +1,4 @@
-package org.igye.memoryrefresh
+package org.igye.memoryrefresh.config
 
 import android.content.Context
 import androidx.lifecycle.ViewModel
@@ -12,6 +12,8 @@ import org.igye.memoryrefresh.manager.DataManager
 import org.igye.memoryrefresh.manager.HttpsServerManager
 import org.igye.memoryrefresh.manager.RepositoryManager
 import org.igye.memoryrefresh.manager.SettingsManager
+import org.igye.memoryrefresh.ui.MainActivityViewModel
+import org.igye.memoryrefresh.ui.SharedFileReceiverViewModel
 import java.time.Clock
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors

@@ -1,11 +1,11 @@
-package org.igye.memoryrefresh
+package org.igye.memoryrefresh.ui
 
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.os.Parcelable
 import androidx.activity.viewModels
-import org.igye.memoryrefresh.ui.WebViewActivity
+import org.igye.memoryrefresh.config.MemoryRefreshApp
 
 class SharedFileReceiverActivity : WebViewActivity<SharedFileReceiverViewModel>() {
     override val viewModel: SharedFileReceiverViewModel by viewModels {

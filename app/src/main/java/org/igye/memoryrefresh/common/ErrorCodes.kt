@@ -1,6 +1,7 @@
 package org.igye.memoryrefresh
 
 enum class ErrorCode(val code: Long) {
+    BACKEND_METHOD_WAS_NOT_FOUND(15L),
     GET_TRANSLATE_CARD_HISTORY(14L),
     DELETE_TRANSLATE_CARD_EXCEPTION(13L),
     DELAY_DURATION_IS_TOO_BIG(12L),

@@ -1,6 +1,6 @@
 'use strict';
 
-const re = React.createElement;
+const re = React.createElement
 const useState = React.useState
 const useEffect = React.useEffect
 const useMemo = React.useMemo
@@ -29,46 +29,8 @@ function gridFactory(direction, justify, alignItems) {
     )
 }
 
-function svgOnClick({nativeEvent, onClick, width, height, boundaries}) {
-    if (onClick) {
-        let target = nativeEvent.target
-        while (hasValue(target) && target.nodeName != 'svg') {
-            target = target.parentElement
-        }
-        if (target) {
-            const svgBoundingClientRect = target.getBoundingClientRect()
-            const clickViewScreenX = nativeEvent.clientX - svgBoundingClientRect.x
-            const clickViewScreenY = nativeEvent.clientY - svgBoundingClientRect.y
-            const H = height
-            const W = width
-            const h = boundaries.maxY - boundaries.minY
-            const w = boundaries.maxX - boundaries.minX
-            const pixelSize = H/W < h/w ? h/H : w/W
-            const clickViewCenterX = -W/2 + clickViewScreenX
-            const clickViewCenterY = -H/2 + clickViewScreenY
-            const clickImageCenterX = clickViewCenterX*pixelSize
-            const clickImageCenterY = clickViewCenterY*pixelSize
-            const clickImageX = (boundaries.minX + boundaries.maxX)/2 + clickImageCenterX
-            const clickImageY = (boundaries.minY + boundaries.maxY)/2 + clickImageCenterY
-            onClick(clickImageX, clickImageY, nativeEvent)
-        }
-    }
-}
-
 const RE = {
     div: reFactory('div'),
-    svg: ({width, height, boundaries, onClick, onWheel, props}, ...children) => re('svg',
-        {
-            width,
-            height,
-            viewBox: `${boundaries.minX} ${boundaries.minY} ${boundaries.maxX - boundaries.minX} ${boundaries.maxY - boundaries.minY}`,
-            onMouseDown: clickEvent => svgOnClick({nativeEvent: clickEvent.nativeEvent, onClick, width, height, boundaries}),
-            onMouseUp: clickEvent => svgOnClick({nativeEvent: clickEvent.nativeEvent, onClick, width, height, boundaries}),
-            onWheel,
-            ...(props??{})
-        },
-        children
-    ),
     span: reFactory('span'),
     table: reFactory('table'),
     tbody: reFactory('tbody'),
@@ -109,7 +71,6 @@ const RE = {
     img: reFactory('img'),
     If: (condition, ...elems) => condition?re(Fragment,{},...elems):re(Fragment,{}),
     IfNot: (condition, ...elems) => !condition?re(Fragment,{},...elems):re(Fragment,{}),
-    IfTrue: (condition, ...elems) => re(Fragment,{},...elems),
     Fragment: reFactory(React.Fragment),
     Container: {
         row: {
@@ -137,38 +98,8 @@ const RE = {
     },
 }
 
-const SVG = {
-    line: reFactory('line'),
-    rect: reFactory('rect'),
-    circle: reFactory('circle'),
-    image: reFactory('image'),
-    path: reFactory('path'),
-    polygon: reFactory('polygon'),
-    g: reFactory('g'),
-    text: reFactory('text'),
-}
-
-const svg = {
-    rect: reFactory('rect'),
-    circle: reFactory('circle'),
-    line: reFactory('line'),
-    polygon: reFactory('polygon'),
-    image: ({key, x, y, height, width, href, clipPath}) => {
-        const imgCenterX = x+width/2;
-        const imgCenterY = y+height/2;
-        return re('image',{key, x, y, height, width, href, clipPath,
-            transform:`translate(${-imgCenterX},${imgCenterY}) scale(1,-1) translate(${imgCenterX},${-imgCenterY})`})
-    },
-    path: reFactory('path'),
-    g: reFactory('g'),
-    text: reFactory('text'),
-}
-
-
 function useStateFromLocalStorage({key, validator}) {
-    const [value, setValue] = useState(() => {
-        return validator(readFromLocalStorage(key, undefined))
-    })
+    const [value, setValue] = useState(() => validator(readFromLocalStorage(key, undefined)))
 
     function setValueInternal(newValue) {
         newValue = validator(newValue)
@@ -336,7 +267,7 @@ function useMessagePopup() {
         }
     }
 
-    function drawActionButtons() {
+    function renderActionButtons() {
         return RE.Fragment({},
             additionalActionsRenderer?.(),
             renderCancelButton(),
@@ -348,7 +279,7 @@ function useMessagePopup() {
         if (dialogOpened) {
             return RE.Dialog({open:true},
                 RE.DialogContent({}, RE.Typography({}, text)),
-                RE.DialogActions({}, drawActionButtons())
+                RE.DialogActions({}, renderActionButtons())
             )
         }
     }

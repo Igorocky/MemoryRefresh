@@ -6,7 +6,7 @@ import androidx.webkit.WebViewAssetLoader
 import java.io.ByteArrayInputStream
 
 class CustomAssetsPathHandler(
-    private val appContext: Context,
+    appContext: Context,
     private val rootReactComponent: String = "ViewSelector",
     private val feBeBridge: String
 ) : WebViewAssetLoader.PathHandler {

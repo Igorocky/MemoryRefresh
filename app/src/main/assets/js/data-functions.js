@@ -233,36 +233,6 @@ function objectHolder(obj) {
     }
 }
 
-const NEXT_SOUND = "on-next.mp3"
-const PREV_SOUND = "on-prev.mp3"
-const GO_TO_START_SOUND = "on-go-to-start3.mp3"
-const GO_TO_END_SOUND = "on-go-to-end-teleport.mp3"
-const ENTER_SOUND = "on-enter2.mp3"
-const BACKSPACE_SOUND = "on-backspace.mp3"
-const ESCAPE_SOUND = "on-escape.mp3"
-const ERROR_SOUND = "on-error.mp3"
-
-function audioUrl(audioFileName) {
-    return "./sounds/" + audioFileName
-}
-
-const AUDIO_FILES_CACHE = {}
-
-function playAudio(audioFileName, callback) {
-    let audioArr = AUDIO_FILES_CACHE[audioFileName]
-    if (!audioArr) {
-        audioArr = [new Audio(audioUrl(audioFileName))]
-        AUDIO_FILES_CACHE[audioFileName] = audioArr
-    }
-    let audio = audioArr.find(a => a.paused)
-    if (!audio) {
-        audio = new Audio(audioUrl(audioFileName))
-        audioArr.push(audio)
-    }
-    audio.onended = callback
-    audio.play()
-}
-
 function saveToLocalStorage(localStorageKey, value) {
     window.localStorage.setItem(localStorageKey, JSON.stringify(value))
 }
@@ -270,18 +240,4 @@ function saveToLocalStorage(localStorageKey, value) {
 function readFromLocalStorage(localStorageKey, defaultValue) {
     const item = window.localStorage.getItem(localStorageKey)
     return hasValue(item) ? JSON.parse(item) : defaultValue
-}
-
-function createParamsGetter({prevState, params}) {
-    return (name,defValue) => {
-        const fromParams = params?.[name]
-        if (fromParams !== undefined) {
-            return fromParams
-        }
-        const fromPrevState = prevState?.[name]
-        if (fromPrevState !== undefined) {
-            return fromPrevState
-        }
-        return defValue
-    }
 }

@@ -1,8 +1,9 @@
-package org.igye.memoryrefresh
+package org.igye.memoryrefresh.ui
 
 import android.content.Context
 import android.net.Uri
 import android.provider.OpenableColumns
+import org.igye.memoryrefresh.ErrorCode
 import org.igye.memoryrefresh.common.BeMethod
 import org.igye.memoryrefresh.common.MemoryRefreshException
 import org.igye.memoryrefresh.common.Utils
@@ -40,7 +41,7 @@ class SharedFileReceiverViewModel(appContext: Context, beThreadPool: ExecutorSer
 
     data class SaveSharedFileArgs(val fileUri: String, val fileType: SharedFileType, val fileName: String)
     @BeMethod
-    fun saveSharedFile(args:SaveSharedFileArgs): BeRespose<Any> {
+    fun saveSharedFile(args: SaveSharedFileArgs): BeRespose<Any> {
         return if (args.fileUri != sharedFileUri) {
             BeRespose<Any>(err = BeErr(code = 1, msg = "fileInfo.uri != sharedFileUri"))
         } else {

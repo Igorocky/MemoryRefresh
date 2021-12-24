@@ -1,6 +1,7 @@
-package org.igye.memoryrefresh
+package org.igye.memoryrefresh.config
 
 import android.app.Application
+import org.igye.memoryrefresh.LoggerImpl
 
 class MemoryRefreshApp: Application() {
     private val log = LoggerImpl("MemoryRefreshApp")
