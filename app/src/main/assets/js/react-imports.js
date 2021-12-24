@@ -69,8 +69,8 @@ const RE = {
     TextField: reFactory(MaterialUI.TextField),
     Toolbar: reFactory(MaterialUI.Toolbar),
     img: reFactory('img'),
-    If: (condition, ...elems) => condition?re(Fragment,{},...elems):re(Fragment,{}),
-    IfNot: (condition, ...elems) => !condition?re(Fragment,{},...elems):re(Fragment,{}),
+    If: (condition, elemsProvider) => condition?re(Fragment,{},elemsProvider()):re(Fragment,{}),
+    IfNot: (condition, elemsProvider) => !condition?re(Fragment,{},elemsProvider()):re(Fragment,{}),
     Fragment: reFactory(React.Fragment),
     Container: {
         row: {
@@ -230,15 +230,16 @@ function useStateFromLocalStorageBoolean({key, defaultValue, nullable}) {
     })
 }
 
-function iconButton({iconName,onClick}) {
+function iconButton({iconName,onClick,disabled,iconStyle}) {
     return RE.IconButton(
         {
             onClick: e => {
                 e.stopPropagation();
                 onClick?.()
-            }
+            },
+            disabled
         },
-        RE.Icon({style:{color:'black'}}, iconName)
+        RE.Icon({style:{color:'black', ...(iconStyle??{})}}, iconName)
     )
 }
 

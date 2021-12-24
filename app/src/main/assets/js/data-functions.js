@@ -7,6 +7,7 @@ const LEFT_ARROW_KEY_CODE = 37
 const SPACE_KEY_CODE = 32
 const PAGE_DOWN_KEY_CODE = 34
 const PAGE_UP_KEY_CODE = 33
+const ENTER_KEY_CODE = 13
 
 function hasValue(variable) {
     return variable !== undefined && variable !== null

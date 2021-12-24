@@ -17,6 +17,10 @@ const be = {
     saveSharedFile: createBeFunction('saveSharedFile'),
 
     saveNewTranslateCard: createBeFunction('saveNewTranslateCard'),
+    getTranslateCardById: createBeFunction('getTranslateCardById'),
+    validateTranslateCard: createBeFunction('validateTranslateCard'),
+    updateTranslateCard: createBeFunction('updateTranslateCard'),
+    getNextCardToRepeat: createBeFunction('getNextCardToRepeat'),
 
     saveNewTag: createBeFunction('saveNewTag'),
     getAllTags: createBeFunction('getTags'),

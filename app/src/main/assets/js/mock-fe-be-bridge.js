@@ -46,6 +46,83 @@ function createFeBeBridgeForUiTestMode() {
         }
     }
 
+    mockedBeFunctions.getTranslateCardById = ({cardId}) => {
+        const card = CARDS.find(c=>c.id==cardId)
+        if (hasNoValue(card)) {
+            return errResponse(9, 'Error getting translate card by id.')
+        } else {
+            return okResponse({
+                id: card.id,
+                textToTranslate: card.textToTranslate,
+                translation: card.translation,
+                schedule: {
+                    cardId: card.schedule.cardId,
+                    delay: card.schedule.delay,
+                    nextAccessInMillis: card.schedule.nextAccessInMillis,
+                    nextAccessAt: card.schedule.nextAccessAt,
+                }
+            })
+        }
+    }
+
+    mockedBeFunctions.validateTranslateCard = ({cardId, userProvidedTranslation}) => {
+        const card = CARDS.find(c=>c.id==cardId)
+        if (hasNoValue(card)) {
+            return errResponse(11, 'Error getting translate card by id.')
+        } else {
+            return okResponse({
+                answer: card.translation,
+                isCorrect: card.translation == userProvidedTranslation
+            })
+        }
+    }
+
+    mockedBeFunctions.updateTranslateCard = ({cardId, textToTranslate, translation, delay, recalculateDelay}) => {
+        const card = CARDS.find(c=>c.id==cardId)
+        if (hasNoValue(card)) {
+            return errResponse(7, 'Error getting translate card by id.')
+        } else {
+            card.textToTranslate = textToTranslate??card.textToTranslate
+            card.translation = translation??card.translation
+            if (hasValue(delay) && (delay != card.schedule.delay || recalculateDelay)) {
+                card.schedule.delay = delay
+                card.schedule.nextAccessInMillis = 20000
+                card.schedule.nextAccessAt = (new Date().getTime()) + card.schedule.nextAccessInMillis
+            }
+            return okResponse({
+                id: card.id,
+                textToTranslate: card.textToTranslate,
+                translation: card.translation,
+                schedule: {
+                    cardId: card.schedule.cardId,
+                    delay: card.schedule.delay,
+                    nextAccessInMillis: card.schedule.nextAccessInMillis,
+                    nextAccessAt: card.schedule.nextAccessAt,
+                }
+            })
+        }
+    }
+
+    mockedBeFunctions.getNextCardToRepeat = () => {
+        if (!CARDS.length) {
+            return okResponse({cardsRemain: 0, nextCardIn: ''})
+        } else {
+            const curTime = new Date().getTime()
+            const activeCards = CARDS.filter(c=>c.schedule.nextAccessAt <= curTime)
+            if (!activeCards.length) {
+                return okResponse({cardsRemain: 0, nextCardIn: '###'})
+            } else {
+                const selectedCard = activeCards[randomInt(0,activeCards.length-1)]
+                return okResponse({
+                    cardId: selectedCard.id,
+                    cardType: 'TRANSLATION',
+                    cardsRemain: activeCards.length,
+                    isCardsRemainExact: true
+                })
+            }
+        }
+    }
+
     const TAGS = []
     const NOTES = []
     const NOTES_TO_TAGS = []
@@ -210,29 +287,9 @@ function createFeBeBridgeForUiTestMode() {
     }
 
     function fillDbWithMockData() {
-        const numOfTags = 30
-        const tags = ints(1,numOfTags)
-            .map(i=>randomAlphaNumString({minLength:3,maxLength:5}))
-            .map(s=>mockedBeFunctions.saveNewTag({name:s}))
-            .map(({data:tag}) => tag)
-
-        function getRandomTagIds() {
-            let numOfTags = randomInt(1,5)
-            let result = []
-            while (result.length < numOfTags) {
-                let newId = tags[randomInt(0,tags.length-1)].id
-                if (!result.includes(newId)) {
-                    result.push(newId)
-                }
-            }
-            return result
-        }
-
-        const numOfNotes = 500
-        const notes = ints(1,numOfNotes)
-            .map(i=>randomSentence({}))
-            .map(s=>mockedBeFunctions.saveNewNote({text:s, tagIds:getRandomTagIds()}))
-            .map(({data:note}) => note)
+        mockedBeFunctions.saveNewTranslateCard({textToTranslate:'A', translation:'a'})
+        mockedBeFunctions.saveNewTranslateCard({textToTranslate:'B', translation:'b'})
+        mockedBeFunctions.saveNewTranslateCard({textToTranslate:'C', translation:'c'})
     }
     fillDbWithMockData()
 

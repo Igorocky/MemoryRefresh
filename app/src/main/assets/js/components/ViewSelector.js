@@ -5,15 +5,13 @@ function createQueryObjectForView(viewName, params) {
     return {[VIEW_NAME_ATTR]:viewName, ...(hasValue(params)?params:{})}
 }
 
-const BACKUPS_VIEW = 'backups'
-const HTTP_SERVER_VIEW = 'httpserver'
+const BACKUPS_VIEW = 'BACKUPS_VIEW'
+const HTTP_SERVER_VIEW = 'HTTP_SERVER_VIEW'
 
-const TAGS_VIEW = 'tags'
-const SEARCH_NOTES_VIEW = 'searchNotes'
-const CREATE_CARD_VIEW = 'CreateCardView'
-
-const DEBUG_VIEW = 'debug'
-const HOME_PAGE_VIEW = 'homePage'
+const CREATE_CARD_VIEW = 'CREATE_CARD_VIEW'
+const REPEAT_CARDS_VIEW = 'REPEAT_CARDS_VIEW'
+const TAGS_VIEW = 'TAGS_VIEW'
+const SEARCH_NOTES_VIEW = 'SEARCH_NOTES_VIEW'
 
 const VIEWS = {}
 function addView({name, component}) {
@@ -27,9 +25,11 @@ function addView({name, component}) {
 addView({name: BACKUPS_VIEW, component: BackupsView})
 addView({name: HTTP_SERVER_VIEW, component: HttpServerView})
 
+addView({name: CREATE_CARD_VIEW, component: CreateCardView})
+addView({name: REPEAT_CARDS_VIEW, component: RepeatCardsView})
+
 addView({name: TAGS_VIEW, component: TagsView})
 addView({name: SEARCH_NOTES_VIEW, component: SearchNotesView})
-addView({name: CREATE_CARD_VIEW, component: CreateCardView})
 
 const ViewSelector = ({}) => {
     const [currentViewUrl, setCurrentViewUrl] = useState(null)
@@ -43,7 +43,7 @@ const ViewSelector = ({}) => {
     }, [pageTitle])
 
     useEffect(() => {
-        openView(CREATE_CARD_VIEW)
+        openView(REPEAT_CARDS_VIEW)
     }, [])
 
     function updatePageTitle() {
@@ -79,7 +79,7 @@ const ViewSelector = ({}) => {
             ]
         ]
         const buttons = [[
-            {key:TAGS_VIEW, viewName:TAGS_VIEW, iconName:"sell"},
+            {key:REPEAT_CARDS_VIEW, viewName:REPEAT_CARDS_VIEW, iconName:"published_with_changes"},
             {key:SEARCH_NOTES_VIEW, viewName:SEARCH_NOTES_VIEW, iconName:"search"},
             {key:CREATE_CARD_VIEW, viewName:CREATE_CARD_VIEW, iconName:"add"},
             getOpenedViewButton(),
