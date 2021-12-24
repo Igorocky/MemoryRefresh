@@ -21,7 +21,7 @@ const CreateCardView = ({query,openView,setPageTitle}) => {
         re(UpdateTranslateCardCmp,{
             textToTranslate,textToTranslateOnChange: newValue => setTextToTranslate(newValue),
             translation,translationOnChange: newValue => setTranslation(newValue),
-            onSave: createCard, canSave: textToTranslate.length && translation.length
+            onSave: createCard, saveDisabled: !textToTranslate.length || !translation.length
         }),
         renderMessagePopup()
     )
