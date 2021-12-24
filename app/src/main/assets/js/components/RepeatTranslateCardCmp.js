@@ -50,10 +50,7 @@ const RepeatTranslateCardCmp = ({cardId,cardsRemain,onDone}) => {
     function renderQuestion() {
         if (card) {
             return RE.Container.col.top.left({},{},
-                RE.div({style:{fontWeight:'bold',marginBottom:'10px'}},
-                    renderEditButton(),
-                    'Translate:'
-                ),
+                RE.div({style:{fontWeight:'bold',marginBottom:'10px'}}, 'Translate:'),
                 RE.div({}, card.textToTranslate),
             )
         }
@@ -203,7 +200,10 @@ const RepeatTranslateCardCmp = ({cardId,cardsRemain,onDone}) => {
             })
         } else {
             return RE.Container.col.top.left({},{style: {marginTop: '10px'}},
-                renderCardsRemaining(),
+                RE.Container.row.left.center({},{},
+                    renderEditButton(),
+                    renderCardsRemaining()
+                ),
                 renderQuestion(),
                 RE.If(hasValue(answerFromBE) && !isUserInputCorrect(), renderExpectedTranslation),
                 RE.Container.row.left.center({},{},

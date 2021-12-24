@@ -61,6 +61,7 @@ const RE = {
     MenuItem: reFactory(MaterialUI.MenuItem),
     InputLabel: reFactory(MaterialUI.InputLabel),
     Paper: reFactory(MaterialUI.Paper),
+    Portal: reFactory(MaterialUI.Portal),
     RadioGroup: reFactory(MaterialUI.RadioGroup),
     Radio : reFactory(MaterialUI.Radio),
     Slider: reFactory(MaterialUI.Slider),
