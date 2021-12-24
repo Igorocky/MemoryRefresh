@@ -1,6 +1,6 @@
 "use strict";
 
-const RepeatTranslateCardCmp = ({cardId,cardsRemain,onDone}) => {
+const RepeatTranslateCardCmp = ({cardId,cardsRemain,onDone,controlsContainer}) => {
     const USER_INPUT_TEXT_FIELD = 'user-input'
     const CARD_DELAY_TEXT_FIELD = 'card-delay'
 
@@ -80,7 +80,7 @@ const RepeatTranslateCardCmp = ({cardId,cardsRemain,onDone}) => {
             label: 'Translation',
             variant: 'outlined',
             multiline: true,
-            maxRows: 1,
+            maxRows: 10,
             size: 'small',
             inputProps: {cols:30},
             style: {backgroundColor:getUserInputBackgroundColor()},
@@ -200,10 +200,6 @@ const RepeatTranslateCardCmp = ({cardId,cardsRemain,onDone}) => {
             })
         } else {
             return RE.Container.col.top.left({},{style: {marginTop: '10px'}},
-                RE.Container.row.left.center({},{},
-                    renderEditButton(),
-                    renderCardsRemaining()
-                ),
                 renderQuestion(),
                 RE.If(hasValue(answerFromBE) && !isUserInputCorrect(), renderExpectedTranslation),
                 RE.Container.row.left.center({},{},
@@ -220,7 +216,11 @@ const RepeatTranslateCardCmp = ({cardId,cardsRemain,onDone}) => {
 
     return RE.Fragment({},
         renderPageContent(),
-        renderMessagePopup()
+        RE.If(controlsContainer?.current && !editMode, () => RE.Portal({container:controlsContainer.current},
+            renderEditButton(),
+            renderCardsRemaining()
+        )),
+        renderMessagePopup(),
     )
 
 }

@@ -17,8 +17,8 @@ const VIEWS = {}
 function addView({name, component}) {
     VIEWS[name] = {
         name,
-        render({query, openView, setPageTitle}) {
-            return re(component,{openView, setPageTitle, query})
+        render({openView, setPageTitle, query, controlsContainer}) {
+            return re(component,{openView, setPageTitle, query, controlsContainer})
         }
     }
 }
@@ -35,6 +35,8 @@ const ViewSelector = ({}) => {
     const [currentViewUrl, setCurrentViewUrl] = useState(null)
     const [pageTitle, setPageTitle] = useState(null)
     const [showMoreControlButtons, setShowMoreControlButtons] = useState(false)
+
+    const controlsContainer = useRef(null)
 
     const query = parseSearchParams(currentViewUrl)
 
@@ -65,6 +67,7 @@ const ViewSelector = ({}) => {
                 query,
                 openView,
                 setPageTitle: str => setPageTitle(str),
+                controlsContainer: showMoreControlButtons ? null : controlsContainer
             })
         }
     }
@@ -106,11 +109,13 @@ const ViewSelector = ({}) => {
             openView(viewName)
         }
 
-        return re(KeyPad, {
-            componentKey: "controlButtons",
-            keys: buttons.map(r => r.map(b => ({...b,onClick: b.onClick??(() => openViewInternal(b.viewName)), style:{backgroundColor:bgColor(b.viewName)}}))),
-            variant: "outlined",
-        })
+        return RE.Container.row.left.center({ref: controlsContainer},{},
+            re(KeyPad, {
+                componentKey: "controlButtons",
+                keys: buttons.map(r => r.map(b => ({...b,onClick: b.onClick??(() => openViewInternal(b.viewName)), style:{backgroundColor:bgColor(b.viewName)}}))),
+                variant: "outlined",
+            })
+        )
     }
 
     if (currentViewUrl) {

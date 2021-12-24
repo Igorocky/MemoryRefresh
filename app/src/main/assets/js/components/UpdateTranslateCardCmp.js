@@ -40,14 +40,14 @@ const UpdateTranslateCardCmp = ({
     }
 
     function renderButtons() {
-        return RE.Container.row.left.center({}, {style: {marginRight: '3px'}},
+        return RE.Container.row.left.center({}, {style: {}},
             renderDeleteButton(),
             renderCancelButton(),
             renderSaveButton()
         )
     }
 
-    return RE.Container.col.top.left({}, {style: {marginTop: '20px'}},
+    return RE.Container.col.top.left({}, {style: {marginBottom: '5px'}},
         renderButtons(),
         RE.If(hasValue(textToTranslate), () => RE.TextField({
             autoCorrect: 'off', autoCapitalize: 'none', spellCheck: 'false',
@@ -58,7 +58,7 @@ const UpdateTranslateCardCmp = ({
             multiline: true,
             maxRows: 10,
             size: 'small',
-            style: {backgroundColor:textToTranslateBgColor, marginTop: '20px'},
+            style: {backgroundColor:textToTranslateBgColor},
             onChange: event => {
                 const newText = event.nativeEvent.target.value
                 if (newText != textToTranslate) {
@@ -75,7 +75,7 @@ const UpdateTranslateCardCmp = ({
             multiline: true,
             maxRows: 10,
             size: 'small',
-            style: {backgroundColor:translationBgColor, marginTop: '20px'},
+            style: {backgroundColor:translationBgColor, marginTop: '15px'},
             onChange: event => {
                 const newText = event.nativeEvent.target.value
                 if (newText != translation) {
@@ -92,7 +92,7 @@ const UpdateTranslateCardCmp = ({
             multiline: false,
             maxRows: 1,
             size: 'small',
-            style: {backgroundColor:delayBgColor, marginTop: '20px'},
+            style: {backgroundColor:delayBgColor, marginTop: '15px'},
             onChange: event => {
                 const newText = event.nativeEvent.target.value
                 if (newText != delay) {

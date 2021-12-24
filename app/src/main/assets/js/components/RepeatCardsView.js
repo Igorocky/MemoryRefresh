@@ -1,6 +1,6 @@
 "use strict";
 
-const RepeatCardsView = ({query,openView,setPageTitle}) => {
+const RepeatCardsView = ({query,openView,setPageTitle,controlsContainer}) => {
     const {showError, renderMessagePopup} = useMessagePopup()
 
     const [cardCounter, setCardCounter] = useState(0)
@@ -44,7 +44,8 @@ const RepeatCardsView = ({query,openView,setPageTitle}) => {
                     key: cardCounter,
                     cardId:nextCardResponse.cardId,
                     cardsRemain:nextCardResponse.cardsRemain,
-                    onDone: loadNextCard
+                    onDone: loadNextCard,
+                    controlsContainer
                 })
             } else if (nextCardResponse.nextCardIn === '') {
                 return `There are no cards to repeat.`

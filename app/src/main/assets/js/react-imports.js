@@ -70,8 +70,8 @@ const RE = {
     TextField: reFactory(MaterialUI.TextField),
     Toolbar: reFactory(MaterialUI.Toolbar),
     img: reFactory('img'),
-    If: (condition, elemsProvider) => condition?re(Fragment,{},elemsProvider()):re(Fragment,{}),
-    IfNot: (condition, elemsProvider) => !condition?re(Fragment,{},elemsProvider()):re(Fragment,{}),
+    If: (condition, elemsProvider) => condition?elemsProvider():null,
+    IfNot: (condition, elemsProvider) => !condition?elemsProvider():null,
     Fragment: reFactory(React.Fragment),
     Container: {
         row: {
