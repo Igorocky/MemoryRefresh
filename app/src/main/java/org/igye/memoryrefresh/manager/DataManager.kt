@@ -50,7 +50,7 @@ class DataManager(
 
     data class UpdateTranslateCardArgs(
         val cardId:Long, val textToTranslate:String? = null, val translation:String? = null,
-        val delay: String? = null, val recalculateDelay: Boolean? = null
+        val delay: String? = null, val recalculateDelay: Boolean = false
     )
     @BeMethod
     @Synchronized
@@ -73,7 +73,7 @@ class DataManager(
                     repo.translationCards.update(cardId = args.cardId, textToTranslate = newTextToTranslate, translation = newTranslation)
                     dataWasUpdated = true
                 }
-                if (args.recalculateDelay == true || newDelay != existingCard.schedule.delay) {
+                if (args.recalculateDelay || newDelay != existingCard.schedule.delay) {
                     val randomFactor = 0.85 + Random.nextDouble(from = 0.0, until = 0.30001)
                     val nextAccessInMillis = (Utils.delayStrToMillis(newDelay) * randomFactor).toLong()
                     val timestamp = clock.instant().toEpochMilli()

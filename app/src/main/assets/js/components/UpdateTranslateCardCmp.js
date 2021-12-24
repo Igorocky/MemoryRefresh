@@ -1,8 +1,9 @@
 "use strict";
 
 const UpdateTranslateCardCmp = ({
-                                    textToTranslate,onTextToTranslateChange,textToTranslateLabel,
-                                    translation,onTranslationChange,translationLabel,
+                                    textToTranslate,textToTranslateOnChange,textToTranslateBgColor,
+                                    translation,translationOnChange,translationBgColor,
+                                    delay,delayOnChange,delayBgColor,
                                     onSave, saveBtnText = 'save', canSave = true,
                                     onCancel,
                                 }) => {
@@ -23,7 +24,7 @@ const UpdateTranslateCardCmp = ({
     }
 
     function renderButtons() {
-        return RE.Container.row.left.center({}, {style: {margin: '3px'}},
+        return RE.Container.row.left.center({}, {style: {marginRight: '3px'}},
             renderCancelButton(),
             renderSaveButton()
         )
@@ -31,39 +32,58 @@ const UpdateTranslateCardCmp = ({
 
     return RE.Container.col.top.left({}, {style: {marginTop: '10px'}},
         renderButtons(),
-        RE.TextField({
+        RE.If(hasValue(textToTranslate), () => RE.TextField({
             autoCorrect: 'off', autoCapitalize: 'none', spellCheck: 'false',
             value: textToTranslate,
-            label: textToTranslateLabel,
+            label: 'Text to translate',
             variant: 'outlined',
             autoFocus: true,
             multiline: true,
             maxRows: 10,
             size: 'small',
+            style: {backgroundColor:textToTranslateBgColor},
             onChange: event => {
                 const newText = event.nativeEvent.target.value
                 if (newText != textToTranslate) {
-                    onTextToTranslateChange(newText)
+                    textToTranslateOnChange(newText)
                 }
             },
-            onKeyUp: event => event.nativeEvent.keyCode == 27 ? onCancel?.() : null,
-        }),
-        RE.TextField({
+            onKeyUp: event => event.nativeEvent.keyCode == ESCAPE_KEY_CODE ? onCancel?.() : null,
+        })),
+        RE.If(hasValue(translation), () => RE.TextField({
             autoCorrect: 'off', autoCapitalize: 'none', spellCheck: 'false',
             value: translation,
-            label: translationLabel,
+            label: 'Translation',
             variant: 'outlined',
             multiline: true,
             maxRows: 10,
             size: 'small',
+            style: {backgroundColor:translationBgColor},
             onChange: event => {
                 const newText = event.nativeEvent.target.value
                 if (newText != translation) {
-                    onTranslationChange(newText)
+                    translationOnChange(newText)
                 }
             },
-            onKeyUp: event => event.nativeEvent.keyCode == 27 ? onCancel?.() : null,
-        }),
+            onKeyUp: event => event.nativeEvent.keyCode == ESCAPE_KEY_CODE ? onCancel?.() : null,
+        })),
+        RE.If(hasValue(delay), () => RE.TextField({
+            autoCorrect: 'off', autoCapitalize: 'none', spellCheck: 'false',
+            value: delay,
+            label: 'Delay',
+            variant: 'outlined',
+            multiline: false,
+            maxRows: 1,
+            size: 'small',
+            style: {backgroundColor:delayBgColor},
+            onChange: event => {
+                const newText = event.nativeEvent.target.value
+                if (newText != delay) {
+                    delayOnChange(newText)
+                }
+            },
+            onKeyUp: event => event.nativeEvent.keyCode == ESCAPE_KEY_CODE ? onCancel?.() : null,
+        })),
         renderButtons(),
     )
 }

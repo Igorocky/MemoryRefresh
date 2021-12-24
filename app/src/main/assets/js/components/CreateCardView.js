@@ -19,8 +19,8 @@ const CreateCardView = ({query,openView,setPageTitle}) => {
 
     return RE.Fragment({},
         re(UpdateTranslateCardCmp,{
-            textToTranslate,textToTranslateLabel:'Text to translate',onTextToTranslateChange: newValue => setTextToTranslate(newValue),
-            translation,translationLabel:'Translation',onTranslationChange: newValue => setTranslation(newValue),
+            textToTranslate,textToTranslateOnChange: newValue => setTextToTranslate(newValue),
+            translation,translationOnChange: newValue => setTranslation(newValue),
             onSave: createCard, canSave: textToTranslate.length && translation.length
         }),
         renderMessagePopup()

@@ -86,7 +86,7 @@ function createFeBeBridgeForUiTestMode() {
             card.translation = translation??card.translation
             if (hasValue(delay) && (delay != card.schedule.delay || recalculateDelay)) {
                 card.schedule.delay = delay
-                card.schedule.nextAccessInMillis = 20000
+                card.schedule.nextAccessInMillis = 1000
                 card.schedule.nextAccessAt = (new Date().getTime()) + card.schedule.nextAccessInMillis
             }
             return okResponse({

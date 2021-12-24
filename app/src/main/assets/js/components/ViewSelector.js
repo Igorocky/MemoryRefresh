@@ -80,7 +80,6 @@ const ViewSelector = ({}) => {
         ]
         const buttons = [[
             {key:REPEAT_CARDS_VIEW, viewName:REPEAT_CARDS_VIEW, iconName:"published_with_changes"},
-            {key:SEARCH_NOTES_VIEW, viewName:SEARCH_NOTES_VIEW, iconName:"search"},
             {key:CREATE_CARD_VIEW, viewName:CREATE_CARD_VIEW, iconName:"add"},
             getOpenedViewButton(),
             {key:'more', iconName:"more_horiz", onClick: () => setShowMoreControlButtons(old => !old)},

@@ -1,10 +1,10 @@
 "use strict";
 
-const RepeatTranslateCardCmp = ({cardCounter,cardId,cardsRemain,onDone}) => {
+const RepeatTranslateCardCmp = ({cardId,cardsRemain,onDone}) => {
     const USER_INPUT_TEXT_FIELD = 'user-input'
     const CARD_DELAY_TEXT_FIELD = 'card-delay'
 
-    const {showError, renderMessagePopup} = useMessagePopup()
+    const {showError, showMessage, renderMessagePopup} = useMessagePopup()
 
     const [errorLoadingCard, setErrorLoadingCard] = useState(null)
     const [card, setCard] = useState(null)
@@ -16,17 +16,11 @@ const RepeatTranslateCardCmp = ({cardCounter,cardId,cardsRemain,onDone}) => {
     const delayTextField = useRef(null)
     const [validateButtonWasClicked, setValidateButtonWasClicked] = useState(false)
 
+    const [editMode, setEditMode] = useState(false)
+
     useEffect(async () => {
-        resetAll()
-        const resp = await be.getTranslateCardById({cardId})
-        if (!resp.err) {
-            setCard(resp.data)
-            setDelay(resp.data.schedule.delay)
-        } else {
-            await showError(resp.err)
-            setErrorLoadingCard(resp.err)
-        }
-    }, [cardCounter])
+        loadCard()
+    }, [])
 
     useEffect(() => {
         if (autoFocusDelay && delayTextField.current) {
@@ -34,24 +28,34 @@ const RepeatTranslateCardCmp = ({cardCounter,cardId,cardsRemain,onDone}) => {
             delayInput?.focus()
             delayInput?.select()
             delayInput?.scrollIntoView()
+            setAutoFocusDelay(false)
         }
     }, [delayTextField.current])
 
-    function resetAll() {
-        setErrorLoadingCard(null)
+    async function loadCard() {
         setCard(null)
-        setUserInput('')
-        setAnswerFromBE(null)
-        setBeValidationResult(null)
-        setDelay(null)
-        setAutoFocusDelay(false)
-        setValidateButtonWasClicked(false)
+        const resp = await be.getTranslateCardById({cardId})
+        if (resp.err) {
+            await showError(resp.err)
+            setErrorLoadingCard(resp.err)
+        } else {
+            setCard(resp.data)
+            setDelay(resp.data.schedule.delay)
+            if (editMode && hasValue(answerFromBE)) {
+                console.log('resp.data.translation.trim()', resp.data.translation.trim())
+                setAnswerFromBE(resp.data.translation.trim())
+            }
+        }
+        setEditMode(false)
     }
 
     function renderQuestion() {
         if (card) {
             return RE.Container.col.top.left({},{},
-                RE.div({style:{fontWeight:'bold',marginBottom:'10px'}}, 'Translate:'),
+                RE.div({style:{fontWeight:'bold',marginBottom:'10px'}},
+                    renderEditButton(),
+                    'Translate:'
+                ),
                 RE.div({}, card.textToTranslate),
             )
         }
@@ -99,17 +103,22 @@ const RepeatTranslateCardCmp = ({cardCounter,cardId,cardsRemain,onDone}) => {
 
     async function validateTranslation() {
         if (hasNoValue(beValidationResult)) {
-            const res = await be.validateTranslateCard({cardId, userProvidedTranslation: userInput})
-            if (res.err) {
-                await showError(res.err)
-                return false
+            if (userInput.trim().length === 0) {
+                showMessage({text: 'Translation must not be empty.'})
+                setValidateButtonWasClicked(false)
             } else {
-                setBeValidationResult(res.data.isCorrect)
-                setAnswerFromBE(res.data.answer)
-                if (res.data.isCorrect) {
-                    setAutoFocusDelay(true)
+                const res = await be.validateTranslateCard({cardId, userProvidedTranslation: userInput})
+                if (res.err) {
+                    await showError(res.err)
+                    return false
+                } else {
+                    setBeValidationResult(res.data.isCorrect)
+                    setAnswerFromBE(res.data.answer)
+                    if (res.data.isCorrect) {
+                        setAutoFocusDelay(true)
+                    }
+                    return res.data.isCorrect
                 }
-                return res.data.isCorrect
             }
         }
     }
@@ -130,7 +139,7 @@ const RepeatTranslateCardCmp = ({cardCounter,cardId,cardsRemain,onDone}) => {
             id: CARD_DELAY_TEXT_FIELD,
             autoCorrect: 'off', autoCapitalize: 'none', spellCheck: 'false',
             // autoFocus: autoFocusDelay,
-            value: delay,
+            value: delay??'',
             label: 'Delay',
             variant: 'outlined',
             multiline: false,
@@ -151,7 +160,6 @@ const RepeatTranslateCardCmp = ({cardCounter,cardId,cardsRemain,onDone}) => {
         if (res.err) {
             showError(res.err)
         } else {
-            resetAll()
             onDone()
         }
     }
@@ -185,28 +193,32 @@ const RepeatTranslateCardCmp = ({cardCounter,cardId,cardsRemain,onDone}) => {
         }, 'Next')
     }
 
-    function renderValidateButtonOrExpectedTranslation() {
-        if (hasNoValue(answerFromBE) || beValidationResult === true || !validateButtonWasClicked) {
-            return renderValidateButton()
-        } else {
-            return renderExpectedTranslation()
-        }
+    function renderEditButton() {
+        return iconButton({iconName:'edit', onClick: () => setEditMode(true)})
     }
 
     function renderPageContent() {
         if (errorLoadingCard) {
             return `An error occurred during card loading: [${errorLoadingCard.code}] - ${errorLoadingCard.msg}`
-        } else if (!card) {
+        } else if (hasNoValue(card)) {
             return 'Loading card...'
+        } else if (editMode) {
+            return re(EditTranslateCardCmp, {
+                card,
+                translationEnabled: hasValue(answerFromBE),
+                onDone: loadCard
+            })
         } else {
-            const shouldRenderExpectedAnswer = hasValue(answerFromBE) && !(beValidationResult || isUserInputCorrect())
+            const shouldRenderExpectedTranslationAbove = hasValue(answerFromBE) && validateButtonWasClicked
+            const shouldRenderExpectedTranslationBelow = hasValue(answerFromBE) && !validateButtonWasClicked && !isUserInputCorrect()
             const shouldRenderDelay = hasValue(answerFromBE) && isUserInputCorrect();
             return RE.Container.col.top.left({},{style: {marginTop: '10px'}},
                 renderCardsRemaining(),
                 renderQuestion(),
-                renderValidateButtonOrExpectedTranslation(),
+                RE.If(shouldRenderExpectedTranslationAbove, renderExpectedTranslation),
+                RE.If(!shouldRenderExpectedTranslationAbove, renderValidateButton),
                 renderUserTranslation(),
-                RE.If(!validateButtonWasClicked && shouldRenderExpectedAnswer, renderExpectedTranslation),
+                RE.If(shouldRenderExpectedTranslationBelow, renderExpectedTranslation),
                 RE.If(shouldRenderDelay, renderDelay),
                 RE.If(shouldRenderDelay, renderNextButton),
             )

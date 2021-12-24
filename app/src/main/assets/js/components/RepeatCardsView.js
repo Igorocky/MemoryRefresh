@@ -41,7 +41,7 @@ const RepeatCardsView = ({query,openView,setPageTitle}) => {
         } else {
             if (nextCardResponse.cardsRemain > 0) {
                 return re(RepeatTranslateCardCmp, {
-                    cardCounter,
+                    key: cardCounter,
                     cardId:nextCardResponse.cardId,
                     cardsRemain:nextCardResponse.cardsRemain,
                     onDone: loadNextCard
