@@ -33,7 +33,11 @@ class AppContainer(
     val repositoryManager = RepositoryManager(context = context, clock = clock, repositoryProvider = {createNewRepo()})
     val dataManager = DataManager(clock = clock, repositoryManager = repositoryManager)
     val settingsManager = SettingsManager(context = context)
-    val httpsServerManager = HttpsServerManager(appContext = context, settingsManager = settingsManager, javascriptInterface = listOf(dataManager))
+    val httpsServerManager = HttpsServerManager(
+        appContext = context,
+        settingsManager = settingsManager,
+        javascriptInterface = listOf(dataManager, repositoryManager)
+    )
 
     fun createNewRepo(): Repository {
         return Repository(

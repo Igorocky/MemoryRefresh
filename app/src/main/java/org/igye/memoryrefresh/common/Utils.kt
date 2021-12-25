@@ -165,7 +165,7 @@ object Utils {
                 BeRespose(
                     err = BeErr(
                         code = (if (it is MemoryRefreshException) it.errCode.code else null)?:errCode.code,
-                        msg = it.javaClass.canonicalName + ": " + it.message
+                        msg = if (it is MemoryRefreshException) it.msg else ("${it.message} (${it.javaClass.canonicalName})")
                     )
                 )
             }
