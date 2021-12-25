@@ -259,6 +259,7 @@ function useMessagePopup() {
     const [cancelBtnText, setCancelBtnText] = useState(null)
     const [onCancel, setOnCancel] = useState(null)
     const [okBtnText, setOkBtnText] = useState(null)
+    const [okBtnColor, setOkBtnColor] = useState(null)
     const [onOk, setOnOk] = useState(null)
     const [showProgress, setShowProgress] = useState(false)
     const [additionalActionsRenderer, setAdditionalActionsRenderer] = useState(null)
@@ -266,7 +267,7 @@ function useMessagePopup() {
     function renderOkButton() {
         if (okBtnText) {
             return RE.div({style:{position: 'relative'}},
-                RE.Button({variant: 'contained', color: 'primary', disabled: showProgress, onClick: onOk}, okBtnText),
+                RE.Button({variant: 'contained', color: okBtnColor??'primary', disabled: showProgress, onClick: onOk}, okBtnText),
                 showProgress?RE.CircularProgress({size:24, style: inButtonCircularProgressStyle}):null
             )
         }
@@ -295,7 +296,7 @@ function useMessagePopup() {
         }
     }
 
-    async function confirmAction({text, cancelBtnText = 'cancel', okBtnText = 'ok'}) {
+    async function confirmAction({text, cancelBtnText = 'cancel', okBtnText = 'ok', okBtnColor}) {
         return new Promise(resolve => {
             setDialogOpened(true)
             setText(text)
@@ -305,6 +306,7 @@ function useMessagePopup() {
                 resolve(false)
             })
             setOkBtnText(okBtnText)
+            setOkBtnColor(okBtnColor)
             setOnOk(() => () => {
                 setDialogOpened(false)
                 resolve(true)
@@ -321,6 +323,7 @@ function useMessagePopup() {
             setCancelBtnText(null)
             setOnCancel(null)
             setOkBtnText(okBtnText)
+            setOkBtnColor(null)
             setOnOk(() => () => {
                 setDialogOpened(false)
                 resolve(true)
@@ -336,6 +339,7 @@ function useMessagePopup() {
         setCancelBtnText(null)
         setOnCancel(null)
         setOkBtnText(okBtnText)
+        setOkBtnColor(null)
         setOnOk(() => () => null)
         setShowProgress(true)
         setAdditionalActionsRenderer(null)

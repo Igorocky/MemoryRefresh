@@ -16,6 +16,7 @@ const RepeatTranslateCardCmp = ({cardId,cardsRemain,onDone,controlsContainer}) =
     const [delay, setDelay] = useState(null)
     const [autoFocusDelay, setAutoFocusDelay] = useState(false)
     const delayTextField = useRef(null)
+    const [updateDelayRequestIsInProgress, setUpdateDelayRequestIsInProgress] = useState(false)
 
     const [editMode, setEditMode] = useState(false)
 
@@ -156,8 +157,10 @@ const RepeatTranslateCardCmp = ({cardId,cardsRemain,onDone,controlsContainer}) =
         })
     }
 
-    function updateSchedule() {
-        const res = be.updateTranslateCard({cardId, delay, recalculateDelay: true})
+    async function updateSchedule() {
+        setUpdateDelayRequestIsInProgress(true)
+        const res = await be.updateTranslateCard({cardId, delay, recalculateDelay: true})
+        setUpdateDelayRequestIsInProgress(false)
         if (res.err) {
             showError(res.err)
         } else {
@@ -209,11 +212,15 @@ const RepeatTranslateCardCmp = ({cardId,cardsRemain,onDone,controlsContainer}) =
     }
 
     function renderNextButton() {
-        return iconButton({
-            iconName: 'done',
-            onClick: updateSchedule,
-            iconStyle: {color: 'blue'}
-        })
+        if (updateDelayRequestIsInProgress) {
+            return RE.span({}, RE.CircularProgress({size:24, style: {marginLeft: '5px'}}))
+        } else {
+            return iconButton({
+                iconName: 'done',
+                onClick: updateSchedule,
+                iconStyle: {color: 'blue'}
+            })
+        }
     }
 
     function renderEditButton() {

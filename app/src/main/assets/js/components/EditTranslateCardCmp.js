@@ -36,7 +36,7 @@ const EditTranslateCardCmp = ({card,translationEnabled,onCancelled,onSaved,onDel
     }
 
     async function doDelete() {
-        if (await confirmAction({text: 'Delete this card?'})) {
+        if (await confirmAction({text: 'Delete this card?', okBtnColor: 'secondary'})) {
             const closeProgressIndicator = showMessageWithProgress({text: 'Deleting...'})
             const res = await be.deleteTranslateCard({cardId:card.id})
             closeProgressIndicator()
