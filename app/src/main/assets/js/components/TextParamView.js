@@ -34,11 +34,21 @@ const TextParamView = ({paramName,paramValue,editable = true,onSave,validator,is
     }
 
     function getValue() {
-        return !isEditMode() && isPassword ? '********' : newParamValue??paramValue
+        return (!isEditMode() && isPassword && !isShowingPassword) ? '********' : (newParamValue??paramValue)
     }
 
     function getTextFieldType() {
         return isEditMode() && isPassword && !isShowingPassword ? 'password' : 'text'
+    }
+
+    function renderShowPasswordButton() {
+        return RE.IconButton(
+            {onClick: () => setIsShowingPassword(prevValue => !prevValue)},
+            RE.Icon(
+                {style: {color: 'black'}},
+                isShowingPassword ? 'visibility_off' : 'visibility'
+            )
+        )
     }
 
     function renderButtons() {
@@ -46,17 +56,14 @@ const TextParamView = ({paramName,paramValue,editable = true,onSave,validator,is
             if (isEditMode()) {
                 return RE.Fragment({},
                     RE.IconButton({onClick:cancel}, RE.Icon({style:{color:'black'}}, 'highlight_off')),
-                    isPassword ? RE.IconButton(
-                        {onClick: () => setIsShowingPassword(prevValue => !prevValue)},
-                        RE.Icon(
-                            {style: {color: 'black'}},
-                            isShowingPassword ? 'visibility_off' : 'visibility'
-                        )
-                    ) : null,
+                    RE.If(isPassword, () => renderShowPasswordButton()),
                     RE.IconButton({onClick: save}, RE.Icon({style:{color:'black'}}, 'save'))
                 )
             } else if (editable) {
-                return RE.IconButton({onClick: beginEdit}, RE.Icon({style:{color:'black'}}, 'edit'))
+                return RE.Fragment({},
+                    RE.IconButton({onClick: beginEdit}, RE.Icon({style:{color:'black'}}, 'edit')),
+                    RE.If(isPassword, () => renderShowPasswordButton()),
+                )
             }
         }
     }

@@ -85,7 +85,7 @@ const RepeatTranslateCardCmp = ({cardId,cardsRemain,onDone,controlsContainer}) =
             multiline: true,
             maxRows: 10,
             size: 'small',
-            inputProps: {cols:30, tabIndex:1},
+            inputProps: {cols:24, tabIndex:1},
             style: {backgroundColor:getUserInputBackgroundColor()},
             onChange: event => {
                 onUserInputChange({newUserInput:event.nativeEvent.target.value})
@@ -169,7 +169,7 @@ const RepeatTranslateCardCmp = ({cardId,cardsRemain,onDone,controlsContainer}) =
     }
 
     function renderCardsRemaining() {
-        return RE.div({}, `Cards remaining: ${cardsRemain}`)
+        return RE.div({}, `Cards: ${cardsRemain}`)
     }
 
     function focusUserTranslation() {

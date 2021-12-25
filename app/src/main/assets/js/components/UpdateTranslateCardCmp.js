@@ -59,6 +59,7 @@ const UpdateTranslateCardCmp = ({
             maxRows: 10,
             size: 'small',
             style: {backgroundColor:textToTranslateBgColor},
+            inputProps: {cols:27},
             onChange: event => {
                 const newText = event.nativeEvent.target.value
                 if (newText != textToTranslate) {
@@ -76,6 +77,7 @@ const UpdateTranslateCardCmp = ({
             maxRows: 10,
             size: 'small',
             style: {backgroundColor:translationBgColor, marginTop: '15px'},
+            inputProps: {cols:27},
             onChange: event => {
                 const newText = event.nativeEvent.target.value
                 if (newText != translation) {
@@ -93,6 +95,7 @@ const UpdateTranslateCardCmp = ({
             maxRows: 1,
             size: 'small',
             style: {backgroundColor:delayBgColor, marginTop: '15px'},
+            inputProps: {size:8},
             onChange: event => {
                 const newText = event.nativeEvent.target.value
                 if (newText != delay) {
