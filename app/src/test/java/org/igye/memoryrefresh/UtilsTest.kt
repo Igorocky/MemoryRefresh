@@ -14,7 +14,15 @@ class UtilsTest {
     @Test
     open fun millisToDurationStr_produces_expected_results() {
         val now = Instant.now()
-        Assert.assertEquals("1m", millisToDurationStr(instantToMillis(now.plusSeconds(63))
+        Assert.assertEquals("0s", millisToDurationStr(instantToMillis(now.plusMillis(100))
+                - instantToMillis(now)))
+        Assert.assertEquals("1s", millisToDurationStr(instantToMillis(now.plusSeconds(1))
+                - instantToMillis(now)))
+        Assert.assertEquals("1m 3s", millisToDurationStr(instantToMillis(now.plusSeconds(63))
+                - instantToMillis(now)))
+        Assert.assertEquals("1m 18s", millisToDurationStr(instantToMillis(now.plusSeconds(78))
+                - instantToMillis(now)))
+        Assert.assertEquals("2m 0s", millisToDurationStr(instantToMillis(now.plusSeconds(120))
                 - instantToMillis(now)))
         Assert.assertEquals("1h 1m", millisToDurationStr((instantToMillis(now.plus(1, ChronoUnit.HOURS).plusSeconds(75))
                 - instantToMillis(now))))

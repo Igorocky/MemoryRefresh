@@ -97,7 +97,7 @@ object Utils {
     val MILLIS_IN_HOUR: Long = MILLIS_IN_MINUTE * MINUTES_IN_HOUR
     val MILLIS_IN_DAY: Long = MILLIS_IN_HOUR * HOURS_IN_DAY
     val MILLIS_IN_MONTH: Long = MILLIS_IN_DAY * DAYS_IN_MONTH
-    private val DURATION_UNITS = charArrayOf('M', 'd', 'h', 'm')
+    private val DURATION_UNITS = charArrayOf('M', 'd', 'h', 'm', 's')
     fun millisToDurationStr(millis: Long): String {
         var diff = millis
         val sb = StringBuilder()
@@ -111,13 +111,15 @@ object Utils {
         val hours: Long = Math.abs(diff / MILLIS_IN_HOUR)
         diff = diff % MILLIS_IN_HOUR
         val minutes: Long = Math.abs(diff / MILLIS_IN_MINUTE)
-        val parts = longArrayOf(months, days, hours, minutes)
+        diff = diff % MILLIS_IN_MINUTE
+        val seconds: Long = Math.abs(diff / MILLIS_IN_SECOND)
+        val parts = longArrayOf(months, days, hours, minutes, seconds)
         var idx = 0
         while (idx < parts.size && parts[idx] == 0L) {
             idx++
         }
         if (idx == parts.size) {
-            return "0m"
+            return "0s"
         }
         sb.append(parts[idx]).append(DURATION_UNITS[idx])
         if (idx < parts.size - 1) {
