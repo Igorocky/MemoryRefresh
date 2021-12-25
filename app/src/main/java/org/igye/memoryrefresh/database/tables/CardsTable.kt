@@ -44,7 +44,10 @@ class CardsTable(private val clock: Clock): TableWithVersioning(name = "CARDS") 
             stmtVer.bindLong(1, clock.instant().toEpochMilli())
             stmtVer.bindLong(2, id)
             if (stmtVer.executeUpdateDelete() != 1) {
-                throw MemoryRefreshException(msg = "stmtVer.executeUpdateDelete() != 1", errCode = ErrorCode.GENERAL)
+                throw MemoryRefreshException(
+                    msg = "stmtVer.executeUpdateDelete() != 1",
+                    errCode = ErrorCode.CARDS_TABLE_UNEXPECTED_NUMBER_OF_INSERTED_ROWS
+                )
             }
         }
         insert = object : InsertStmt {

@@ -43,7 +43,7 @@ class SharedFileReceiverViewModel(appContext: Context, beThreadPool: ExecutorSer
     @BeMethod
     fun saveSharedFile(args: SaveSharedFileArgs): BeRespose<Any> {
         return if (args.fileUri != sharedFileUri) {
-            BeRespose(err = BeErr(code = ErrorCode.GENERAL.code, msg = "fileInfo.uri != sharedFileUri"))
+            BeRespose(err = BeErr(code = ErrorCode.UNEXPECTED_SHARED_FILE_URI.code, msg = "fileInfo.uri != sharedFileUri"))
         } else {
             BeRespose(data = copyFile(fileUri = args.fileUri, fileName = args.fileName, fileType = args.fileType))
         }
@@ -63,7 +63,7 @@ class SharedFileReceiverViewModel(appContext: Context, beThreadPool: ExecutorSer
         } else if (fileName.endsWith(".zip")) {
             SharedFileType.BACKUP
         } else {
-            throw MemoryRefreshException(msg = "unsupported file type.", errCode = ErrorCode.GENERAL)
+            throw MemoryRefreshException(msg = "unsupported file type.", errCode = ErrorCode.UNSUPPORTED_FILE_TYPE)
         }
     }
 

@@ -55,7 +55,10 @@ class CardsScheduleTable(private val clock: Clock, private val cards: CardsTable
             stmtVer.bindLong(1, timestamp)
             stmtVer.bindLong(2, cardId)
             if (stmtVer.executeUpdateDelete() != 1) {
-                throw MemoryRefreshException(msg = "stmtVer.executeUpdateDelete() != 1", errCode = ErrorCode.GENERAL)
+                throw MemoryRefreshException(
+                    msg = "stmtVer.executeUpdateDelete() != 1",
+                    errCode = ErrorCode.CARDS_SCHEDULE_TABLE_UNEXPECTED_NUMBER_OF_INSERTED_ROWS
+                )
             }
         }
         insert = object : InsertStmt {

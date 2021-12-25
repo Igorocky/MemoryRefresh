@@ -5,7 +5,7 @@ import android.database.Cursor.*
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import org.igye.memoryrefresh.manager.DataManager.*
-import org.igye.memoryrefresh.ErrorCode.GENERAL
+import org.igye.memoryrefresh.ErrorCode.ERROR_IN_TEST
 import org.igye.memoryrefresh.common.Utils.MILLIS_IN_HOUR
 import org.igye.memoryrefresh.common.Utils.MILLIS_IN_MINUTE
 import org.igye.memoryrefresh.common.Utils.MILLIS_IN_SECOND
@@ -1463,7 +1463,7 @@ class DataManagerInstrumentedTest {
             FIELD_TYPE_INTEGER -> cursor.getLong(columnIndex)
             FIELD_TYPE_STRING -> cursor.getString(columnIndex)
             FIELD_TYPE_FLOAT -> cursor.getDouble(columnIndex)
-            else -> throw MemoryRefreshException(msg = "Unexpected type '$type'", errCode = GENERAL)
+            else -> throw MemoryRefreshException(msg = "Unexpected type '$type'", errCode = ERROR_IN_TEST)
         }
     }
 

@@ -46,7 +46,10 @@ class TranslationCardsTable(
             stmtVer.bindLong(1, clock.instant().toEpochMilli())
             stmtVer.bindLong(2, cardId)
             if (stmtVer.executeUpdateDelete() != 1) {
-                throw MemoryRefreshException(msg = "stmtVer.executeUpdateDelete() != 1", errCode = ErrorCode.GENERAL)
+                throw MemoryRefreshException(
+                    msg = "stmtVer.executeUpdateDelete() != 1",
+                    errCode = ErrorCode.TRANSLATION_CARDS_TABLE_UNEXPECTED_NUMBER_OF_INSERTED_ROWS
+                )
             }
         }
         insert = object : InsertStmt {

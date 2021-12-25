@@ -13,7 +13,10 @@ enum class CardType(val intValue: Long) {
                     return value
                 }
             }
-            throw MemoryRefreshException(msg = "Unexpected CardType code of '$intValue'", errCode = ErrorCode.GENERAL)
+            throw MemoryRefreshException(
+                msg = "Unexpected CardType code of '$intValue'",
+                errCode = ErrorCode.UNEXPECTED_CARD_TYPE_CODE
+            )
         }
     }
 }

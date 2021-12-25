@@ -31,7 +31,10 @@ object Utils {
                 .filter { it.getAnnotation(BeMethod::class.java) != null }
                 .forEach { method ->
                     if (resultMap.containsKey(method.name)) {
-                        throw MemoryRefreshException(msg = "resultMap.containsKey('${method.name}')", errCode = ErrorCode.GENERAL)
+                        throw MemoryRefreshException(
+                            msg = "resultMap.containsKey('${method.name}')",
+                            errCode = ErrorCode.DUPLICATED_BE_METHOD_NAME
+                        )
                     } else {
                         resultMap.put(method.name) { argStr ->
                             val parameterTypes = method.parameterTypes

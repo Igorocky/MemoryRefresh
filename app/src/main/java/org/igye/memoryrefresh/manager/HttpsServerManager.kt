@@ -39,9 +39,9 @@ class HttpsServerManager(
     fun startHttpServer(): BeRespose<HttpServerState> {
         val keyStorFile = settingsManager.getKeyStorFile()
         return if (keyStorFile == null) {
-            BeRespose(err = BeErr(code = ErrorCode.GENERAL.code, msg = "Key store is not defined."))
+            BeRespose(err = BeErr(code = ErrorCode.KEY_STORE_IS_NOT_DEFINED.code, msg = "Key store is not defined."))
         } else if (httpsServer.get() != null) {
-            BeRespose(err = BeErr(code = ErrorCode.GENERAL.code, msg = "Http server is already running."))
+            BeRespose(err = BeErr(code = ErrorCode.HTTP_SERVER_IS_ALREADY_RUNNING.code, msg = "Http server is already running."))
         } else {
             Intent(appContext, HttpsServerService::class.java).also { intent ->
                 appContext.startService(intent)
@@ -60,7 +60,7 @@ class HttpsServerManager(
                 ))
             } catch (ex: Exception) {
                 stopHttpServer()
-                return BeRespose(err = BeErr(code = ErrorCode.GENERAL.code, msg = ex.message?:ex.javaClass.name))
+                return BeRespose(err = BeErr(code = ErrorCode.ERROR_WHILE_STARTING_HTTP_SERVER.code, msg = ex.message?:ex.javaClass.name))
             }
             getHttpServerState()
         }
