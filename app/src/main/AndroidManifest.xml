@@ -15,7 +15,7 @@
         android:theme="@style/Theme.MemoryRefresh">
         <provider
                 android:name="androidx.core.content.FileProvider"
-                android:authorities="org.igye.memoryrefresh.fileprovider"
+                android:authorities="org.igye.memoryrefresh.fileprovider.dev"
                 android:grantUriPermissions="true"
                 android:exported="false">
             <meta-data
