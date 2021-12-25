@@ -1,6 +1,8 @@
 package org.igye.memoryrefresh
 
 enum class ErrorCode(val code: Long) {
+    UNRECOGNIZED_TIME_INTERVAL_UNIT(18L),
+    PAUSE_DURATION_IS_IN_INCORRECT_FORMAT(17L),
     SHARE_BACKUP(16L),
     BACKEND_METHOD_WAS_NOT_FOUND(15L),
     GET_TRANSLATE_CARD_HISTORY(14L),

@@ -41,10 +41,13 @@ class UtilsTest {
 
     @Test
     fun delayStrToMillis_correctly_translates_strings_to_millis() {
+        Assert.assertEquals(0L, delayStrToMillis("0s"))
         Assert.assertEquals(0L, delayStrToMillis("0m"))
         Assert.assertEquals(0L, delayStrToMillis("0h"))
         Assert.assertEquals(0L, delayStrToMillis("0d"))
         Assert.assertEquals(0L, delayStrToMillis("0M"))
+        Assert.assertEquals(1_000L, delayStrToMillis("1s"))
+        Assert.assertEquals(50_000L, delayStrToMillis("50s"))
         Assert.assertEquals(60_000L, delayStrToMillis("1m"))
         Assert.assertEquals(300_000L, delayStrToMillis("5m"))
         Assert.assertEquals(MILLIS_IN_HOUR, delayStrToMillis("1h"))

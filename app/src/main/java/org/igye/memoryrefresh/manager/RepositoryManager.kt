@@ -113,7 +113,7 @@ class RepositoryManager(
         return Try {
             val fileUri: Uri = FileProvider.getUriForFile(
                 context,
-                "org.igye.memoryrefresh.fileprovider.dev",
+                "org.igye.memoryrefresh.fileprovider",
                 File(backupDir, args.backupName)
             )
             shareFile.get()?.invoke(fileUri)

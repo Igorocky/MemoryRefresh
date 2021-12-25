@@ -131,11 +131,14 @@ object Utils {
         return sb.toString()
     }
 
-    private val attemptDelayPattern = Pattern.compile("^(\\d+)(M|d|h|m)$")
+    private val attemptDelayPattern = Pattern.compile("^(\\d+)(M|d|h|m|s)$")
     fun delayStrToMillis(pauseDuration: String): Long {
         val matcher = attemptDelayPattern.matcher(pauseDuration)
         if (!matcher.matches()) {
-            throw MemoryRefreshException(msg = "Pause duration '$pauseDuration' is in incorrect format.", errCode = ErrorCode.GENERAL)
+            throw MemoryRefreshException(
+                msg = "Pause duration '$pauseDuration' is in incorrect format.",
+                errCode = ErrorCode.PAUSE_DURATION_IS_IN_INCORRECT_FORMAT
+            )
         }
         var amount = matcher.group(1).toLong()
         if (amount > 365) {
@@ -167,10 +170,11 @@ object Utils {
 
     private fun getChronoUnit(unit: String): TemporalUnit {
         return when (unit) {
+            "s" -> ChronoUnit.SECONDS
             "m" -> ChronoUnit.MINUTES
             "h" -> ChronoUnit.HOURS
             "d" -> ChronoUnit.DAYS
-            else -> throw MemoryRefreshException(msg = "Unrecognized time interval unit: $unit", errCode = ErrorCode.GENERAL)
+            else -> throw MemoryRefreshException(msg = "Unrecognized time interval unit: $unit", errCode = ErrorCode.UNRECOGNIZED_TIME_INTERVAL_UNIT)
         }
     }
 }
