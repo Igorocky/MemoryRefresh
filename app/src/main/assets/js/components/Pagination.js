@@ -5,7 +5,7 @@ function Pagination({pageNumShift,numOfPages,curIdx,onChange}) {
     return RE.Container.row.left.center({},{style: {marginRight:'15px'}},
         RE.TextField(
             {
-                autoCorrect:'off', autoCapitalize:'none', spellCheck:'false',
+                autoCorrect: 'off', autoCapitalize: 'off', spellCheck:'false',
                 variant: 'outlined', label: 'Page',
                 style: {width: 80},
                 size: 'small',

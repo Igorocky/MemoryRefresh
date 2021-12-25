@@ -77,7 +77,7 @@ const RepeatTranslateCardCmp = ({cardId,cardsRemain,onDone,controlsContainer}) =
     function renderUserTranslation() {
         return RE.TextField({
             id: USER_INPUT_TEXT_FIELD,
-            autoCorrect: 'off', autoCapitalize: 'none', spellCheck: 'false',
+            autoCorrect: 'off', autoCapitalize: 'off', spellCheck: 'false',
             autoFocus: true,
             value: userInput,
             label: 'Translation',
@@ -139,7 +139,7 @@ const RepeatTranslateCardCmp = ({cardId,cardsRemain,onDone,controlsContainer}) =
         return RE.TextField({
             ref: delayTextField,
             id: CARD_DELAY_TEXT_FIELD,
-            autoCorrect: 'off', autoCapitalize: 'none', spellCheck: 'false',
+            autoCorrect: 'off', autoCapitalize: 'off', spellCheck: 'false',
             value: delay??'',
             label: 'Delay',
             variant: 'outlined',

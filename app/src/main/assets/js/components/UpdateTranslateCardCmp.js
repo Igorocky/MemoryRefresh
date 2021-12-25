@@ -50,7 +50,7 @@ const UpdateTranslateCardCmp = ({
     return RE.Container.col.top.left({}, {style: {marginBottom: '5px'}},
         renderButtons(),
         RE.If(hasValue(textToTranslate), () => RE.TextField({
-            autoCorrect: 'off', autoCapitalize: 'none', spellCheck: 'false',
+            autoCorrect: 'off', autoCapitalize: 'off', spellCheck: 'false',
             value: textToTranslate,
             label: 'Text to translate',
             variant: 'outlined',
@@ -69,7 +69,7 @@ const UpdateTranslateCardCmp = ({
             onKeyUp: event => event.nativeEvent.keyCode == ESCAPE_KEY_CODE ? onCancel?.() : null,
         })),
         RE.If(hasValue(translation), () => RE.TextField({
-            autoCorrect: 'off', autoCapitalize: 'none', spellCheck: 'false',
+            autoCorrect: 'off', autoCapitalize: 'off', spellCheck: 'false',
             value: translation,
             label: 'Translation',
             variant: 'outlined',
@@ -87,7 +87,7 @@ const UpdateTranslateCardCmp = ({
             onKeyUp: event => event.nativeEvent.keyCode == ESCAPE_KEY_CODE ? onCancel?.() : null,
         })),
         RE.If(hasValue(delay), () => RE.TextField({
-            autoCorrect: 'off', autoCapitalize: 'none', spellCheck: 'false',
+            autoCorrect: 'off', autoCapitalize: 'off', spellCheck: 'false',
             value: delay,
             label: 'Delay',
             variant: 'outlined',
