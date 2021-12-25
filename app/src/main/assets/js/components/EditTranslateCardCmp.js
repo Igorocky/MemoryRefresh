@@ -1,7 +1,7 @@
 "use strict";
 
 const EditTranslateCardCmp = ({card,translationEnabled,onCancelled,onSaved,onDeleted}) => {
-    const {renderMessagePopup, showError, confirmAction} = useMessagePopup()
+    const {renderMessagePopup, showError, confirmAction, showMessageWithProgress} = useMessagePopup()
 
     const [textToTranslate, setTextToTranslate] = useState(card.textToTranslate)
     const [translation, setTranslation] = useState(card.translation)
@@ -21,11 +21,13 @@ const EditTranslateCardCmp = ({card,translationEnabled,onCancelled,onSaved,onDel
     }
 
     async function saveChanges() {
+        const closeProgressIndicator = showMessageWithProgress({text: 'Saving changes...'})
         const res = await be.updateTranslateCard({
             cardId: card.id,
             textToTranslate: textToTranslate,
             translation: translationEnabled ? translation : null,
         })
+        closeProgressIndicator()
         if (!res.err) {
             onSaved()
         } else {
@@ -35,7 +37,9 @@ const EditTranslateCardCmp = ({card,translationEnabled,onCancelled,onSaved,onDel
 
     async function doDelete() {
         if (await confirmAction({text: 'Delete this card?'})) {
+            const closeProgressIndicator = showMessageWithProgress({text: 'Deleting...'})
             const res = await be.deleteTranslateCard({cardId:card.id})
+            closeProgressIndicator()
             if (res.err) {
                 await showError(res.err)
             } else {

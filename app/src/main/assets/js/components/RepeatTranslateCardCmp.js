@@ -9,6 +9,7 @@ const RepeatTranslateCardCmp = ({cardId,cardsRemain,onDone,controlsContainer}) =
     const [errorLoadingCard, setErrorLoadingCard] = useState(null)
     const [card, setCard] = useState(null)
     const [userInput, setUserInput] = useState('')
+    const [validationRequestIsInProgress, setValidationRequestIsInProgress] = useState(false)
     const [answerFromBE, setAnswerFromBE] = useState(null)
     const [answerFromBEIsShown, setAnswerFromBEIsShown] = useState(false)
     const [beValidationResult, setBeValidationResult] = useState(null)
@@ -101,11 +102,13 @@ const RepeatTranslateCardCmp = ({cardId,cardsRemain,onDone,controlsContainer}) =
     }
 
     async function validateTranslation() {
-        if (hasNoValue(beValidationResult)) {
+        if (hasNoValue(beValidationResult) && !validationRequestIsInProgress) {
             if (userInput.trim().length === 0) {
                 showMessage({text: 'Translation must not be empty.'})
             } else {
+                setValidationRequestIsInProgress(true)
                 const res = await be.validateTranslateCard({cardId, userProvidedTranslation: userInput})
+                setValidationRequestIsInProgress(false)
                 if (res.err) {
                     await showError(res.err)
                     return false
@@ -178,17 +181,21 @@ const RepeatTranslateCardCmp = ({cardId,cardsRemain,onDone,controlsContainer}) =
 
     function renderValidateButton() {
         if (hasNoValue(answerFromBE)) {
-            const disabled = hasValue(answerFromBE)
-            return iconButton({
-                iconName:'send',
-                onClick: async () => {
-                    if (!(await validateTranslation())) {
-                        focusUserTranslation()
-                    }
-                },
-                disabled,
-                iconStyle:{color:disabled?'lightgrey':'blue'}
-            })
+            if (validationRequestIsInProgress) {
+                return RE.span({}, RE.CircularProgress({size:24, style: {marginLeft: '5px'}}))
+            } else {
+                const disabled = hasValue(answerFromBE)
+                return iconButton({
+                    iconName:'send',
+                    onClick: async () => {
+                        if (!(await validateTranslation())) {
+                            focusUserTranslation()
+                        }
+                    },
+                    disabled,
+                    iconStyle:{color:disabled?'lightgrey':'blue'}
+                })
+            }
         } else {
             return iconButton({
                 iconName: answerFromBEIsShown ? 'visibility_off' : 'visibility',

@@ -244,6 +244,15 @@ function iconButton({iconName,onClick,disabled,iconStyle}) {
     )
 }
 
+const inButtonCircularProgressStyle = {
+    color: MuiColors.green[500],
+    position: 'absolute',
+    top: '50%',
+    left: '50%',
+    marginTop: -12,
+    marginLeft: -12,
+}
+
 function useMessagePopup() {
     const [dialogOpened, setDialogOpened] = useState(false)
     const [text, setText] = useState(null)
