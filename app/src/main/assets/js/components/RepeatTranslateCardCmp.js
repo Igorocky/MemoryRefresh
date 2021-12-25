@@ -83,7 +83,7 @@ const RepeatTranslateCardCmp = ({cardId,cardsRemain,onDone,controlsContainer}) =
             multiline: true,
             maxRows: 10,
             size: 'small',
-            inputProps: {cols:30},
+            inputProps: {cols:30, tabIndex:1},
             style: {backgroundColor:getUserInputBackgroundColor()},
             onChange: event => {
                 onUserInputChange({newUserInput:event.nativeEvent.target.value})
@@ -142,7 +142,7 @@ const RepeatTranslateCardCmp = ({cardId,cardsRemain,onDone,controlsContainer}) =
             multiline: false,
             maxRows: 10,
             size: 'small',
-            inputProps: {size:8},
+            inputProps: {size:8, tabIndex:2},
             onChange: event => {
                 const newText = event.nativeEvent.target.value
                 if (newText != delay) {
@@ -235,6 +235,7 @@ const RepeatTranslateCardCmp = ({cardId,cardsRemain,onDone,controlsContainer}) =
                     renderValidateButton(),
                 ),
                 RE.If(hasValue(answerFromBE) && isUserInputCorrect(), () => RE.Container.row.left.center({},{},
+                    RE.span({style:{marginRight:'10px'}}, card.schedule.timeSinceLastCheck),
                     renderDelay(),
                     renderNextButton(),
                 )),

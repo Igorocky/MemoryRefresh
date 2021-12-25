@@ -745,6 +745,7 @@ class DataManagerInstrumentedTest {
         assertEquals(CardType.TRANSLATION, nextCard1Resp1.type)
         assertEquals("karta1", nextCard1Resp1.textToTranslate)
         assertEquals("0m", nextCard1Resp1.schedule.delay)
+        assertEquals(time2, nextCard1Resp1.schedule.updatedAt)
 
         //when: 5. validate answer for card1 (a user provided correct answer)
         val time5 = testClock.plus(1, ChronoUnit.MINUTES)
@@ -894,6 +895,7 @@ class DataManagerInstrumentedTest {
         assertEquals(CardType.TRANSLATION, nextCard2Resp1.type)
         assertEquals("karta2", nextCard2Resp1.textToTranslate)
         assertEquals("0m", nextCard2Resp1.schedule.delay)
+        assertEquals(time8, nextCard2Resp1.schedule.updatedAt)
 
         //when: 11. validate answer for card2  (a user provided incorrect answer)
         val time11 = testClock.plus(1, ChronoUnit.MINUTES)
@@ -1032,6 +1034,7 @@ class DataManagerInstrumentedTest {
         assertEquals(CardType.TRANSLATION, nextCard2Resp2.type)
         assertEquals("karta2+", nextCard2Resp2.textToTranslate)
         assertEquals("5m", nextCard2Resp2.schedule.delay)
+        assertEquals(time12, nextCard2Resp2.schedule.updatedAt)
 
         //when: 17. validate answer for card2 (a user provided correct answer)
         val time17 = testClock.plus(1, ChronoUnit.MINUTES)

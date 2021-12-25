@@ -36,6 +36,7 @@ function createFeBeBridgeForUiTestMode() {
                 translation,
                 schedule: {
                     cardId: id,
+                    timeSinceLastCheck: '1d 3h',
                     delay: '0m',
                     nextAccessInMillis: 0,
                     nextAccessAt: new Date().getTime()
@@ -57,6 +58,7 @@ function createFeBeBridgeForUiTestMode() {
                 translation: card.translation,
                 schedule: {
                     cardId: card.schedule.cardId,
+                    timeSinceLastCheck: card.schedule.timeSinceLastCheck,
                     delay: card.schedule.delay,
                     nextAccessInMillis: card.schedule.nextAccessInMillis,
                     nextAccessAt: card.schedule.nextAccessAt,
@@ -95,6 +97,7 @@ function createFeBeBridgeForUiTestMode() {
                 translation: card.translation,
                 schedule: {
                     cardId: card.schedule.cardId,
+                    timeSinceLastCheck: card.schedule.timeSinceLastCheck,
                     delay: card.schedule.delay,
                     nextAccessInMillis: card.schedule.nextAccessInMillis,
                     nextAccessAt: card.schedule.nextAccessAt,

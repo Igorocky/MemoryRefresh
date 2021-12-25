@@ -7,6 +7,7 @@ data class TranslateCard(
     val textToTranslate:String,
     val translation:String,
     val schedule: CardSchedule,
+    val timeSinceLastCheck: String,
 ) {
     val type = CardType.TRANSLATION
 }

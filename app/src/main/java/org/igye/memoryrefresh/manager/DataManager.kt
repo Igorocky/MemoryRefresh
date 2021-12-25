@@ -1,6 +1,6 @@
 package org.igye.memoryrefresh.manager
 
-import org.igye.memoryrefresh.*
+import org.igye.memoryrefresh.ErrorCode
 import org.igye.memoryrefresh.ErrorCode.*
 import org.igye.memoryrefresh.common.BeMethod
 import org.igye.memoryrefresh.common.MemoryRefreshException
@@ -205,8 +205,8 @@ class DataManager(
     }
 
     private val selectCurrScheduleForCardQuery =
-        "select ${s.delay}, ${s.nextAccessInMillis}, ${s.nextAccessAt} from $s where ${s.cardId} = ?"
-    private val selectCurrScheduleForCardQueryСolumnNames = arrayOf(s.delay, s.nextAccessInMillis, s.nextAccessAt)
+        "select ${s.updatedAt}, ${s.delay}, ${s.nextAccessInMillis}, ${s.nextAccessAt} from $s where ${s.cardId} = ?"
+    private val selectCurrScheduleForCardQueryСolumnNames = arrayOf(s.updatedAt, s.delay, s.nextAccessInMillis, s.nextAccessAt)
     @Synchronized
     private fun selectCurrScheduleForCard(cardId: Long): Try<CardSchedule> {
         return getRepo().readableDatabase.doInTransaction {
@@ -217,6 +217,7 @@ class DataManager(
                 rowMapper = {
                     CardSchedule(
                         cardId = cardId,
+                        updatedAt = it.getLong(),
                         delay = it.getString(),
                         nextAccessInMillis = it.getLong(),
                         nextAccessAt = it.getLong()
@@ -231,16 +232,19 @@ class DataManager(
     @Synchronized
     private fun selectTranslateCardById(cardId: Long): Try<TranslateCard> {
         return getRepo().readableDatabase.doInTransaction {
+            val currTime = clock.instant().toEpochMilli()
             select(
                 query = selectTranslateCardByIdQuery,
                 args = arrayOf(cardId.toString()),
                 columnNames = selectTranslateCardByIdQueryColumnNames,
                 rowMapper = {
+                    val schedule = selectCurrScheduleForCard(cardId = cardId).get()
                     TranslateCard(
                         id = cardId,
                         textToTranslate = it.getString(),
                         translation = it.getString(),
-                        schedule = selectCurrScheduleForCard(cardId = cardId).get()
+                        schedule = schedule,
+                        timeSinceLastCheck = Utils.millisToDurationStr(currTime - schedule.updatedAt),
                     )
                 }
             ).rows[0]
