@@ -15,7 +15,7 @@ class CardsTable(private val clock: Clock): TableWithVersioning(name = "CARDS") 
     override fun create(db: SQLiteDatabase) {
         db.execSQL("""
                 CREATE TABLE $this (
-                    $id integer primary key,
+                    $id integer primary key autoincrement,
                     $type integer not null,
                     $createdAt integer not null
                 )
