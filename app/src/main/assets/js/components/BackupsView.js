@@ -6,6 +6,7 @@ const BackupsView = ({query,openView,setPageTitle}) => {
     const [focusedBackup, setFocusedBackup] = useState(null)
 
     const {renderMessagePopup, showMessage, confirmAction, showMessageWithProgress} = useMessagePopup()
+    const {renderMessagePopup:renderMessagePopup2, showError} = useMessagePopup()
 
     useEffect(async () => {
         const {data:allBackups} = await be.listAvailableBackups()
@@ -35,7 +36,7 @@ const BackupsView = ({query,openView,setPageTitle}) => {
                             ),
                             RE.td({},
                                 focusedBackup?.name === backup.name
-                                    ? iconButton({iconName:'share', onClick: () => be.shareBackup({backupName:backup.name})})
+                                    ? iconButton({iconName:'share', onClick: () => shareBackup({backupName:backup.name})})
                                     : null
                             ),
                         )
@@ -47,10 +48,6 @@ const BackupsView = ({query,openView,setPageTitle}) => {
 
     function renderBackup({backup}) {
         return `${backup.name} [${backup.size}]`
-    }
-
-    async function showError({code, msg}) {
-        return showMessage({text: `Error [${code}] - ${msg}`})
     }
 
     async function deleteBackup({backup}) {
@@ -78,6 +75,13 @@ const BackupsView = ({query,openView,setPageTitle}) => {
         }
     }
 
+    async function shareBackup({backupName}) {
+        const res = await be.shareBackup({backupName})
+        if (res.err) {
+            showError(res.err)
+        }
+    }
+
     async function doBackup() {
         if (await confirmAction({text: `Confirm creating a backup?`})) {
             const closeProgressWindow = showMessageWithProgress({text: `Creating a backup...`})
@@ -87,7 +91,7 @@ const BackupsView = ({query,openView,setPageTitle}) => {
                 const newBackupName = res.data.name
                 await showMessage({
                     text: `A backup was created '${newBackupName}'`,
-                    additionalActionsRenderer: () => iconButton({iconName:'share', onClick: () => be.shareBackup({backupName:newBackupName})})
+                    additionalActionsRenderer: () => iconButton({iconName:'share', onClick: () => shareBackup({backupName:newBackupName})})
                 })
                 setAllBackups(prev => [res.data, ...prev])
                 setFocusedBackup(null)
@@ -100,6 +104,7 @@ const BackupsView = ({query,openView,setPageTitle}) => {
     return RE.Container.col.top.left({style:{marginTop:'5px'}},{},
         RE.Button({variant:"contained", color:'primary', onClick: doBackup}, 'Backup'),
         renderAllBackups(),
-        renderMessagePopup()
+        renderMessagePopup(),
+        renderMessagePopup2(),
     )
 }

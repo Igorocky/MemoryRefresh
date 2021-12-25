@@ -72,8 +72,8 @@ const ViewSelector = ({}) => {
         const bgColor = viewName => viewName == selectedViewName ? '#00d0ff' : undefined
         const additionalButtons = [
             [
-                {key:BACKUPS_VIEW, viewName:BACKUPS_VIEW, iconName:"backup_table"},
-                {key:HTTP_SERVER_VIEW, viewName:HTTP_SERVER_VIEW, iconName:"devices"},
+                {key:BACKUPS_VIEW, viewName:BACKUPS_VIEW, iconName:"archive"},
+                {key:HTTP_SERVER_VIEW, viewName:HTTP_SERVER_VIEW, iconName:"reset_tv"},
             ]
         ]
         const buttons = [[

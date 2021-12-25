@@ -1,11 +1,11 @@
 package org.igye.memoryrefresh.manager
 
-import org.igye.memoryrefresh.ErrorCode
 import org.igye.memoryrefresh.ErrorCode.*
 import org.igye.memoryrefresh.common.BeMethod
 import org.igye.memoryrefresh.common.MemoryRefreshException
 import org.igye.memoryrefresh.common.Try
 import org.igye.memoryrefresh.common.Utils
+import org.igye.memoryrefresh.common.Utils.toBeResponse
 import org.igye.memoryrefresh.database.*
 import org.igye.memoryrefresh.dto.common.BeErr
 import org.igye.memoryrefresh.dto.common.BeRespose
@@ -301,19 +301,6 @@ class DataManager(
                 rowsMax = maxCardsNum
             )
         }
-    }
-
-    private fun <T> toBeResponse(errCode: ErrorCode): (Try<T>) -> BeRespose<T> = {
-        it
-            .map { BeRespose(data = it) }
-            .getIfSuccessOrElse {
-                BeRespose(
-                    err = BeErr(
-                        code = (if (it is MemoryRefreshException) it.errCode.code else null)?:errCode.code,
-                        msg = it.javaClass.canonicalName + ": " + it.message
-                    )
-                )
-            }
     }
 
 }

@@ -13,14 +13,14 @@ fun main() {
 }
 
 object Tools {
-    private val DEV_APP_ID = "org.igye.taggednotes.dev"
-    private val RELEASE_APP_ID = "org.igye.taggednotes"
+    private val DEV_APP_ID = "org.igye.memoryrefresh.dev"
+    private val RELEASE_APP_ID = "org.igye.memoryrefresh"
 
-    private val DEV_APP_NAME = "DEV-TaggedNotes"
-    private val RELEASE_APP_NAME = "TaggedNotes"
+    private val DEV_APP_NAME = "DEV-RemoryRefresh"
+    private val RELEASE_APP_NAME = "RemoryRefresh"
 
-    private val DEV_FILE_PROVIDER_NAME = "org.igye.taggednotes.fileprovider.dev"
-    private val RELEASE_FILE_PROVIDER_NAME = "org.igye.taggednotes.fileprovider"
+    private val DEV_FILE_PROVIDER_NAME = "org.igye.memoryrefresh.fileprovider.dev"
+    private val RELEASE_FILE_PROVIDER_NAME = "org.igye.memoryrefresh.fileprovider"
 
     private val DEV_APP_BACKGROUND_COLOR = "<body style=\"background-color: #d5f5e6\">"
     private val RELEASE_APP_BACKGROUND_COLOR = "<body>"

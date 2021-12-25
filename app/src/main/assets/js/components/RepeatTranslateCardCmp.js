@@ -249,7 +249,7 @@ const RepeatTranslateCardCmp = ({cardId,cardsRemain,onDone,controlsContainer}) =
                     renderValidateButton(),
                 ),
                 RE.If(hasValue(answerFromBE) && isUserInputCorrect(), () => RE.Container.row.left.center({},{},
-                    RE.span({style:{marginRight:'10px'}}, card.schedule.timeSinceLastCheck),
+                    RE.span({style:{marginRight:'10px'}}, card.timeSinceLastCheck),
                     renderDelay(),
                     renderNextButton(),
                 )),

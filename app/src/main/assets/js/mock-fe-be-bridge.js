@@ -34,9 +34,9 @@ function createFeBeBridgeForUiTestMode() {
                 id,
                 textToTranslate,
                 translation,
+                timeSinceLastCheck: '1d 3h',
                 schedule: {
                     cardId: id,
-                    timeSinceLastCheck: '1d 3h',
                     delay: '0m',
                     nextAccessInMillis: 0,
                     nextAccessAt: new Date().getTime()
@@ -56,9 +56,9 @@ function createFeBeBridgeForUiTestMode() {
                 id: card.id,
                 textToTranslate: card.textToTranslate,
                 translation: card.translation,
+                timeSinceLastCheck: card.timeSinceLastCheck,
                 schedule: {
                     cardId: card.schedule.cardId,
-                    timeSinceLastCheck: card.schedule.timeSinceLastCheck,
                     delay: card.schedule.delay,
                     nextAccessInMillis: card.schedule.nextAccessInMillis,
                     nextAccessAt: card.schedule.nextAccessAt,
@@ -95,9 +95,9 @@ function createFeBeBridgeForUiTestMode() {
                 id: card.id,
                 textToTranslate: card.textToTranslate,
                 translation: card.translation,
+                timeSinceLastCheck: card.timeSinceLastCheck,
                 schedule: {
                     cardId: card.schedule.cardId,
-                    timeSinceLastCheck: card.schedule.timeSinceLastCheck,
                     delay: card.schedule.delay,
                     nextAccessInMillis: card.schedule.nextAccessInMillis,
                     nextAccessAt: card.schedule.nextAccessAt,
@@ -129,101 +129,6 @@ function createFeBeBridgeForUiTestMode() {
     mockedBeFunctions.deleteTranslateCard = ({cardId}) => {
         removeIf(CARDS, c=>c.id===cardId)
         return okResponse(true)
-    }
-
-    const TAGS = []
-    const NOTES = []
-    const NOTES_TO_TAGS = []
-
-    mockedBeFunctions.saveNewTag = ({name}) => {
-        if (TAGS.find(t=>t.name==name)) {
-            return errResponse(1,`'${name}' tag already exists.`)
-        } else {
-            const id = (TAGS.map(t=>t.id).max()??0)+1
-            const newTag = {id,name,createdAt:new Date().getTime()}
-            TAGS.push(newTag)
-            return okResponse(newTag)
-        }
-    }
-
-    mockedBeFunctions.getTags = () => {
-        return okResponse(TAGS.map(t => ({...t})))
-    }
-
-    mockedBeFunctions.updateTag = ({id,name}) => {
-        const tagsToUpdate = TAGS.filter(t=>t.id==id)
-        for (const tag of tagsToUpdate) {
-            if (TAGS.find(t=> t.name==name && t.id != id)) {
-                return errResponse(1, `'${name}' tag already exists.`)
-            } else {
-                tag.name = name
-            }
-        }
-        return okResponse(tagsToUpdate.length)
-    }
-
-    mockedBeFunctions.deleteTag = ({id}) => {
-        // return errResponse(2,'Error while deleting a tag.')
-        if (NOTES_TO_TAGS.find(({noteId,tagId}) => tagId==id)) {
-            return errResponse(222,'This tag is used by a note.')
-        } else {
-            return okResponse(removeIf(TAGS,t => t.id==id))
-        }
-    }
-
-    mockedBeFunctions.saveNewNote = ({text, tagIds}) => {
-        const id = (NOTES.map(n=>n.id).max()??0)+1
-        const newNote = {id,text,createdAt:new Date().getTime()}
-        NOTES.push(newNote)
-        for (let tagId of tagIds) {
-            NOTES_TO_TAGS.push({noteId:id,tagId})
-        }
-        return okResponse(newNote)
-    }
-
-    mockedBeFunctions.getNotes = ({tagIdsToInclude=[],tagIdsToExclude=[],searchInDeleted = false}) => {
-        function getAllTagIdsOfNote({noteId}) {
-            return NOTES_TO_TAGS
-                .filter(({noteId:id,tagId})=>noteId==id)
-                .map(({tagId})=>tagId)
-        }
-        function hasTags({noteId,tagIds,atLeastOne = false}) {
-            let noteTagIds = getAllTagIdsOfNote({noteId})
-            if (atLeastOne) {
-                return hasValue(tagIds.find(id => noteTagIds.includes(id)))
-            } else {
-                return tagIds.length && tagIds.every(id => noteTagIds.includes(id))
-            }
-        }
-        let result = NOTES
-            .filter(note => searchInDeleted && note.isDeleted || !searchInDeleted && !note.isDeleted)
-            .filter(note => tagIdsToInclude.length == 0 || hasTags({noteId:note.id,tagIds:tagIdsToInclude}))
-            .filter(note => tagIdsToExclude.length == 0 || !hasTags({noteId:note.id, tagIds:tagIdsToExclude, atLeastOne:true}))
-            .map(note => ({...note, tagIds:getAllTagIdsOfNote({noteId:note.id})}))
-        return okResponse({items:result,complete:true})
-    }
-
-    mockedBeFunctions.getRemainingTagIds = (args) => {
-        return mockedBeFunctions.getNotes(args).mapData(({items}) => items.flatMap(n => n.tagIds).distinct())
-    }
-
-    mockedBeFunctions.updateNote = ({id,text,tagIds,isDeleted}) => {
-        const notesToUpdate = NOTES.filter(n=>n.id==id)
-        for (const note of notesToUpdate) {
-            if (hasValue(text)) {
-                note.text = text
-            }
-            if (hasValue(tagIds)) {
-                removeIf(NOTES_TO_TAGS, ({noteId}) => noteId == id)
-                for (let tagId of tagIds) {
-                    NOTES_TO_TAGS.push({noteId:note.id,tagId})
-                }
-            }
-            if (hasValue(isDeleted)) {
-                note.isDeleted = isDeleted
-            }
-        }
-        return okResponse(notesToUpdate.length)
     }
 
     mockedBeFunctions.doBackup = () => {
@@ -320,7 +225,7 @@ function createFeBeBridgeForUiTestMode() {
 
     return {
         createBeFunction,
-        feBeBridgeState: {mockedBeFunctions, TAGS, NOTES, NOTES_TO_TAGS},
+        feBeBridgeState: {mockedBeFunctions},
     }
 }
 

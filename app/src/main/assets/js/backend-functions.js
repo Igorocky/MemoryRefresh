@@ -22,15 +22,5 @@ const be = {
     updateTranslateCard: createBeFunction('updateTranslateCard'),
     getNextCardToRepeat: createBeFunction('getNextCardToRepeat'),
     deleteTranslateCard: createBeFunction('deleteTranslateCard'),
-
-    saveNewTag: createBeFunction('saveNewTag'),
-    getAllTags: createBeFunction('getTags'),
-    getRemainingTagIds: createBeFunction('getRemainingTagIds'),
-    updateTag: createBeFunction('updateTag'),
-    deleteTag: createBeFunction('deleteTag'),
-    saveNewNote: createBeFunction('saveNewNote'),
-    getNotes: createBeFunction('getNotes'),
-    updateNote: createBeFunction('updateNote'),
-
 }
 

@@ -3,6 +3,8 @@ package org.igye.memoryrefresh.common
 import android.content.Context
 import com.google.gson.Gson
 import org.igye.memoryrefresh.ErrorCode
+import org.igye.memoryrefresh.dto.common.BeErr
+import org.igye.memoryrefresh.dto.common.BeRespose
 import java.io.File
 import java.net.InetAddress
 import java.net.NetworkInterface
@@ -148,6 +150,19 @@ object Utils {
             unit = "d"
         }
         return getChronoUnit(unit).getDuration().getSeconds() * amount * 1000
+    }
+
+    fun <T> toBeResponse(errCode: ErrorCode): (Try<T>) -> BeRespose<T> = {
+        it
+            .map { BeRespose(data = it) }
+            .getIfSuccessOrElse {
+                BeRespose(
+                    err = BeErr(
+                        code = (if (it is MemoryRefreshException) it.errCode.code else null)?:errCode.code,
+                        msg = it.javaClass.canonicalName + ": " + it.message
+                    )
+                )
+            }
     }
 
     private fun getChronoUnit(unit: String): TemporalUnit {

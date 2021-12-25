@@ -3,7 +3,9 @@ package org.igye.memoryrefresh.manager
 import android.content.Context
 import android.net.Uri
 import androidx.core.content.FileProvider
+import org.igye.memoryrefresh.ErrorCode
 import org.igye.memoryrefresh.common.BeMethod
+import org.igye.memoryrefresh.common.Try
 import org.igye.memoryrefresh.common.Utils
 import org.igye.memoryrefresh.database.Repository
 import org.igye.memoryrefresh.dto.common.Backup
@@ -107,14 +109,15 @@ class RepositoryManager(
     data class ShareBackupArgs(val backupName:String)
     @BeMethod
     @Synchronized
-    fun shareBackup(args: ShareBackupArgs): BeRespose<Unit> {
-        val fileUri: Uri = FileProvider.getUriForFile(
-            context,
-            "org.igye.MemoryRefresh.fileprovider",
-            File(backupDir, args.backupName)
-        )
-        shareFile.get()?.invoke(fileUri)
-        return BeRespose(data = Unit)
+    fun shareBackup(args: ShareBackupArgs): BeRespose<Unit?> {
+        return Try {
+            val fileUri: Uri = FileProvider.getUriForFile(
+                context,
+                "org.igye.memoryrefresh.fileprovider.dev",
+                File(backupDir, args.backupName)
+            )
+            shareFile.get()?.invoke(fileUri)
+        }.apply(Utils.toBeResponse(ErrorCode.SHARE_BACKUP))
     }
 
     fun close() {
