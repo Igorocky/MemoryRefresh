@@ -1028,7 +1028,7 @@ class DataManagerInstrumentedTest {
 
         //then
         assertEquals(0, nextCardResp3.cardsRemain)
-        assertTrue(setOf("3m","4m","5m",).contains(nextCardResp3.nextCardIn))
+        assertTrue(setOf("3m","4m","5m",).contains(nextCardResp3.nextCardIn.split(" ")[0]))
 
         //when: 14. update textToTranslate for card2
         val time14 = testClock.plus(1, ChronoUnit.MINUTES)
@@ -1173,7 +1173,7 @@ class DataManagerInstrumentedTest {
 
         //then
         assertEquals(0, nextCardResp5.cardsRemain)
-        assertTrue(setOf("3m","4m","5m",).contains(nextCardResp5.nextCardIn))
+        assertTrue(setOf("3m","4m","5m",).contains(nextCardResp5.nextCardIn.split(" ")[0]))
 
         //when: 20. get next card (card2)
         testClock.plus(10, ChronoUnit.MINUTES)
