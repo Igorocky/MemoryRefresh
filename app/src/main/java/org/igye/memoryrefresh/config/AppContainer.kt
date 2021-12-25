@@ -24,15 +24,16 @@ class AppContainer(
 ) {
     val clock = Clock.systemDefaultZone()
     val beThreadPool: ExecutorService = Executors.newFixedThreadPool(4)
-    val repositoryManager = RepositoryManager(context = context, clock = clock, repositoryProvider = {createNewRepo()})
-    val dataManager = DataManager(clock = clock, repositoryManager = repositoryManager)
-    val settingsManager = SettingsManager(context = context)
-    val httpsServerManager = HttpsServerManager(appContext = context, settingsManager = settingsManager, javascriptInterface = listOf(dataManager))
 
     val cards = CardsTable(clock = clock)
     val cardsSchedule = CardsScheduleTable(clock = clock, cards = cards)
     val translationCards = TranslationCardsTable(clock = clock, cards = cards)
     val translationCardsLog = TranslationCardsLogTable(clock = clock)
+
+    val repositoryManager = RepositoryManager(context = context, clock = clock, repositoryProvider = {createNewRepo()})
+    val dataManager = DataManager(clock = clock, repositoryManager = repositoryManager)
+    val settingsManager = SettingsManager(context = context)
+    val httpsServerManager = HttpsServerManager(appContext = context, settingsManager = settingsManager, javascriptInterface = listOf(dataManager))
 
     fun createNewRepo(): Repository {
         return Repository(
@@ -61,6 +62,7 @@ class AppContainer(
         return MainActivityViewModel(
             appContext = context,
             dataManager = dataManager,
+            repositoryManager = repositoryManager,
             httpsServerManager = httpsServerManager,
             beThreadPool = beThreadPool
         )

@@ -2,6 +2,7 @@ package org.igye.memoryrefresh.manager
 
 import android.content.Context
 import android.content.Intent
+import org.igye.memoryrefresh.ErrorCode
 import org.igye.memoryrefresh.common.BeMethod
 import org.igye.memoryrefresh.common.Utils
 import org.igye.memoryrefresh.dto.common.BeErr
@@ -38,9 +39,9 @@ class HttpsServerManager(
     fun startHttpServer(): BeRespose<HttpServerState> {
         val keyStorFile = settingsManager.getKeyStorFile()
         return if (keyStorFile == null) {
-            BeRespose(err = BeErr(code = 1, msg = "Key store is not defined."))
+            BeRespose(err = BeErr(code = ErrorCode.GENERAL.code, msg = "Key store is not defined."))
         } else if (httpsServer.get() != null) {
-            BeRespose(err = BeErr(code = 2, msg = "Http server is already running."))
+            BeRespose(err = BeErr(code = ErrorCode.GENERAL.code, msg = "Http server is already running."))
         } else {
             Intent(appContext, HttpsServerService::class.java).also { intent ->
                 appContext.startService(intent)
@@ -59,7 +60,7 @@ class HttpsServerManager(
                 ))
             } catch (ex: Exception) {
                 stopHttpServer()
-                return BeRespose(err = BeErr(code = 2, msg = ex.message?:ex.javaClass.name))
+                return BeRespose(err = BeErr(code = ErrorCode.GENERAL.code, msg = ex.message?:ex.javaClass.name))
             }
             getHttpServerState()
         }

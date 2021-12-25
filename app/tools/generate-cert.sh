@@ -1,11 +1,11 @@
-export KEYSTORE_FILE_NAME='tagged-notes-ktor'
+export KEYSTORE_FILE_NAME='default-cert-ktor'
 export JKS_KEYSTORE_PATH="./$KEYSTORE_FILE_NAME.jks"
 export BKS_KEYSTORE_PATH="./$KEYSTORE_FILE_NAME.bks"
 export ALIAS='ktor'
-export PASSWD=''
+export PASSWD='dflt-pwd-nQV!?;4&5yZ?8}.'
 
 #generate a JKS
-keytool -genkey -keyalg RSA -alias $ALIAS -keystore $JKS_KEYSTORE_PATH -validity 365 -keysize 2048
+keytool -genkey -keyalg RSA -alias $ALIAS -keystore $JKS_KEYSTORE_PATH -validity 3650 -keysize 2048
 
 #convert the JKS to BKS format
 keytool -importkeystore -alias $ALIAS -srckeystore $JKS_KEYSTORE_PATH -srcstoretype JKS \

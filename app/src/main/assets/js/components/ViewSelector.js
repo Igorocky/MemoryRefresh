@@ -10,8 +10,6 @@ const HTTP_SERVER_VIEW = 'HTTP_SERVER_VIEW'
 
 const CREATE_CARD_VIEW = 'CREATE_CARD_VIEW'
 const REPEAT_CARDS_VIEW = 'REPEAT_CARDS_VIEW'
-const TAGS_VIEW = 'TAGS_VIEW'
-const SEARCH_NOTES_VIEW = 'SEARCH_NOTES_VIEW'
 
 const VIEWS = {}
 function addView({name, component}) {
@@ -27,9 +25,6 @@ addView({name: HTTP_SERVER_VIEW, component: HttpServerView})
 
 addView({name: CREATE_CARD_VIEW, component: CreateCardView})
 addView({name: REPEAT_CARDS_VIEW, component: RepeatCardsView})
-
-addView({name: TAGS_VIEW, component: TagsView})
-addView({name: SEARCH_NOTES_VIEW, component: SearchNotesView})
 
 const ViewSelector = ({}) => {
     const [currentViewUrl, setCurrentViewUrl] = useState(null)

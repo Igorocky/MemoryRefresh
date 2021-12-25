@@ -43,7 +43,7 @@ class SharedFileReceiverViewModel(appContext: Context, beThreadPool: ExecutorSer
     @BeMethod
     fun saveSharedFile(args: SaveSharedFileArgs): BeRespose<Any> {
         return if (args.fileUri != sharedFileUri) {
-            BeRespose<Any>(err = BeErr(code = 1, msg = "fileInfo.uri != sharedFileUri"))
+            BeRespose(err = BeErr(code = ErrorCode.GENERAL.code, msg = "fileInfo.uri != sharedFileUri"))
         } else {
             BeRespose(data = copyFile(fileUri = args.fileUri, fileName = args.fileName, fileType = args.fileType))
         }
