@@ -10,6 +10,7 @@ const RepeatTranslateCardCmp = ({cardId,cardsRemain,onDone,controlsContainer}) =
     const [card, setCard] = useState(null)
     const [userInput, setUserInput] = useState('')
     const [answerFromBE, setAnswerFromBE] = useState(null)
+    const [answerFromBEIsShown, setAnswerFromBEIsShown] = useState(false)
     const [beValidationResult, setBeValidationResult] = useState(null)
     const [delay, setDelay] = useState(null)
     const [autoFocusDelay, setAutoFocusDelay] = useState(false)
@@ -87,7 +88,15 @@ const RepeatTranslateCardCmp = ({cardId,cardsRemain,onDone,controlsContainer}) =
             onChange: event => {
                 onUserInputChange({newUserInput:event.nativeEvent.target.value})
             },
-            onKeyUp: event => (event.ctrlKey && event.keyCode === ENTER_KEY_CODE) ? validateTranslation() : null,
+            onKeyUp: event => {
+                if (event.ctrlKey && event.keyCode === ENTER_KEY_CODE) {
+                    if (!event.shiftKey) {
+                        validateTranslation()
+                    } else if (hasValue(answerFromBE)) {
+                        toggleShowAnswerButton()
+                    }
+                }
+            },
         })
     }
 
@@ -157,20 +166,39 @@ const RepeatTranslateCardCmp = ({cardId,cardsRemain,onDone,controlsContainer}) =
         return RE.div({}, `Cards remaining: ${cardsRemain}`)
     }
 
+    function focusUserTranslation() {
+        const userTextInput = document.getElementById(USER_INPUT_TEXT_FIELD)
+        userTextInput?.focus()
+        userTextInput?.scrollIntoView()
+    }
+
+    function toggleShowAnswerButton() {
+        setAnswerFromBEIsShown(prev => !prev)
+    }
+
     function renderValidateButton() {
-        const disabled = hasValue(answerFromBE)
-        return iconButton({
-            iconName:'send',
-            onClick: async () => {
-                if (!(await validateTranslation())) {
-                    const userTextInput = document.getElementById(USER_INPUT_TEXT_FIELD)
-                    userTextInput?.focus()
-                    userTextInput?.scrollIntoView()
-                }
-            },
-            disabled,
-            iconStyle:{color:disabled?'lightgrey':'blue'}
-        })
+        if (hasNoValue(answerFromBE)) {
+            const disabled = hasValue(answerFromBE)
+            return iconButton({
+                iconName:'send',
+                onClick: async () => {
+                    if (!(await validateTranslation())) {
+                        focusUserTranslation()
+                    }
+                },
+                disabled,
+                iconStyle:{color:disabled?'lightgrey':'blue'}
+            })
+        } else {
+            return iconButton({
+                iconName: answerFromBEIsShown ? 'visibility_off' : 'visibility',
+                onClick: () => {
+                    toggleShowAnswerButton()
+                    focusUserTranslation()
+                },
+                iconStyle: {color: 'blue'}
+            })
+        }
     }
 
     function renderNextButton() {
@@ -201,7 +229,7 @@ const RepeatTranslateCardCmp = ({cardId,cardsRemain,onDone,controlsContainer}) =
         } else {
             return RE.Container.col.top.left({},{style: {marginTop: '10px'}},
                 renderQuestion(),
-                RE.If(hasValue(answerFromBE) && !isUserInputCorrect(), renderExpectedTranslation),
+                RE.If(answerFromBEIsShown, renderExpectedTranslation),
                 RE.Container.row.left.center({},{},
                     renderUserTranslation(),
                     renderValidateButton(),
