@@ -5,6 +5,7 @@ const CreateCardView = ({query,openView,setPageTitle}) => {
 
     const [textToTranslate, setTextToTranslate] = useState('')
     const [translation, setTranslation] = useState('')
+    const [cardCounter, setCardCounter] = useState(0)
 
     async function createCard() {
         const res = await be.saveNewTranslateCard({textToTranslate, translation})
@@ -12,6 +13,7 @@ const CreateCardView = ({query,openView,setPageTitle}) => {
             await showMessage({text: 'New card was saved.'})
             setTextToTranslate('')
             setTranslation('')
+            setCardCounter(c => c + 1)
         } else {
             await showError(res.err)
         }
@@ -19,6 +21,7 @@ const CreateCardView = ({query,openView,setPageTitle}) => {
 
     return RE.Fragment({},
         re(UpdateTranslateCardCmp,{
+            key: cardCounter,
             textToTranslate,textToTranslateOnChange: newValue => setTextToTranslate(newValue),
             translation,translationOnChange: newValue => setTranslation(newValue),
             onSave: createCard, saveDisabled: !textToTranslate.length || !translation.length
