@@ -28,7 +28,7 @@ addView({name: REPEAT_CARDS_VIEW, component: RepeatCardsView})
 
 const ViewSelector = ({}) => {
     const [currentViewUrl, setCurrentViewUrl] = useState(null)
-    const [pageTitle, setPageTitle] = useState(null)
+    const [pageTitle, setPageTitle] = useState("MemoryRefresh")
     const [showMoreControlButtons, setShowMoreControlButtons] = useState(false)
 
     const controlsContainer = useRef(null)
