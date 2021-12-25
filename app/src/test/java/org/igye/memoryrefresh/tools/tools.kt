@@ -16,8 +16,8 @@ object Tools {
     private val DEV_APP_ID = "org.igye.memoryrefresh.dev"
     private val RELEASE_APP_ID = "org.igye.memoryrefresh"
 
-    private val DEV_APP_NAME = "DEV-RemoryRefresh"
-    private val RELEASE_APP_NAME = "RemoryRefresh"
+    private val DEV_APP_NAME = "DEV-MemoryRefresh"
+    private val RELEASE_APP_NAME = "MemoryRefresh"
 
     private val DEV_FILE_PROVIDER_NAME = "org.igye.memoryrefresh.fileprovider.dev"
     private val RELEASE_FILE_PROVIDER_NAME = "org.igye.memoryrefresh.fileprovider"
