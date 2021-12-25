@@ -26,6 +26,10 @@ function isFunction(obj) {
     return typeof obj === 'function'
 }
 
+function isUpperCase(char) {
+    return char.toUpperCase() === char
+}
+
 function arraysAreEqualAsSets(a,b) {
     if (hasNoValue(a) && hasNoValue(b)) {
         return true
