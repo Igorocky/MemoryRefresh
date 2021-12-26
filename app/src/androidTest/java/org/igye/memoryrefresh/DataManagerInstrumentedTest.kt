@@ -1338,6 +1338,120 @@ class DataManagerInstrumentedTest {
         assertEquals(false, card2History[1].isCorrect)
     }
 
+    @Test
+    fun saveNewTag_creates_new_tag() {
+        //given
+        val dm = createInmemoryDataManager()
+        val repo = dm.getRepo()
+        val t = repo.tags
+        val expectedTag1Name = "t1"
+        val expectedTag2Name = "t2"
+        val expectedTag3Name = "t3"
+        testClock.setFixedTime(1000)
+
+        //when
+        val time1 = testClock.plus(2000)
+        val tag1 = dm.saveNewTag(SaveNewTagArgs(name = expectedTag1Name)).data!!
+        val time2 = testClock.plus(2000)
+        val tag2 = dm.saveNewTag(SaveNewTagArgs(name = "  $expectedTag2Name   ")).data!!
+        val time3 = testClock.plus(2000)
+        val tag3 = dm.saveNewTag(SaveNewTagArgs(name = "\t $expectedTag3Name \t")).data!!
+
+        //then
+        assertEquals(expectedTag1Name, tag1.name)
+        assertEquals(expectedTag2Name, tag2.name)
+        assertEquals(expectedTag3Name, tag3.name)
+
+        assertTableContent(repo = repo, table = t, exactMatch = true, matchColumn = t.id, expectedRows = listOf(
+            listOf(t.id to tag1.id, t.createdAt to time1, t.name to expectedTag1Name),
+            listOf(t.id to tag2.id, t.createdAt to time2, t.name to expectedTag2Name),
+            listOf(t.id to tag3.id, t.createdAt to time3, t.name to expectedTag3Name),
+        ))
+    }
+
+    @Test
+    fun updateTag_updates_tag() {
+        //given
+        val dm = createInmemoryDataManager()
+        val repo = dm.getRepo()
+        val t = repo.tags
+        val expectedTag1Name = "t1"
+        val expectedTag2Name = "t2"
+        val expectedTag3Name = "t3"
+        testClock.setFixedTime(1000)
+
+        val time1 = testClock.plus(2000)
+        val tag1 = dm.saveNewTag(SaveNewTagArgs(name = expectedTag1Name)).data!!
+        val time2 = testClock.plus(2000)
+        val tag2 = dm.saveNewTag(SaveNewTagArgs(name = "  $expectedTag2Name   ")).data!!
+        val time3 = testClock.plus(2000)
+        val tag3 = dm.saveNewTag(SaveNewTagArgs(name = "\t $expectedTag3Name \t")).data!!
+
+        assertEquals(expectedTag1Name, tag1.name)
+        assertEquals(expectedTag2Name, tag2.name)
+        assertEquals(expectedTag3Name, tag3.name)
+
+        assertTableContent(repo = repo, table = t, exactMatch = true, matchColumn = t.id, expectedRows = listOf(
+            listOf(t.id to tag1.id, t.createdAt to time1, t.name to expectedTag1Name),
+            listOf(t.id to tag2.id, t.createdAt to time2, t.name to expectedTag2Name),
+            listOf(t.id to tag3.id, t.createdAt to time3, t.name to expectedTag3Name),
+        ))
+
+        //when
+        val time4 = testClock.plus(2000)
+        val tag4 = dm.updateTag(UpdateTagArgs(tagId = tag2.id, name = "  ddssdd  ")).data!!
+
+        //then
+        assertEquals("ddssdd", tag4.name)
+
+        assertTableContent(repo = repo, table = t, exactMatch = true, matchColumn = t.id, expectedRows = listOf(
+            listOf(t.id to tag1.id, t.createdAt to time1, t.name to expectedTag1Name),
+            listOf(t.id to tag2.id, t.createdAt to time2, t.name to "ddssdd"),
+            listOf(t.id to tag3.id, t.createdAt to time3, t.name to expectedTag3Name),
+        ))
+    }
+
+    @Test
+    fun deleteTag_deletes_tag() {
+        //given
+        val dm = createInmemoryDataManager()
+        val repo = dm.getRepo()
+        val t = repo.tags
+        val expectedTag1Name = "t1"
+        val expectedTag2Name = "t2"
+        val expectedTag3Name = "t3"
+        testClock.setFixedTime(1000)
+
+        val time1 = testClock.plus(2000)
+        val tag1 = dm.saveNewTag(SaveNewTagArgs(name = expectedTag1Name)).data!!
+        val time2 = testClock.plus(2000)
+        val tag2 = dm.saveNewTag(SaveNewTagArgs(name = "  $expectedTag2Name   ")).data!!
+        val time3 = testClock.plus(2000)
+        val tag3 = dm.saveNewTag(SaveNewTagArgs(name = "\t $expectedTag3Name \t")).data!!
+
+        assertEquals(expectedTag1Name, tag1.name)
+        assertEquals(expectedTag2Name, tag2.name)
+        assertEquals(expectedTag3Name, tag3.name)
+
+        assertTableContent(repo = repo, table = t, exactMatch = true, matchColumn = t.id, expectedRows = listOf(
+            listOf(t.id to tag1.id, t.createdAt to time1, t.name to expectedTag1Name),
+            listOf(t.id to tag2.id, t.createdAt to time2, t.name to expectedTag2Name),
+            listOf(t.id to tag3.id, t.createdAt to time3, t.name to expectedTag3Name),
+        ))
+
+        //when
+        testClock.plus(2000)
+        val tagDeletionResult = dm.deleteTag(DeleteTagArgs(tagId = tag2.id)).data!!
+
+        //then
+        assertTrue(tagDeletionResult)
+
+        assertTableContent(repo = repo, table = t, exactMatch = true, matchColumn = t.id, expectedRows = listOf(
+            listOf(t.id to tag1.id, t.createdAt to time1, t.name to expectedTag1Name),
+            listOf(t.id to tag3.id, t.createdAt to time3, t.name to expectedTag3Name),
+        ))
+    }
+
     private fun insert(repo: Repository, table: Table, rows: List<List<Pair<String,Any?>>>) {
         val query = """
             insert into $table (${rows[0].map { it.first }.joinToString(separator = ", ")}) 
