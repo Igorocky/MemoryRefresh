@@ -1,8 +1,10 @@
 package org.igye.memoryrefresh.common
 
 import android.content.Context
+import android.database.sqlite.SQLiteStatement
 import com.google.gson.Gson
 import org.igye.memoryrefresh.ErrorCode
+import org.igye.memoryrefresh.database.Table
 import org.igye.memoryrefresh.dto.common.BeErr
 import org.igye.memoryrefresh.dto.common.BeRespose
 import java.io.File
@@ -169,6 +171,30 @@ object Utils {
                     )
                 )
             }
+    }
+
+    fun executeInsert(table: Table, stmt: SQLiteStatement): Long {
+        val id = stmt.executeInsert()
+        if (id < 0) {
+            throw MemoryRefreshException(
+                errCode = ErrorCode.ERROR_INSERTING_A_RECORD_TO_A_TABLE,
+                msg = "Negative id was returned when inserting a record to $table table."
+            )
+        } else {
+            return id
+        }
+    }
+
+    fun executeUpdateDelete(table: Table, stmt: SQLiteStatement, expectedNumberOfRows: Int? = null): Int {
+        val count = stmt.executeUpdateDelete()
+        if (expectedNumberOfRows != null && count != expectedNumberOfRows) {
+            throw MemoryRefreshException(
+                errCode = ErrorCode.ERROR_UPDATING_OR_DELETING_FROM_A_TABLE,
+                msg = "Number of rows updated/deleted from $table doesn't match expected value."
+            )
+        } else {
+            return count
+        }
     }
 
     private fun getChronoUnit(unit: String): TemporalUnit {

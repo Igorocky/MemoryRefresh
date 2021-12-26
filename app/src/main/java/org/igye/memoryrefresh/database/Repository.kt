@@ -4,10 +4,7 @@ import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
 import androidx.core.database.sqlite.transaction
-import org.igye.memoryrefresh.database.tables.CardsScheduleTable
-import org.igye.memoryrefresh.database.tables.CardsTable
-import org.igye.memoryrefresh.database.tables.TranslationCardsLogTable
-import org.igye.memoryrefresh.database.tables.TranslationCardsTable
+import org.igye.memoryrefresh.database.tables.*
 
 class Repository(
     context: Context,
@@ -16,8 +13,10 @@ class Repository(
     val cardsSchedule: CardsScheduleTable,
     val translationCards: TranslationCardsTable,
     val translationCardsLog: TranslationCardsLogTable,
+    val tags: TagsTable,
+    val cardToTag: CardToTagTable
 ) : SQLiteOpenHelper(context, dbName, null, 1) {
-    private val allTables = listOf(cards, cardsSchedule, translationCards, translationCardsLog)
+    private val allTables = listOf(cards, cardsSchedule, translationCards, translationCardsLog, tags, cardToTag)
 
     override fun onCreate(db: SQLiteDatabase) {
         db.transaction {

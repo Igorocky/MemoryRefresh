@@ -8,6 +8,7 @@ import org.igye.memoryrefresh.common.BeMethod
 import org.igye.memoryrefresh.common.Try
 import org.igye.memoryrefresh.common.Utils
 import org.igye.memoryrefresh.database.Repository
+import org.igye.memoryrefresh.database.TagsStat
 import org.igye.memoryrefresh.dto.common.Backup
 import org.igye.memoryrefresh.dto.common.BeRespose
 import java.io.File
@@ -30,6 +31,7 @@ class RepositoryManager(
     val shareFile: AtomicReference<((Uri) -> Unit)?> = AtomicReference(null)
     private val repo: AtomicReference<Repository> = AtomicReference(repositoryProvider())
     private val dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssX").withZone(ZoneId.from(ZoneOffset.UTC))
+    val tagsStat = TagsStat(repositoryManager = this)
 
     @Synchronized
     fun getRepo(): Repository {
@@ -79,6 +81,7 @@ class RepositoryManager(
     @BeMethod
     @Synchronized
     fun restoreFromBackup(args: RestoreFromBackupArgs): BeRespose<String> {
+        tagsStat.reset()
         val dbName = getRepo().dbName
         val databasePath: File = context.getDatabasePath(dbName)
         val backupFile = File(backupDir, args.backupName)
@@ -121,6 +124,7 @@ class RepositoryManager(
     }
 
     fun close() {
+        tagsStat.reset()
         getRepo().close()
     }
 

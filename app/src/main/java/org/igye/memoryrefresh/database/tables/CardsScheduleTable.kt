@@ -1,8 +1,7 @@
 package org.igye.memoryrefresh.database.tables
 
 import android.database.sqlite.SQLiteDatabase
-import org.igye.memoryrefresh.ErrorCode
-import org.igye.memoryrefresh.common.MemoryRefreshException
+import org.igye.memoryrefresh.common.Utils
 import org.igye.memoryrefresh.database.TableWithVersioning
 import java.time.Clock
 
@@ -54,12 +53,7 @@ class CardsScheduleTable(private val clock: Clock, private val cards: CardsTable
         fun saveCurrentVersion(cardId: Long, timestamp: Long) {
             stmtVer.bindLong(1, timestamp)
             stmtVer.bindLong(2, cardId)
-            if (stmtVer.executeUpdateDelete() != 1) {
-                throw MemoryRefreshException(
-                    msg = "stmtVer.executeUpdateDelete() != 1",
-                    errCode = ErrorCode.CARDS_SCHEDULE_TABLE_UNEXPECTED_NUMBER_OF_INSERTED_ROWS
-                )
-            }
+            Utils.executeInsert(self.ver, stmtVer)
         }
         insert = object : InsertStmt {
             val stmt = db.compileStatement("insert into $self ($cardId,$updatedAt,$delay,$randomFactor,$nextAccessInMillis,$nextAccessAt) values (?,?,?,?,?,?)")
@@ -70,7 +64,7 @@ class CardsScheduleTable(private val clock: Clock, private val cards: CardsTable
                 stmt.bindDouble(4, randomFactor)
                 stmt.bindLong(5, nextAccessInMillis)
                 stmt.bindLong(6, nextAccessAt)
-                return stmt.executeInsert()
+                return Utils.executeInsert(self, stmt)
             }
         }
         update = object : UpdateStmt {
@@ -84,7 +78,7 @@ class CardsScheduleTable(private val clock: Clock, private val cards: CardsTable
                 stmt.bindLong(4, nextAccessInMillis)
                 stmt.bindLong(5, nextAccessAt)
                 stmt.bindLong(6, cardId)
-                return stmt.executeUpdateDelete()
+                return Utils.executeUpdateDelete(self, stmt, 1)
             }
 
         }
@@ -93,7 +87,7 @@ class CardsScheduleTable(private val clock: Clock, private val cards: CardsTable
             override fun invoke(cardId: Long): Int {
                 saveCurrentVersion(cardId = cardId, timestamp = clock.instant().toEpochMilli())
                 stmt.bindLong(1, cardId)
-                return stmt.executeUpdateDelete()
+                return Utils.executeUpdateDelete(self, stmt, 1)
             }
         }
     }

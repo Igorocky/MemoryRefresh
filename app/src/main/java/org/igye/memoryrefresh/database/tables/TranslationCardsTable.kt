@@ -1,8 +1,7 @@
 package org.igye.memoryrefresh.database.tables
 
 import android.database.sqlite.SQLiteDatabase
-import org.igye.memoryrefresh.ErrorCode
-import org.igye.memoryrefresh.common.MemoryRefreshException
+import org.igye.memoryrefresh.common.Utils
 import org.igye.memoryrefresh.database.TableWithVersioning
 import java.time.Clock
 
@@ -45,12 +44,7 @@ class TranslationCardsTable(
         fun saveCurrentVersion(cardId: Long) {
             stmtVer.bindLong(1, clock.instant().toEpochMilli())
             stmtVer.bindLong(2, cardId)
-            if (stmtVer.executeUpdateDelete() != 1) {
-                throw MemoryRefreshException(
-                    msg = "stmtVer.executeUpdateDelete() != 1",
-                    errCode = ErrorCode.TRANSLATION_CARDS_TABLE_UNEXPECTED_NUMBER_OF_INSERTED_ROWS
-                )
-            }
+            Utils.executeInsert(self.ver, stmtVer)
         }
         insert = object : InsertStmt {
             val stmt = db.compileStatement("insert into $self ($cardId,$textToTranslate,$translation) values (?,?,?)")
@@ -58,7 +52,7 @@ class TranslationCardsTable(
                 stmt.bindLong(1, cardId)
                 stmt.bindString(2, textToTranslate)
                 stmt.bindString(3, translation)
-                return stmt.executeInsert()
+                return Utils.executeInsert(self, stmt)
             }
         }
         update = object : UpdateStmt {
@@ -68,7 +62,7 @@ class TranslationCardsTable(
                 stmt.bindString(1, textToTranslate)
                 stmt.bindString(2, translation)
                 stmt.bindLong(3, cardId)
-                return stmt.executeUpdateDelete()
+                return Utils.executeUpdateDelete(self, stmt, 1)
             }
 
         }
@@ -77,7 +71,7 @@ class TranslationCardsTable(
             override fun invoke(cardId: Long): Int {
                 saveCurrentVersion(cardId = cardId)
                 stmt.bindLong(1, cardId)
-                return stmt.executeUpdateDelete()
+                return Utils.executeUpdateDelete(self, stmt, 1)
             }
         }
     }

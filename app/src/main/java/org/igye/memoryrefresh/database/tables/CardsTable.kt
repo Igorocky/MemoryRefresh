@@ -1,8 +1,7 @@
 package org.igye.memoryrefresh.database.tables
 
 import android.database.sqlite.SQLiteDatabase
-import org.igye.memoryrefresh.ErrorCode
-import org.igye.memoryrefresh.common.MemoryRefreshException
+import org.igye.memoryrefresh.common.Utils
 import org.igye.memoryrefresh.database.CardType
 import org.igye.memoryrefresh.database.TableWithVersioning
 import java.time.Clock
@@ -43,12 +42,7 @@ class CardsTable(private val clock: Clock): TableWithVersioning(name = "CARDS") 
         fun saveCurrentVersion(id: Long) {
             stmtVer.bindLong(1, clock.instant().toEpochMilli())
             stmtVer.bindLong(2, id)
-            if (stmtVer.executeUpdateDelete() != 1) {
-                throw MemoryRefreshException(
-                    msg = "stmtVer.executeUpdateDelete() != 1",
-                    errCode = ErrorCode.CARDS_TABLE_UNEXPECTED_NUMBER_OF_INSERTED_ROWS
-                )
-            }
+            Utils.executeInsert(self.ver, stmtVer)
         }
         insert = object : InsertStmt {
             val stmt = db.compileStatement("insert into $self ($type,$createdAt) values (?,?)")
@@ -56,7 +50,7 @@ class CardsTable(private val clock: Clock): TableWithVersioning(name = "CARDS") 
                 val currTime = clock.instant().toEpochMilli()
                 stmt.bindLong(1, cardType.intValue)
                 stmt.bindLong(2, currTime)
-                return stmt.executeInsert()
+                return Utils.executeInsert(self, stmt)
             }
         }
         update = object : UpdateStmt {
@@ -65,7 +59,7 @@ class CardsTable(private val clock: Clock): TableWithVersioning(name = "CARDS") 
                 saveCurrentVersion(id = id)
                 stmt.bindLong(1, cardType.intValue)
                 stmt.bindLong(2, id)
-                return stmt.executeUpdateDelete()
+                return Utils.executeUpdateDelete(self, stmt, 1)
             }
 
         }
@@ -74,7 +68,7 @@ class CardsTable(private val clock: Clock): TableWithVersioning(name = "CARDS") 
             override fun invoke(id:Long): Int {
                 saveCurrentVersion(id = id)
                 stmt.bindLong(1, id)
-                return stmt.executeUpdateDelete()
+                return Utils.executeUpdateDelete(self, stmt, 1)
             }
         }
     }

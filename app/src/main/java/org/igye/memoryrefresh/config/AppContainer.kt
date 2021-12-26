@@ -4,10 +4,7 @@ import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import org.igye.memoryrefresh.database.Repository
-import org.igye.memoryrefresh.database.tables.CardsScheduleTable
-import org.igye.memoryrefresh.database.tables.CardsTable
-import org.igye.memoryrefresh.database.tables.TranslationCardsLogTable
-import org.igye.memoryrefresh.database.tables.TranslationCardsTable
+import org.igye.memoryrefresh.database.tables.*
 import org.igye.memoryrefresh.manager.DataManager
 import org.igye.memoryrefresh.manager.HttpsServerManager
 import org.igye.memoryrefresh.manager.RepositoryManager
@@ -29,6 +26,8 @@ class AppContainer(
     val cardsSchedule = CardsScheduleTable(clock = clock, cards = cards)
     val translationCards = TranslationCardsTable(clock = clock, cards = cards)
     val translationCardsLog = TranslationCardsLogTable(clock = clock)
+    val tags = TagsTable(clock = clock)
+    val cardToTag = CardToTagTable(clock = clock, cards = cards, tags = tags)
 
     val repositoryManager = RepositoryManager(context = context, clock = clock, repositoryProvider = {createNewRepo()})
     val dataManager = DataManager(clock = clock, repositoryManager = repositoryManager)
@@ -47,6 +46,8 @@ class AppContainer(
             cardsSchedule = cardsSchedule,
             translationCards = translationCards,
             translationCardsLog = translationCardsLog,
+            tags = tags,
+            cardToTag = cardToTag
         )
     }
 

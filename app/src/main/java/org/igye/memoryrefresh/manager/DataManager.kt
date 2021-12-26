@@ -37,6 +37,7 @@ class DataManager(
         } else if (translation.isBlank()) {
             BeRespose(err = BeErr(code = SAVE_NEW_TRANSLATE_CARD_TRANSLATION_IS_EMPTY.code, msg = "Translation should not be empty."))
         } else {
+            repositoryManager.tagsStat.tagsCouldChange()
             val repo = getRepo()
             repo.writableDatabase.doInTransactionTry {
                 val cardId = repo.cards.insert(cardType = CardType.TRANSLATION)
@@ -167,12 +168,10 @@ class DataManager(
         val repo = getRepo()
         return repo.writableDatabase.doInTransaction {
             repo.translationCards.delete(cardId = args.cardId)
-            repo.cardsSchedule.delete(cardId = args.cardId)
-            repo.cards.delete(id = args.cardId)
+            deleteCard(cardId = args.cardId)
             true
         }.apply(toBeResponse(DELETE_TRANSLATE_CARD_EXCEPTION))
     }
-
 
     data class GetTranslateCardHistoryArgs(val cardId:Long)
     private val getTranslateCardHistoryQuery =
@@ -202,6 +201,63 @@ class DataManager(
                 isHistoryFull = historyRecords.allRawsRead
             )
         }.apply(toBeResponse(GET_TRANSLATE_CARD_HISTORY))
+    }
+
+    data class SaveNewTagArgs(val name:String)
+    @BeMethod
+    fun saveNewTag(args:SaveNewTagArgs): BeRespose<Tag> {
+        val name = args.name.trim()
+        return if (name.isBlank()) {
+            BeRespose(err = BeErr(code = SAVE_NEW_TAG_NAME_IS_EMPTY.code, msg = "Name of a new tag should not be empty."))
+        } else {
+            val repo = getRepo()
+            repo.writableDatabase.doInTransaction {
+                repositoryManager.tagsStat.tagsCouldChange()
+                Tag(
+                    id = repo.tags.insert(name = name),
+                    name = name
+                )
+            }.apply(toBeResponse(SAVE_NEW_TAG))
+        }
+    }
+
+    data class UpdateTagArgs(val tagId:Long, val name:String)
+    @BeMethod
+    fun updateTag(args:UpdateTagArgs): BeRespose<Tag> {
+        val newName = args.name.trim()
+        return if (newName.isBlank()) {
+            BeRespose(err = BeErr(code = UPDATE_TAG_NAME_IS_EMPTY.code, msg = "Name of a tag should not be empty."))
+        } else {
+            val repo = getRepo()
+            repo.writableDatabase.doInTransaction {
+                repo.tags.update(id = args.tagId, name = newName)
+                Tag(
+                    id = args.tagId,
+                    name = newName
+                )
+            }.apply(toBeResponse(UPDATE_TAG))
+        }
+    }
+
+    data class DeleteTagArgs(val tagId:Long)
+    @BeMethod
+    fun deleteTag(args:DeleteTagArgs): BeRespose<Boolean> {
+        val repo = getRepo()
+        return repo.writableDatabase.doInTransaction {
+            repo.tags.delete(id = args.tagId)
+            true
+        }.apply(toBeResponse(DELETE_TAG))
+    }
+
+    @Synchronized
+    private fun deleteCard(cardId: Long) {
+        val repo = getRepo()
+        repo.writableDatabase.doInTransaction {
+            repo.cardToTag.delete(cardId = cardId)
+            repositoryManager.tagsStat.tagsCouldChange()
+            repo.cardsSchedule.delete(cardId = cardId)
+            repo.cards.delete(id = cardId)
+        }
     }
 
     private val selectCurrScheduleForCardQuery =

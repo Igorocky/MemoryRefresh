@@ -1,12 +1,13 @@
 package org.igye.memoryrefresh.database.tables
 
 import android.database.sqlite.SQLiteDatabase
+import org.igye.memoryrefresh.common.Utils
 import org.igye.memoryrefresh.database.Table
 import java.time.Clock
 
 class TranslationCardsLogTable(
     private val clock: Clock,
-): Table(name = "TRANSLATION_CARDS_LOG") {
+): Table(tableName = "TRANSLATION_CARDS_LOG") {
     val recId = "REC_ID"
     val timestamp = "TIMESTAMP"
     val cardId = "CARD_ID"
@@ -40,7 +41,7 @@ class TranslationCardsLogTable(
                 stmt.bindLong(2, cardId)
                 stmt.bindString(3, translation)
                 stmt.bindLong(4, if (matched) 1 else 0)
-                return stmt.executeInsert()
+                return Utils.executeInsert(self, stmt)
             }
         }
     }
