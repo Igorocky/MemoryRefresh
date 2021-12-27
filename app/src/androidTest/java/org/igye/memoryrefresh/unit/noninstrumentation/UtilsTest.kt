@@ -1,4 +1,4 @@
-package org.igye.memoryrefresh
+package org.igye.memoryrefresh.unit.noninstrumentation
 
 import org.igye.memoryrefresh.common.Utils.MILLIS_IN_DAY
 import org.igye.memoryrefresh.common.Utils.MILLIS_IN_HOUR
@@ -7,9 +7,12 @@ import org.igye.memoryrefresh.common.Utils.delayStrToMillis
 import org.igye.memoryrefresh.common.Utils.millisToDurationStr
 import org.junit.Assert
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.junit.runners.JUnit4
 import java.time.Instant
 import java.time.temporal.ChronoUnit
 
+@RunWith(JUnit4::class)
 class UtilsTest {
     @Test
     open fun millisToDurationStr_produces_expected_results() {
