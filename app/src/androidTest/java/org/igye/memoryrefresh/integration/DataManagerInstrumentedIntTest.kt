@@ -1,13 +1,14 @@
 package org.igye.memoryrefresh.integration
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import org.igye.memoryrefresh.common.InstrumentedTestBase
+import androidx.test.platform.app.InstrumentationRegistry
 import org.igye.memoryrefresh.common.Utils
 import org.igye.memoryrefresh.common.Utils.MILLIS_IN_HOUR
 import org.igye.memoryrefresh.common.Utils.MILLIS_IN_MINUTE
 import org.igye.memoryrefresh.database.CardType
 import org.igye.memoryrefresh.dto.domain.TranslateCard
 import org.igye.memoryrefresh.manager.DataManager.*
+import org.igye.memoryrefresh.testutils.InstrumentedTestBase
 import org.junit.Assert.*
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -15,6 +16,13 @@ import java.time.temporal.ChronoUnit
 
 @RunWith(AndroidJUnit4::class)
 class DataManagerInstrumentedIntTest: InstrumentedTestBase() {
+
+    @Test
+    fun useAppContext() {
+        // Context of the app under test.
+        val appContext = InstrumentationRegistry.getInstrumentation().targetContext
+        assertEquals("org.igye.memoryrefresh.dev", appContext.packageName)
+    }
 
     @Test
     fun test_scenario_1_create_card_and_edit_it_twice() {
@@ -33,10 +41,10 @@ class DataManagerInstrumentedIntTest: InstrumentedTestBase() {
         //when: create a new translation card
         testClock.setFixedTime(1000L)
         val timeCrt = testClock.instant().toEpochMilli()
-        val actualCreatedCardId = dm.saveNewTranslateCard(
-            SaveNewTranslateCardArgs(textToTranslate = expectedTextToTranslate1, translation = expectedTranslation1)
+        val actualCreatedCardId = dm.createTranslateCard(
+            CreateTranslateCardArgs(textToTranslate = expectedTextToTranslate1, translation = expectedTranslation1)
         ).data!!
-        val actualCreatedCard = dm.getTranslateCardById(GetTranslateCardByIdArgs(cardId = actualCreatedCardId)).data!!
+        val actualCreatedCard = dm.readTranslateCardById(ReadTranslateCardByIdArgs(cardId = actualCreatedCardId)).data!!
 
         //then: a new card is created successfully
         assertEquals(expectedTextToTranslate1, actualCreatedCard.textToTranslate)
@@ -67,7 +75,7 @@ class DataManagerInstrumentedIntTest: InstrumentedTestBase() {
         dm.updateTranslateCard(
             UpdateTranslateCardArgs(cardId = actualCreatedCard.id, textToTranslate = "$expectedTextToTranslate1  ", translation = "\t$expectedTranslation1")
         )
-        val responseAfterEdit1 = dm.getTranslateCardById(GetTranslateCardByIdArgs(cardId = actualCreatedCard.id))
+        val responseAfterEdit1 = dm.readTranslateCardById(ReadTranslateCardByIdArgs(cardId = actualCreatedCard.id))
 
         //then: the card stays in the same state - no actual edit was done
         val translateCardAfterEdit1: TranslateCard = responseAfterEdit1.data!!
@@ -100,7 +108,7 @@ class DataManagerInstrumentedIntTest: InstrumentedTestBase() {
         dm.updateTranslateCard(
             UpdateTranslateCardArgs(cardId = actualCreatedCard.id, textToTranslate = "  $expectedTextToTranslate2  ", translation = "\t$expectedTranslation2  ")
         )
-        val responseAfterEdit2 = dm.getTranslateCardById(GetTranslateCardByIdArgs(cardId = actualCreatedCard.id))
+        val responseAfterEdit2 = dm.readTranslateCardById(ReadTranslateCardByIdArgs(cardId = actualCreatedCard.id))
 
         //then: the values of card are updated and the previous version of the card is saved to the corresponding VER table
         val translateCardAfterEdit2: TranslateCard = responseAfterEdit2.data!!
@@ -162,10 +170,10 @@ class DataManagerInstrumentedIntTest: InstrumentedTestBase() {
 
         //when: 2. create a new card1
         val time2 = testClock.plus(1, ChronoUnit.MINUTES)
-        val card1Id = dm.saveNewTranslateCard(
-            SaveNewTranslateCardArgs(textToTranslate = "karta1", translation = "card1")
+        val card1Id = dm.createTranslateCard(
+            CreateTranslateCardArgs(textToTranslate = "karta1", translation = "card1")
         ).data!!
-        val createCard1Resp = dm.getTranslateCardById(GetTranslateCardByIdArgs(cardId = card1Id)).data!!
+        val createCard1Resp = dm.readTranslateCardById(ReadTranslateCardByIdArgs(cardId = card1Id)).data!!
 
         //then
         assertEquals("karta1", createCard1Resp.textToTranslate)
@@ -203,7 +211,7 @@ class DataManagerInstrumentedIntTest: InstrumentedTestBase() {
 
         //when: 4. get translate card by card1 id
         testClock.plus(1, ChronoUnit.SECONDS)
-        val nextCard1Resp1 = dm.getTranslateCardById(GetTranslateCardByIdArgs(cardId = card1Id)).data!!
+        val nextCard1Resp1 = dm.readTranslateCardById(ReadTranslateCardByIdArgs(cardId = card1Id)).data!!
 
         //then
         assertEquals(card1Id, nextCard1Resp1.id)
@@ -242,7 +250,7 @@ class DataManagerInstrumentedIntTest: InstrumentedTestBase() {
         //when 6. set delay for card1
         val time6 = testClock.plus(1, ChronoUnit.MINUTES)
         dm.updateTranslateCard(UpdateTranslateCardArgs(cardId = card1Id, recalculateDelay = true, delay = "1d"))
-        val setDelayCard1Resp1 = dm.getTranslateCardById(GetTranslateCardByIdArgs(cardId = card1Id)).data!!
+        val setDelayCard1Resp1 = dm.readTranslateCardById(ReadTranslateCardByIdArgs(cardId = card1Id)).data!!
 
         //then
         assertEquals(card1Id, card1Id)
@@ -272,7 +280,7 @@ class DataManagerInstrumentedIntTest: InstrumentedTestBase() {
         //when: 7. update translation for card1
         val time7 = testClock.plus(1, ChronoUnit.MINUTES)
         dm.updateTranslateCard(UpdateTranslateCardArgs(cardId = card1Id, translation = "card1+"))
-        val updTranslationCard1Resp1 = dm.getTranslateCardById(GetTranslateCardByIdArgs(cardId = card1Id)).data!!
+        val updTranslationCard1Resp1 = dm.readTranslateCardById(ReadTranslateCardByIdArgs(cardId = card1Id)).data!!
 
         //then
         assertEquals(card1Id, updTranslationCard1Resp1.id)
@@ -305,10 +313,10 @@ class DataManagerInstrumentedIntTest: InstrumentedTestBase() {
 
         //when: 8. create a new card2
         val time8 = testClock.plus(1, ChronoUnit.MINUTES)
-        val card2Id = dm.saveNewTranslateCard(
-            SaveNewTranslateCardArgs(textToTranslate = "karta2", translation = "card2")
+        val card2Id = dm.createTranslateCard(
+            CreateTranslateCardArgs(textToTranslate = "karta2", translation = "card2")
         ).data!!
-        val createCard2Resp = dm.getTranslateCardById(GetTranslateCardByIdArgs(cardId = card2Id)).data!!
+        val createCard2Resp = dm.readTranslateCardById(ReadTranslateCardByIdArgs(cardId = card2Id)).data!!
 
         //then
         assertEquals("karta2", createCard2Resp.textToTranslate)
@@ -355,7 +363,7 @@ class DataManagerInstrumentedIntTest: InstrumentedTestBase() {
 
         //when: 10. get translate card by card2 id
         testClock.plus(1, ChronoUnit.SECONDS)
-        val nextCard2Resp1 = dm.getTranslateCardById(GetTranslateCardByIdArgs(cardId = card2Id)).data!!
+        val nextCard2Resp1 = dm.readTranslateCardById(ReadTranslateCardByIdArgs(cardId = card2Id)).data!!
 
         //then
         assertEquals(card2Id, nextCard2Resp1.id)
@@ -402,7 +410,7 @@ class DataManagerInstrumentedIntTest: InstrumentedTestBase() {
         //when: 12. set delay for card2
         val time12 = testClock.plus(1, ChronoUnit.MINUTES)
         dm.updateTranslateCard(UpdateTranslateCardArgs(cardId = card2Id, recalculateDelay = true, delay = "5m")).data!!
-        val setDelayCard2Resp1 = dm.getTranslateCardById(GetTranslateCardByIdArgs(cardId = card2Id)).data!!
+        val setDelayCard2Resp1 = dm.readTranslateCardById(ReadTranslateCardByIdArgs(cardId = card2Id)).data!!
 
         //then
         assertEquals(card2Id, setDelayCard2Resp1.id)
@@ -447,7 +455,7 @@ class DataManagerInstrumentedIntTest: InstrumentedTestBase() {
         //when: 14. update textToTranslate for card2
         val time14 = testClock.plus(1, ChronoUnit.MINUTES)
         dm.updateTranslateCard(UpdateTranslateCardArgs(cardId = card2Id, textToTranslate = "karta2+"))
-        val updTextToTranslateCard2Resp1 = dm.getTranslateCardById(GetTranslateCardByIdArgs(cardId = card2Id)).data!!
+        val updTextToTranslateCard2Resp1 = dm.readTranslateCardById(ReadTranslateCardByIdArgs(cardId = card2Id)).data!!
 
         //then
         assertEquals(card2Id, updTextToTranslateCard2Resp1.id)
@@ -496,7 +504,7 @@ class DataManagerInstrumentedIntTest: InstrumentedTestBase() {
 
         //when: 16. get translate card by card2 id
         testClock.plus(1, ChronoUnit.SECONDS)
-        val nextCard2Resp2 = dm.getTranslateCardById(GetTranslateCardByIdArgs(cardId = card2Id)).data!!
+        val nextCard2Resp2 = dm.readTranslateCardById(ReadTranslateCardByIdArgs(cardId = card2Id)).data!!
 
         //then
         assertEquals(card2Id, nextCard2Resp2.id)
@@ -546,7 +554,7 @@ class DataManagerInstrumentedIntTest: InstrumentedTestBase() {
         //when: 18. set delay for card2
         val time18 = testClock.plus(1, ChronoUnit.MINUTES)
         dm.updateTranslateCard(UpdateTranslateCardArgs(cardId = card2Id, recalculateDelay = true, delay = "5m"))
-        val setDelayCard2Resp2 = dm.getTranslateCardById(GetTranslateCardByIdArgs(cardId = card2Id)).data!!
+        val setDelayCard2Resp2 = dm.readTranslateCardById(ReadTranslateCardByIdArgs(cardId = card2Id)).data!!
 
         //then
         assertEquals(card2Id, setDelayCard2Resp2.id)
@@ -604,7 +612,7 @@ class DataManagerInstrumentedIntTest: InstrumentedTestBase() {
         //when: 21. correct schedule for card1 (provide the same value, no change expected)
         val time21 = testClock.plus(10, ChronoUnit.SECONDS)
         dm.updateTranslateCard(UpdateTranslateCardArgs(cardId = card1Id, delay = "1d"))
-        val setDelayCard1Resp2 = dm.getTranslateCardById(GetTranslateCardByIdArgs(cardId = card1Id)).data!!
+        val setDelayCard1Resp2 = dm.readTranslateCardById(ReadTranslateCardByIdArgs(cardId = card1Id)).data!!
 
         //then
         assertEquals(card1Id, setDelayCard1Resp2.id)
@@ -654,7 +662,7 @@ class DataManagerInstrumentedIntTest: InstrumentedTestBase() {
         //when: 23. correct schedule for card1 (provide new value)
         val time23 = testClock.plus(10, ChronoUnit.SECONDS)
         dm.updateTranslateCard(UpdateTranslateCardArgs(cardId = card1Id, delay = "0m"))
-        val setDelayCard1Resp3 = dm.getTranslateCardById(GetTranslateCardByIdArgs(cardId = card1Id)).data!!
+        val setDelayCard1Resp3 = dm.readTranslateCardById(ReadTranslateCardByIdArgs(cardId = card1Id)).data!!
 
         //then
         assertEquals(card1Id, setDelayCard1Resp3.id)
@@ -744,7 +752,7 @@ class DataManagerInstrumentedIntTest: InstrumentedTestBase() {
         ))
 
         //when: 26. request history for card2
-        val card2History = dm.getTranslateCardHistory(GetTranslateCardHistoryArgs(cardId = card2Id)).data!!.historyRecords
+        val card2History = dm.readTranslateCardHistory(ReadTranslateCardHistoryArgs(cardId = card2Id)).data!!.historyRecords
 
         //then
         assertEquals(2, card2History.size)
@@ -849,7 +857,7 @@ class DataManagerInstrumentedIntTest: InstrumentedTestBase() {
         //when
         for (i in 0 until numOfCalcs) {
             dm.updateTranslateCard(UpdateTranslateCardArgs(cardId = cardId, delay = delayStr, recalculateDelay = true))
-            val beRespose = dm.getTranslateCardById(GetTranslateCardByIdArgs(cardId = cardId))
+            val beRespose = dm.readTranslateCardById(ReadTranslateCardByIdArgs(cardId = cardId))
             val schedule = beRespose.data!!.schedule
             val actualDelay = schedule.nextAccessInMillis
             assertEquals(testClock.instant().toEpochMilli() + actualDelay, schedule.nextAccessAt)

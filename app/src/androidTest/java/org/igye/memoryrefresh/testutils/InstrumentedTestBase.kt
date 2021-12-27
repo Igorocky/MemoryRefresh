@@ -1,9 +1,10 @@
-package org.igye.memoryrefresh.common
+package org.igye.memoryrefresh.testutils
 
 import android.database.Cursor
 import android.database.Cursor.*
 import androidx.test.platform.app.InstrumentationRegistry
 import org.igye.memoryrefresh.ErrorCode.ERROR_IN_TEST
+import org.igye.memoryrefresh.common.MemoryRefreshException
 import org.igye.memoryrefresh.database.CardType
 import org.igye.memoryrefresh.database.Repository
 import org.igye.memoryrefresh.database.Table
