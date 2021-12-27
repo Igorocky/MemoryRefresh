@@ -43,11 +43,13 @@ class DataManagerInstrumentedTest {
     }
 
     @Test
-    fun saveNewTranslateCard_saves_new_translate_card() {
+    fun saveNewTranslateCard_saves_new_translate_card_without_tags() {
         //given
         val dm = createInmemoryDataManager()
         val repo = dm.getRepo()
         val c = repo.cards
+        val tg = repo.tags
+        val ctg = repo.cardToTag
         val t = repo.translationCards
         val s = repo.cardsSchedule
         val l = repo.translationCardsLog
@@ -57,12 +59,12 @@ class DataManagerInstrumentedTest {
         testClock.setFixedTime(time1)
 
         //when
-        val actualTranslateCardResp = dm.saveNewTranslateCard(
+        val translateCardId = dm.saveNewTranslateCard(
             SaveNewTranslateCardArgs(textToTranslate = " $expectedTextToTranslate\t", translation = "  \t$expectedTranslation    \t  ")
-        )
+        ).data!!
+        val translateCard = dm.getTranslateCardById(GetTranslateCardByIdArgs(cardId = translateCardId)).data!!
 
         //then
-        val translateCard: TranslateCard = actualTranslateCardResp.data!!
         assertEquals(expectedTextToTranslate, translateCard.textToTranslate)
         assertEquals(expectedTranslation, translateCard.translation)
         assertEquals("0m", translateCard.schedule.delay)
@@ -73,6 +75,71 @@ class DataManagerInstrumentedTest {
             listOf(c.id to translateCard.id, c.type to TR_TP, c.createdAt to time1)
         ))
         assertTableContent(repo = repo, table = c.ver, exactMatch = true, expectedRows = listOf())
+
+        assertTableContent(repo = repo, table = tg, exactMatch = true, expectedRows = listOf())
+        assertTableContent(repo = repo, table = ctg, exactMatch = true, expectedRows = listOf())
+
+        assertTableContent(repo = repo, table = t, matchColumn = t.cardId, expectedRows = listOf(
+            listOf(t.cardId to translateCard.id, t.textToTranslate to expectedTextToTranslate, t.translation to expectedTranslation)
+        ))
+        assertTableContent(repo = repo, table = t.ver, exactMatch = true, expectedRows = listOf())
+
+        assertTableContent(repo = repo, table = s, matchColumn = s.cardId, expectedRows = listOf(
+            listOf(s.cardId to translateCard.id, s.delay to "0m", s.nextAccessInMillis to 0L, s.nextAccessAt to time1)
+        ))
+        assertTableContent(repo = repo, table = s.ver, exactMatch = true, expectedRows = listOf())
+
+        assertTableContent(repo = repo, table = l, exactMatch = true, expectedRows = listOf())
+    }
+
+    @Test
+    fun saveNewTranslateCard_saves_new_translate_card_with_tags() {
+        //given
+        val dm = createInmemoryDataManager()
+        val repo = dm.getRepo()
+        val c = repo.cards
+        val tg = repo.tags
+        val ctg = repo.cardToTag
+        val t = repo.translationCards
+        val s = repo.cardsSchedule
+        val l = repo.translationCardsLog
+        val expectedTextToTranslate = "A"
+        val expectedTranslation = "a"
+        val time1 = 1000L
+        testClock.setFixedTime(time1)
+        val tagId1 = dm.saveNewTag(SaveNewTagArgs("t1")).data!!
+        val tagId2 = dm.saveNewTag(SaveNewTagArgs("t2")).data!!
+
+        //when
+        val translateCardId = dm.saveNewTranslateCard(
+            SaveNewTranslateCardArgs(
+                textToTranslate = " $expectedTextToTranslate\t",
+                translation = "  \t$expectedTranslation    \t  ",
+                tagIds = setOf(tagId1, tagId2)
+            )
+        ).data!!
+        val translateCard = dm.getTranslateCardById(GetTranslateCardByIdArgs(cardId = translateCardId)).data!!
+
+        //then
+        assertEquals(expectedTextToTranslate, translateCard.textToTranslate)
+        assertEquals(expectedTranslation, translateCard.translation)
+        assertEquals("0m", translateCard.schedule.delay)
+        assertEquals(0, translateCard.schedule.nextAccessInMillis)
+        assertEquals(time1, translateCard.schedule.nextAccessAt)
+
+        assertTableContent(repo = repo, table = c, matchColumn = c.id, expectedRows = listOf(
+            listOf(c.id to translateCard.id, c.type to TR_TP, c.createdAt to time1)
+        ))
+        assertTableContent(repo = repo, table = c.ver, exactMatch = true, expectedRows = listOf())
+
+        assertTableContent(repo = repo, table = tg, exactMatch = true, expectedRows = listOf(
+            listOf(tg.id to tagId1, tg.createdAt to time1, tg.name to "t1"),
+            listOf(tg.id to tagId2, tg.createdAt to time1, tg.name to "t2"),
+        ))
+        assertTableContent(repo = repo, table = ctg, exactMatch = true, expectedRows = listOf(
+            listOf(ctg.cardId to translateCardId, ctg.tagId to tagId1),
+            listOf(ctg.cardId to translateCardId, ctg.tagId to tagId2),
+        ))
 
         assertTableContent(repo = repo, table = t, matchColumn = t.cardId, expectedRows = listOf(
             listOf(t.cardId to translateCard.id, t.textToTranslate to expectedTextToTranslate, t.translation to expectedTranslation)
@@ -102,7 +169,7 @@ class DataManagerInstrumentedTest {
         val timeCreated = testClock.instant().toEpochMilli()
         val cardId = dm.saveNewTranslateCard(
             SaveNewTranslateCardArgs(textToTranslate = expectedTextToTranslate, translation = expectedTranslation)
-        ).data!!.id
+        ).data!!
 
         //when
         val timeDeleted = testClock.plus(1000)
@@ -146,7 +213,7 @@ class DataManagerInstrumentedTest {
         val timeCreated1 = testClock.instant().toEpochMilli()
         val cardId1 = dm.saveNewTranslateCard(
             SaveNewTranslateCardArgs(textToTranslate = expectedTextToTranslate1, translation = expectedTranslation1)
-        ).data!!.id
+        ).data!!
         val timeDeleted1 = testClock.plus(1000)
         dm.deleteTranslateCard(DeleteTranslateCardArgs(cardId = cardId1))
 
@@ -154,7 +221,7 @@ class DataManagerInstrumentedTest {
         val timeCreated2 = testClock.plus(1000)
         val cardId2 = dm.saveNewTranslateCard(
             SaveNewTranslateCardArgs(textToTranslate = expectedTextToTranslate2, translation = expectedTranslation2)
-        ).data!!.id
+        ).data!!
 
         //then
         assertNotEquals(cardId1, cardId2)
@@ -200,12 +267,12 @@ class DataManagerInstrumentedTest {
         //when: create a new translation card
         testClock.setFixedTime(1000L)
         val timeCrt = testClock.instant().toEpochMilli()
-        val responseAfterCreate = dm.saveNewTranslateCard(
+        val actualCreatedCardId = dm.saveNewTranslateCard(
             SaveNewTranslateCardArgs(textToTranslate = expectedTextToTranslate1, translation = expectedTranslation1)
-        )
+        ).data!!
+        val actualCreatedCard = dm.getTranslateCardById(GetTranslateCardByIdArgs(cardId = actualCreatedCardId)).data!!
 
         //then: a new card is created successfully
-        val actualCreatedCard: TranslateCard = responseAfterCreate.data!!
         assertEquals(expectedTextToTranslate1, actualCreatedCard.textToTranslate)
         assertEquals(expectedTranslation1, actualCreatedCard.translation)
         assertEquals("0m", actualCreatedCard.schedule.delay)
@@ -231,9 +298,10 @@ class DataManagerInstrumentedTest {
 
         //when: edit the card but provide same values
         testClock.plus(5000)
-        val responseAfterEdit1 = dm.updateTranslateCard(
+        dm.updateTranslateCard(
             UpdateTranslateCardArgs(cardId = actualCreatedCard.id, textToTranslate = "$expectedTextToTranslate1  ", translation = "\t$expectedTranslation1")
         )
+        val responseAfterEdit1 = dm.getTranslateCardById(GetTranslateCardByIdArgs(cardId = actualCreatedCard.id))
 
         //then: the card stays in the same state - no actual edit was done
         val translateCardAfterEdit1: TranslateCard = responseAfterEdit1.data!!
@@ -263,9 +331,10 @@ class DataManagerInstrumentedTest {
         //when: provide new values when editing the card
         testClock.plus(5000)
         val timeEdt2 = testClock.instant().toEpochMilli()
-        val responseAfterEdit2 = dm.updateTranslateCard(
+        dm.updateTranslateCard(
             UpdateTranslateCardArgs(cardId = actualCreatedCard.id, textToTranslate = "  $expectedTextToTranslate2  ", translation = "\t$expectedTranslation2  ")
         )
+        val responseAfterEdit2 = dm.getTranslateCardById(GetTranslateCardByIdArgs(cardId = actualCreatedCard.id))
 
         //then: the values of card are updated and the previous version of the card is saved to the corresponding VER table
         val translateCardAfterEdit2: TranslateCard = responseAfterEdit2.data!!
@@ -683,7 +752,7 @@ class DataManagerInstrumentedTest {
         val baseTime = 1_000
 
         testClock.setFixedTime(baseTime)
-        val cardId = dm.saveNewTranslateCard(SaveNewTranslateCardArgs(textToTranslate = "A", translation = "a")).data!!.id
+        val cardId = dm.saveNewTranslateCard(SaveNewTranslateCardArgs(textToTranslate = "A", translation = "a")).data!!
 
         val validationTime1 = testClock.plus(3, ChronoUnit.MINUTES)
         assertTrue(dm.validateTranslateCard(ValidateTranslateCardArgs(cardId = cardId, userProvidedTranslation = "a")).data!!.isCorrect)
@@ -747,12 +816,12 @@ class DataManagerInstrumentedTest {
 
         //when: 2. create a new card1
         val time2 = testClock.plus(1, ChronoUnit.MINUTES)
-        val createCard1Resp = dm.saveNewTranslateCard(
+        val card1Id = dm.saveNewTranslateCard(
             SaveNewTranslateCardArgs(textToTranslate = "karta1", translation = "card1")
         ).data!!
+        val createCard1Resp = dm.getTranslateCardById(GetTranslateCardByIdArgs(cardId = card1Id)).data!!
 
         //then
-        val card1Id = createCard1Resp.id
         assertEquals("karta1", createCard1Resp.textToTranslate)
         assertEquals("card1", createCard1Resp.translation)
         assertEquals("0m", createCard1Resp.schedule.delay)
@@ -826,10 +895,11 @@ class DataManagerInstrumentedTest {
 
         //when 6. set delay for card1
         val time6 = testClock.plus(1, ChronoUnit.MINUTES)
-        val setDelayCard1Resp1 = dm.updateTranslateCard(UpdateTranslateCardArgs(cardId = card1Id, recalculateDelay = true, delay = "1d")).data!!
+        dm.updateTranslateCard(UpdateTranslateCardArgs(cardId = card1Id, recalculateDelay = true, delay = "1d"))
+        val setDelayCard1Resp1 = dm.getTranslateCardById(GetTranslateCardByIdArgs(cardId = card1Id)).data!!
 
         //then
-        assertEquals(card1Id, setDelayCard1Resp1.id)
+        assertEquals(card1Id, card1Id)
         assertEquals("1d", setDelayCard1Resp1.schedule.delay)
 
         assertTableContent(repo = repo, table = c, matchColumn = c.id, exactMatch = true, expectedRows = listOf(
@@ -855,7 +925,8 @@ class DataManagerInstrumentedTest {
 
         //when: 7. update translation for card1
         val time7 = testClock.plus(1, ChronoUnit.MINUTES)
-        val updTranslationCard1Resp1 = dm.updateTranslateCard(UpdateTranslateCardArgs(cardId = card1Id, translation = "card1+")).data!!
+        dm.updateTranslateCard(UpdateTranslateCardArgs(cardId = card1Id, translation = "card1+"))
+        val updTranslationCard1Resp1 = dm.getTranslateCardById(GetTranslateCardByIdArgs(cardId = card1Id)).data!!
 
         //then
         assertEquals(card1Id, updTranslationCard1Resp1.id)
@@ -888,12 +959,12 @@ class DataManagerInstrumentedTest {
 
         //when: 8. create a new card2
         val time8 = testClock.plus(1, ChronoUnit.MINUTES)
-        val createCard2Resp = dm.saveNewTranslateCard(
+        val card2Id = dm.saveNewTranslateCard(
             SaveNewTranslateCardArgs(textToTranslate = "karta2", translation = "card2")
         ).data!!
+        val createCard2Resp = dm.getTranslateCardById(GetTranslateCardByIdArgs(cardId = card2Id)).data!!
 
         //then
-        val card2Id = createCard2Resp.id
         assertEquals("karta2", createCard2Resp.textToTranslate)
         assertEquals("card2", createCard2Resp.translation)
         assertEquals("0m", createCard2Resp.schedule.delay)
@@ -984,7 +1055,8 @@ class DataManagerInstrumentedTest {
 
         //when: 12. set delay for card2
         val time12 = testClock.plus(1, ChronoUnit.MINUTES)
-        val setDelayCard2Resp1 = dm.updateTranslateCard(UpdateTranslateCardArgs(cardId = card2Id, recalculateDelay = true, delay = "5m")).data!!
+        dm.updateTranslateCard(UpdateTranslateCardArgs(cardId = card2Id, recalculateDelay = true, delay = "5m")).data!!
+        val setDelayCard2Resp1 = dm.getTranslateCardById(GetTranslateCardByIdArgs(cardId = card2Id)).data!!
 
         //then
         assertEquals(card2Id, setDelayCard2Resp1.id)
@@ -1028,7 +1100,8 @@ class DataManagerInstrumentedTest {
 
         //when: 14. update textToTranslate for card2
         val time14 = testClock.plus(1, ChronoUnit.MINUTES)
-        val updTextToTranslateCard2Resp1 = dm.updateTranslateCard(UpdateTranslateCardArgs(cardId = card2Id, textToTranslate = "karta2+")).data!!
+        dm.updateTranslateCard(UpdateTranslateCardArgs(cardId = card2Id, textToTranslate = "karta2+"))
+        val updTextToTranslateCard2Resp1 = dm.getTranslateCardById(GetTranslateCardByIdArgs(cardId = card2Id)).data!!
 
         //then
         assertEquals(card2Id, updTextToTranslateCard2Resp1.id)
@@ -1126,7 +1199,8 @@ class DataManagerInstrumentedTest {
 
         //when: 18. set delay for card2
         val time18 = testClock.plus(1, ChronoUnit.MINUTES)
-        val setDelayCard2Resp2 = dm.updateTranslateCard(UpdateTranslateCardArgs(cardId = card2Id, recalculateDelay = true, delay = "5m")).data!!
+        dm.updateTranslateCard(UpdateTranslateCardArgs(cardId = card2Id, recalculateDelay = true, delay = "5m"))
+        val setDelayCard2Resp2 = dm.getTranslateCardById(GetTranslateCardByIdArgs(cardId = card2Id)).data!!
 
         //then
         assertEquals(card2Id, setDelayCard2Resp2.id)
@@ -1183,7 +1257,8 @@ class DataManagerInstrumentedTest {
 
         //when: 21. correct schedule for card1 (provide the same value, no change expected)
         val time21 = testClock.plus(10, ChronoUnit.SECONDS)
-        val setDelayCard1Resp2 = dm.updateTranslateCard(UpdateTranslateCardArgs(cardId = card1Id, delay = "1d")).data!!
+        dm.updateTranslateCard(UpdateTranslateCardArgs(cardId = card1Id, delay = "1d"))
+        val setDelayCard1Resp2 = dm.getTranslateCardById(GetTranslateCardByIdArgs(cardId = card1Id)).data!!
 
         //then
         assertEquals(card1Id, setDelayCard1Resp2.id)
@@ -1232,7 +1307,8 @@ class DataManagerInstrumentedTest {
 
         //when: 23. correct schedule for card1 (provide new value)
         val time23 = testClock.plus(10, ChronoUnit.SECONDS)
-        val setDelayCard1Resp3 = dm.updateTranslateCard(UpdateTranslateCardArgs(cardId = card1Id, delay = "0m")).data!!
+        dm.updateTranslateCard(UpdateTranslateCardArgs(cardId = card1Id, delay = "0m"))
+        val setDelayCard1Resp3 = dm.getTranslateCardById(GetTranslateCardByIdArgs(cardId = card1Id)).data!!
 
         //then
         assertEquals(card1Id, setDelayCard1Resp3.id)
@@ -1351,21 +1427,42 @@ class DataManagerInstrumentedTest {
 
         //when
         val time1 = testClock.plus(2000)
-        val tag1 = dm.saveNewTag(SaveNewTagArgs(name = expectedTag1Name)).data!!
+        val tagId1 = dm.saveNewTag(SaveNewTagArgs(name = expectedTag1Name)).data!!
         val time2 = testClock.plus(2000)
-        val tag2 = dm.saveNewTag(SaveNewTagArgs(name = "  $expectedTag2Name   ")).data!!
+        val tagId2 = dm.saveNewTag(SaveNewTagArgs(name = "  $expectedTag2Name   ")).data!!
         val time3 = testClock.plus(2000)
-        val tag3 = dm.saveNewTag(SaveNewTagArgs(name = "\t $expectedTag3Name \t")).data!!
+        val tagId3 = dm.saveNewTag(SaveNewTagArgs(name = "\t $expectedTag3Name \t")).data!!
 
         //then
-        assertEquals(expectedTag1Name, tag1.name)
-        assertEquals(expectedTag2Name, tag2.name)
-        assertEquals(expectedTag3Name, tag3.name)
+        assertTableContent(repo = repo, table = t, exactMatch = true, matchColumn = t.id, expectedRows = listOf(
+            listOf(t.id to tagId1, t.createdAt to time1, t.name to expectedTag1Name),
+            listOf(t.id to tagId2, t.createdAt to time2, t.name to expectedTag2Name),
+            listOf(t.id to tagId3, t.createdAt to time3, t.name to expectedTag3Name),
+        ))
+    }
+
+    @Test
+    fun saveNewTag_doesnt_allow_to_save_tag_with_same_name() {
+        //given
+        val dm = createInmemoryDataManager()
+        val repo = dm.getRepo()
+        val t = repo.tags
+        testClock.setFixedTime(1000)
+        insert(repo = repo, table = t, rows = listOf(
+            listOf(t.id to 1, t.createdAt to 1000, t.name to "ttt")
+        ))
+        assertTableContent(repo = repo, table = t, exactMatch = true, matchColumn = t.id, expectedRows = listOf(
+            listOf(t.id to 1, t.createdAt to 1000, t.name to "ttt"),
+        ))
+
+        //when
+        val err = dm.saveNewTag(SaveNewTagArgs(name = "ttt")).err!!
+
+        //then
+        assertEquals("A tag with name 'ttt' already exists.", err.msg)
 
         assertTableContent(repo = repo, table = t, exactMatch = true, matchColumn = t.id, expectedRows = listOf(
-            listOf(t.id to tag1.id, t.createdAt to time1, t.name to expectedTag1Name),
-            listOf(t.id to tag2.id, t.createdAt to time2, t.name to expectedTag2Name),
-            listOf(t.id to tag3.id, t.createdAt to time3, t.name to expectedTag3Name),
+            listOf(t.id to 1, t.createdAt to 1000, t.name to "ttt"),
         ))
     }
 
@@ -1381,33 +1478,66 @@ class DataManagerInstrumentedTest {
         testClock.setFixedTime(1000)
 
         val time1 = testClock.plus(2000)
-        val tag1 = dm.saveNewTag(SaveNewTagArgs(name = expectedTag1Name)).data!!
+        val tagId1 = dm.saveNewTag(SaveNewTagArgs(name = expectedTag1Name)).data!!
         val time2 = testClock.plus(2000)
-        val tag2 = dm.saveNewTag(SaveNewTagArgs(name = "  $expectedTag2Name   ")).data!!
+        val tagId2 = dm.saveNewTag(SaveNewTagArgs(name = "  $expectedTag2Name   ")).data!!
         val time3 = testClock.plus(2000)
-        val tag3 = dm.saveNewTag(SaveNewTagArgs(name = "\t $expectedTag3Name \t")).data!!
-
-        assertEquals(expectedTag1Name, tag1.name)
-        assertEquals(expectedTag2Name, tag2.name)
-        assertEquals(expectedTag3Name, tag3.name)
+        val tagId3 = dm.saveNewTag(SaveNewTagArgs(name = "\t $expectedTag3Name \t")).data!!
 
         assertTableContent(repo = repo, table = t, exactMatch = true, matchColumn = t.id, expectedRows = listOf(
-            listOf(t.id to tag1.id, t.createdAt to time1, t.name to expectedTag1Name),
-            listOf(t.id to tag2.id, t.createdAt to time2, t.name to expectedTag2Name),
-            listOf(t.id to tag3.id, t.createdAt to time3, t.name to expectedTag3Name),
+            listOf(t.id to tagId1, t.createdAt to time1, t.name to expectedTag1Name),
+            listOf(t.id to tagId2, t.createdAt to time2, t.name to expectedTag2Name),
+            listOf(t.id to tagId3, t.createdAt to time3, t.name to expectedTag3Name),
         ))
 
         //when
-        val time4 = testClock.plus(2000)
-        val tag4 = dm.updateTag(UpdateTagArgs(tagId = tag2.id, name = "  ddssdd  ")).data!!
+        testClock.plus(2000)
+        val tag4 = dm.updateTag(UpdateTagArgs(tagId = tagId2, name = "  ddssdd  ")).data!!
 
         //then
         assertEquals("ddssdd", tag4.name)
 
         assertTableContent(repo = repo, table = t, exactMatch = true, matchColumn = t.id, expectedRows = listOf(
-            listOf(t.id to tag1.id, t.createdAt to time1, t.name to expectedTag1Name),
-            listOf(t.id to tag2.id, t.createdAt to time2, t.name to "ddssdd"),
-            listOf(t.id to tag3.id, t.createdAt to time3, t.name to expectedTag3Name),
+            listOf(t.id to tagId1, t.createdAt to time1, t.name to expectedTag1Name),
+            listOf(t.id to tagId2, t.createdAt to time2, t.name to "ddssdd"),
+            listOf(t.id to tagId3, t.createdAt to time3, t.name to expectedTag3Name),
+        ))
+    }
+
+    @Test
+    fun updateTag_doesnt_allow_to_update_tag_with_same_name() {
+        //given
+        val dm = createInmemoryDataManager()
+        val repo = dm.getRepo()
+        val t = repo.tags
+        val expectedTag1Name = "t1"
+        val expectedTag2Name = "t2"
+        val expectedTag3Name = "t3"
+        testClock.setFixedTime(1000)
+
+        val time1 = testClock.plus(2000)
+        val tagId1 = dm.saveNewTag(SaveNewTagArgs(name = expectedTag1Name)).data!!
+        val time2 = testClock.plus(2000)
+        val tagId2 = dm.saveNewTag(SaveNewTagArgs(name = "  $expectedTag2Name   ")).data!!
+        val time3 = testClock.plus(2000)
+        val tagId3 = dm.saveNewTag(SaveNewTagArgs(name = "\t $expectedTag3Name \t")).data!!
+
+        assertTableContent(repo = repo, table = t, exactMatch = true, matchColumn = t.id, expectedRows = listOf(
+            listOf(t.id to tagId1, t.createdAt to time1, t.name to expectedTag1Name),
+            listOf(t.id to tagId2, t.createdAt to time2, t.name to expectedTag2Name),
+            listOf(t.id to tagId3, t.createdAt to time3, t.name to expectedTag3Name),
+        ))
+
+        //when
+        val err = dm.updateTag(UpdateTagArgs(tagId = tagId2, name = expectedTag3Name)).err!!
+
+        //then
+        assertEquals("A tag with name '$expectedTag3Name' already exists.", err.msg)
+
+        assertTableContent(repo = repo, table = t, exactMatch = true, matchColumn = t.id, expectedRows = listOf(
+            listOf(t.id to tagId1, t.createdAt to time1, t.name to expectedTag1Name),
+            listOf(t.id to tagId2, t.createdAt to time2, t.name to expectedTag2Name),
+            listOf(t.id to tagId3, t.createdAt to time3, t.name to expectedTag3Name),
         ))
     }
 
@@ -1423,32 +1553,28 @@ class DataManagerInstrumentedTest {
         testClock.setFixedTime(1000)
 
         val time1 = testClock.plus(2000)
-        val tag1 = dm.saveNewTag(SaveNewTagArgs(name = expectedTag1Name)).data!!
+        val tagId1 = dm.saveNewTag(SaveNewTagArgs(name = expectedTag1Name)).data!!
         val time2 = testClock.plus(2000)
-        val tag2 = dm.saveNewTag(SaveNewTagArgs(name = "  $expectedTag2Name   ")).data!!
+        val tagId2 = dm.saveNewTag(SaveNewTagArgs(name = "  $expectedTag2Name   ")).data!!
         val time3 = testClock.plus(2000)
-        val tag3 = dm.saveNewTag(SaveNewTagArgs(name = "\t $expectedTag3Name \t")).data!!
-
-        assertEquals(expectedTag1Name, tag1.name)
-        assertEquals(expectedTag2Name, tag2.name)
-        assertEquals(expectedTag3Name, tag3.name)
+        val tagId3 = dm.saveNewTag(SaveNewTagArgs(name = "\t $expectedTag3Name \t")).data!!
 
         assertTableContent(repo = repo, table = t, exactMatch = true, matchColumn = t.id, expectedRows = listOf(
-            listOf(t.id to tag1.id, t.createdAt to time1, t.name to expectedTag1Name),
-            listOf(t.id to tag2.id, t.createdAt to time2, t.name to expectedTag2Name),
-            listOf(t.id to tag3.id, t.createdAt to time3, t.name to expectedTag3Name),
+            listOf(t.id to tagId1, t.createdAt to time1, t.name to expectedTag1Name),
+            listOf(t.id to tagId2, t.createdAt to time2, t.name to expectedTag2Name),
+            listOf(t.id to tagId3, t.createdAt to time3, t.name to expectedTag3Name),
         ))
 
         //when
         testClock.plus(2000)
-        val tagDeletionResult = dm.deleteTag(DeleteTagArgs(tagId = tag2.id)).data!!
+        val tagDeletionResult = dm.deleteTag(DeleteTagArgs(tagId = tagId2)).data!!
 
         //then
         assertTrue(tagDeletionResult)
 
         assertTableContent(repo = repo, table = t, exactMatch = true, matchColumn = t.id, expectedRows = listOf(
-            listOf(t.id to tag1.id, t.createdAt to time1, t.name to expectedTag1Name),
-            listOf(t.id to tag3.id, t.createdAt to time3, t.name to expectedTag3Name),
+            listOf(t.id to tagId1, t.createdAt to time1, t.name to expectedTag1Name),
+            listOf(t.id to tagId3, t.createdAt to time3, t.name to expectedTag3Name),
         ))
     }
 
@@ -1637,7 +1763,8 @@ class DataManagerInstrumentedTest {
 
         //when
         for (i in 0 until numOfCalcs) {
-            val beRespose = dm.updateTranslateCard(UpdateTranslateCardArgs(cardId = cardId, delay = delayStr, recalculateDelay = true))
+            dm.updateTranslateCard(UpdateTranslateCardArgs(cardId = cardId, delay = delayStr, recalculateDelay = true))
+            val beRespose = dm.getTranslateCardById(GetTranslateCardByIdArgs(cardId = cardId))
             val schedule = beRespose.data!!.schedule
             val actualDelay = schedule.nextAccessInMillis
             assertEquals(testClock.instant().toEpochMilli() + actualDelay, schedule.nextAccessAt)

@@ -15,7 +15,7 @@ class TagsTable(private val clock: Clock): Table(tableName = "TAGS") {
                 CREATE TABLE $this (
                     $id integer primary key,
                     $createdAt integer not null,
-                    $name text not null
+                    $name text not null unique
                 )
         """)
     }

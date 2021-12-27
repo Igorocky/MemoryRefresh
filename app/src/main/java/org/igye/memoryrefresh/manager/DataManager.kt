@@ -1,10 +1,8 @@
 package org.igye.memoryrefresh.manager
 
+import android.database.sqlite.SQLiteConstraintException
 import org.igye.memoryrefresh.ErrorCode.*
-import org.igye.memoryrefresh.common.BeMethod
-import org.igye.memoryrefresh.common.MemoryRefreshException
-import org.igye.memoryrefresh.common.Try
-import org.igye.memoryrefresh.common.Utils
+import org.igye.memoryrefresh.common.*
 import org.igye.memoryrefresh.common.Utils.toBeResponse
 import org.igye.memoryrefresh.database.*
 import org.igye.memoryrefresh.dto.common.BeErr
@@ -26,25 +24,24 @@ class DataManager(
     private val t = getRepo().translationCards
     private val l = getRepo().translationCardsLog
 
-    data class SaveNewTranslateCardArgs(val textToTranslate:String, val translation:String)
+    data class SaveNewTranslateCardArgs(val textToTranslate:String, val translation:String, val tagIds: Set<Long> = emptySet())
     @BeMethod
     @Synchronized
-    fun saveNewTranslateCard(args: SaveNewTranslateCardArgs): BeRespose<TranslateCard> {
+    fun saveNewTranslateCard(args: SaveNewTranslateCardArgs): BeRespose<Long> {
         val textToTranslate = args.textToTranslate.trim()
         val translation = args.translation.trim()
-        return if (textToTranslate.isBlank()) {
-            BeRespose(err = BeErr(code = SAVE_NEW_TRANSLATE_CARD_TEXT_TO_TRANSLATE_IS_EMPTY.code, msg = "Text to translate should not be empty."))
+        if (textToTranslate.isBlank()) {
+            return BeRespose(err = BeErr(code = SAVE_NEW_TRANSLATE_CARD_TEXT_TO_TRANSLATE_IS_EMPTY.code, msg = "Text to translate should not be empty."))
         } else if (translation.isBlank()) {
-            BeRespose(err = BeErr(code = SAVE_NEW_TRANSLATE_CARD_TRANSLATION_IS_EMPTY.code, msg = "Translation should not be empty."))
+            return BeRespose(err = BeErr(code = SAVE_NEW_TRANSLATE_CARD_TRANSLATION_IS_EMPTY.code, msg = "Translation should not be empty."))
         } else {
             repositoryManager.tagsStat.tagsCouldChange()
             val repo = getRepo()
-            repo.writableDatabase.doInTransactionTry {
-                val cardId = repo.cards.insert(cardType = CardType.TRANSLATION)
-                val currTime = clock.instant().toEpochMilli()
-                repo.cardsSchedule.insert(cardId = cardId, timestamp = currTime, delay = "0m", randomFactor = 1.0, nextAccessInMillis = 0, nextAccessAt = currTime)
-                repo.translationCards.insert(cardId = cardId, textToTranslate = textToTranslate, translation = translation)
-                selectTranslateCardById(cardId = cardId)
+            return repo.writableDatabase.doInTransactionTry {
+                saveNewCard(cardType = CardType.TRANSLATION, tagIds = args.tagIds).map { cardId ->
+                    repo.translationCards.insert(cardId = cardId, textToTranslate = textToTranslate, translation = translation)
+                    cardId
+                }
             }.apply(toBeResponse(SAVE_NEW_TRANSLATE_CARD_EXCEPTION))
         }
     }
@@ -55,7 +52,7 @@ class DataManager(
     )
     @BeMethod
     @Synchronized
-    fun updateTranslateCard(args: UpdateTranslateCardArgs): BeRespose<TranslateCard> {
+    fun updateTranslateCard(args: UpdateTranslateCardArgs): BeRespose<Unit> {
         val repo = getRepo()
         return repo.writableDatabase.doInTransactionTry {
             selectTranslateCardById(cardId = args.cardId).map { existingCard: TranslateCard ->
@@ -69,10 +66,8 @@ class DataManager(
                 } else if (newDelay.isEmpty()) {
                     throw MemoryRefreshException(errCode = EDIT_TRANSLATE_CARD_DELAY_IS_EMPTY, msg = "Delay should not be empty.")
                 }
-                var dataWasUpdated = false
                 if (newTextToTranslate != existingCard.textToTranslate || newTranslation != existingCard.translation) {
                     repo.translationCards.update(cardId = args.cardId, textToTranslate = newTextToTranslate, translation = newTranslation)
-                    dataWasUpdated = true
                 }
                 if (args.recalculateDelay || newDelay != existingCard.schedule.delay) {
                     val randomFactor = 0.85 + Random.nextDouble(from = 0.0, until = 0.30001)
@@ -87,13 +82,8 @@ class DataManager(
                         nextAccessInMillis = nextAccessInMillis,
                         nextAccessAt = nextAccessAt
                     )
-                    dataWasUpdated = true
                 }
-                if (dataWasUpdated) {
-                    selectTranslateCardById(cardId = existingCard.id).get()
-                } else {
-                    existingCard
-                }
+                Unit
             }
         }.apply(toBeResponse(EDIT_TRANSLATE_CARD_EXCEPTION))
     }
@@ -205,7 +195,7 @@ class DataManager(
 
     data class SaveNewTagArgs(val name:String)
     @BeMethod
-    fun saveNewTag(args:SaveNewTagArgs): BeRespose<Tag> {
+    fun saveNewTag(args:SaveNewTagArgs): BeRespose<Long> {
         val name = args.name.trim()
         return if (name.isBlank()) {
             BeRespose(err = BeErr(code = SAVE_NEW_TAG_NAME_IS_EMPTY.code, msg = "Name of a new tag should not be empty."))
@@ -213,11 +203,21 @@ class DataManager(
             val repo = getRepo()
             repo.writableDatabase.doInTransaction {
                 repositoryManager.tagsStat.tagsCouldChange()
-                Tag(
-                    id = repo.tags.insert(name = name),
-                    name = name
-                )
-            }.apply(toBeResponse(SAVE_NEW_TAG))
+                repo.tags.insert(name = name)
+            }
+                .ifErrorThen { throwable ->
+                    Failure(
+                        if (throwable is SQLiteConstraintException && (throwable.message?:"").contains("UNIQUE constraint failed: TAGS.NAME")) {
+                            MemoryRefreshException(
+                                errCode = SAVE_NEW_TAG_NAME_IS_NOT_UNIQUE,
+                                msg = "A tag with name '$name' already exists."
+                            )
+                        } else {
+                            throwable
+                        }
+                    )
+                }
+                .apply(toBeResponse(SAVE_NEW_TAG))
         }
     }
 
@@ -235,7 +235,20 @@ class DataManager(
                     id = args.tagId,
                     name = newName
                 )
-            }.apply(toBeResponse(UPDATE_TAG))
+            }
+                .ifErrorThen { throwable ->
+                    Failure(
+                        if (throwable is SQLiteConstraintException && (throwable.message?:"").contains("UNIQUE constraint failed: TAGS.NAME")) {
+                            MemoryRefreshException(
+                                errCode = UPDATE_TAG_NAME_IS_NOT_UNIQUE,
+                                msg = "A tag with name '$newName' already exists."
+                            )
+                        } else {
+                            throwable
+                        }
+                    )
+                }
+                .apply(toBeResponse(UPDATE_TAG))
         }
     }
 
@@ -320,6 +333,19 @@ class DataManager(
         }
             .map { if (it.rows[0].first == 0L) Optional.empty() else Optional.of(it.rows[0].second) }
             .get()
+    }
+
+    @Synchronized
+    private fun saveNewCard(cardType: CardType, tagIds: Set<Long>): Try<Long> {
+        repositoryManager.tagsStat.tagsCouldChange()
+        val repo = getRepo()
+        return repo.writableDatabase.doInTransaction {
+            val currTime = clock.instant().toEpochMilli()
+            val cardId = repo.cards.insert(cardType = cardType)
+            repo.cardsSchedule.insert(cardId = cardId, timestamp = currTime, delay = "0m", randomFactor = 1.0, nextAccessInMillis = 0, nextAccessAt = currTime)
+            tagIds.forEach { repo.cardToTag.insert(cardId = cardId, tagId = it) }
+            cardId
+        }
     }
 
     private val selectTopOverdueCardsQuery = """
