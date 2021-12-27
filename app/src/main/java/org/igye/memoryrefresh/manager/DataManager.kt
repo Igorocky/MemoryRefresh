@@ -198,45 +198,39 @@ class DataManager(
     }
 
     data class UpdateTranslateCardArgs(
-        val cardId:Long, val textToTranslate:String? = null, val translation:String? = null,
-        val delay: String? = null, val recalculateDelay: Boolean = false
+        val cardId:Long,
+        val delay: String? = null, val recalculateDelay: Boolean = false,
+        val tagIds: Set<Long>? = null,
+        val textToTranslate:String? = null, val translation:String? = null
     )
+    private val updateTranslateCardQuery = "select ${t.textToTranslate}, ${t.translation} from $t where ${t.cardId} = ?"
+    private val updateTranslateCardQueryColumnNames = arrayOf(t.textToTranslate, t.translation)
     @BeMethod
     @Synchronized
     fun updateTranslateCard(args: UpdateTranslateCardArgs): BeRespose<Unit> {
         val repo = getRepo()
-        return repo.writableDatabase.doInTransactionTry {
-            readTranslateCardById(cardId = args.cardId).map { existingCard: TranslateCard ->
-                val newTextToTranslate = args.textToTranslate?.trim()?:existingCard.textToTranslate
-                val newTranslation = args.translation?.trim()?:existingCard.translation
-                val newDelay = args.delay?.trim()?:existingCard.schedule.delay
-                if (newTextToTranslate.isEmpty()) {
-                    throw MemoryRefreshException(errCode = EDIT_TRANSLATE_CARD_TEXT_TO_TRANSLATE_IS_EMPTY, msg = "Text to translate should not be empty.")
-                } else if (newTranslation.isEmpty()) {
-                    throw MemoryRefreshException(errCode = EDIT_TRANSLATE_CARD_TRANSLATION_IS_EMPTY, msg = "Translation should not be empty.")
-                } else if (newDelay.isEmpty()) {
-                    throw MemoryRefreshException(errCode = EDIT_TRANSLATE_CARD_DELAY_IS_EMPTY, msg = "Delay should not be empty.")
-                }
-                if (newTextToTranslate != existingCard.textToTranslate || newTranslation != existingCard.translation) {
-                    repo.translationCards.update(cardId = args.cardId, textToTranslate = newTextToTranslate, translation = newTranslation)
-                }
-                if (args.recalculateDelay || newDelay != existingCard.schedule.delay) {
-                    val randomFactor = 0.85 + Random.nextDouble(from = 0.0, until = 0.30001)
-                    val nextAccessInMillis = (Utils.delayStrToMillis(newDelay) * randomFactor).toLong()
-                    val timestamp = clock.instant().toEpochMilli()
-                    val nextAccessAt = timestamp + nextAccessInMillis
-                    repo.cardsSchedule.update(
-                        timestamp = timestamp,
-                        cardId = args.cardId,
-                        delay = newDelay,
-                        randomFactor = randomFactor,
-                        nextAccessInMillis = nextAccessInMillis,
-                        nextAccessAt = nextAccessAt
-                    )
-                }
-                Unit
+        return repo.writableDatabase.doInTransaction {
+            updateCard(cardId = args.cardId, delay = args.delay, recalculateDelay = args.recalculateDelay, tagIds = args.tagIds)
+            val (existingTextToTranslate: String, existingTranslation: String) = select(
+                query = updateTranslateCardQuery,
+                args = arrayOf(args.cardId.toString()),
+                columnNames = updateTranslateCardQueryColumnNames,
+            ) {
+                listOf(it.getString(), it.getString())
+            }.rows[0]
+            val newTextToTranslate = args.textToTranslate?.trim()?:existingTextToTranslate
+            val newTranslation = args.translation?.trim()?:existingTranslation
+            if (newTextToTranslate.isEmpty()) {
+                throw MemoryRefreshException(errCode = UPDATE_TRANSLATE_CARD_TEXT_TO_TRANSLATE_IS_EMPTY, msg = "Text to translate should not be empty.")
+            } else if (newTranslation.isEmpty()) {
+                throw MemoryRefreshException(errCode = UPDATE_TRANSLATE_CARD_TRANSLATION_IS_EMPTY, msg = "Translation should not be empty.")
             }
-        }.apply(toBeResponse(EDIT_TRANSLATE_CARD_EXCEPTION))
+            if (newTextToTranslate != existingTextToTranslate || newTranslation != existingTranslation) {
+                repo.translationCards.update(cardId = args.cardId, textToTranslate = newTextToTranslate, translation = newTranslation)
+            }
+
+            Unit
+        }.apply(toBeResponse(UPDATE_TRANSLATE_CARD_EXCEPTION))
     }
 
     data class ValidateTranslateCardArgs(val cardId:Long, val userProvidedTranslation:String)
@@ -365,7 +359,7 @@ class DataManager(
         return repo.writableDatabase.doInTransaction {
             val currTime = clock.instant().toEpochMilli()
             val cardId = repo.cards.insert(cardType = cardType)
-            repo.cardsSchedule.insert(cardId = cardId, timestamp = currTime, delay = "0m", randomFactor = 1.0, nextAccessInMillis = 0, nextAccessAt = currTime)
+            repo.cardsSchedule.insert(cardId = cardId, timestamp = currTime, delay = "0s", randomFactor = 1.0, nextAccessInMillis = 0, nextAccessAt = currTime)
             tagIds.forEach { repo.cardToTag.insert(cardId = cardId, tagId = it) }
             cardId
         }
@@ -405,6 +399,41 @@ class DataManager(
                 },
                 rowsMax = maxCardsNum
             )
+        }
+    }
+
+    @Synchronized
+    private fun updateCard(
+        cardId:Long, tagIds: Set<Long>? = null,
+        delay: String? = null, recalculateDelay: Boolean = false
+    ) {
+        val repo = getRepo()
+        repo.writableDatabase.doInTransaction {
+            selectCurrScheduleForCard(cardId = cardId).map { existingSchedule: CardSchedule ->
+                val newDelay = delay?.trim()?:existingSchedule.delay
+                if (newDelay.isEmpty()) {
+                    throw MemoryRefreshException(errCode = UPDATE_CARD_DELAY_IS_EMPTY, msg = "Delay should not be empty.")
+                }
+                if (recalculateDelay || newDelay != existingSchedule.delay) {
+                    val randomFactor = 0.85 + Random.nextDouble(from = 0.0, until = 0.30001)
+                    val nextAccessInMillis = (Utils.delayStrToMillis(newDelay) * randomFactor).toLong()
+                    val timestamp = clock.instant().toEpochMilli()
+                    val nextAccessAt = timestamp + nextAccessInMillis
+                    repo.cardsSchedule.update(
+                        timestamp = timestamp,
+                        cardId = cardId,
+                        delay = newDelay,
+                        randomFactor = randomFactor,
+                        nextAccessInMillis = nextAccessInMillis,
+                        nextAccessAt = nextAccessAt
+                    )
+                }
+                if (tagIds != null) {
+                    repo.cardToTag.delete(cardId = cardId)
+                    tagIds.forEach { repo.cardToTag.insert(cardId = cardId, tagId = it) }
+                }
+                Unit
+            }
         }
     }
 

@@ -41,7 +41,7 @@ class DeleteTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
 
         assertTableContent(repo = repo, table = s, matchColumn = s.cardId, exactMatch = true, expectedRows = listOf())
         assertTableContent(repo = repo, table = s.ver, exactMatch = true, expectedRows = listOf(
-            listOf(s.ver.timestamp to timeDeleted, s.cardId to cardId, s.delay to "0m", s.nextAccessInMillis to 0L, s.nextAccessAt to timeCreated)
+            listOf(s.ver.timestamp to timeDeleted, s.cardId to cardId, s.delay to "0s", s.nextAccessInMillis to 0L, s.nextAccessAt to timeCreated)
         ))
 
         assertTableContent(repo = repo, table = l, exactMatch = true, expectedRows = listOf())
@@ -85,10 +85,10 @@ class DeleteTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
         ))
 
         assertTableContent(repo = repo, table = s, matchColumn = s.cardId, exactMatch = true, expectedRows = listOf(
-            listOf(s.cardId to cardId2, s.updatedAt to timeCreated2, s.delay to "0m", s.nextAccessInMillis to 0L, s.nextAccessAt to timeCreated2)
+            listOf(s.cardId to cardId2, s.updatedAt to timeCreated2, s.delay to "0s", s.nextAccessInMillis to 0L, s.nextAccessAt to timeCreated2)
         ))
         assertTableContent(repo = repo, table = s.ver, exactMatch = true, expectedRows = listOf(
-            listOf(s.ver.timestamp to timeDeleted1, s.cardId to cardId1, s.updatedAt to timeCreated1, s.delay to "0m", s.nextAccessInMillis to 0L, s.nextAccessAt to timeCreated1)
+            listOf(s.ver.timestamp to timeDeleted1, s.cardId to cardId1, s.updatedAt to timeCreated1, s.delay to "0s", s.nextAccessInMillis to 0L, s.nextAccessAt to timeCreated1)
         ))
 
         assertTableContent(repo = repo, table = l, exactMatch = true, expectedRows = listOf())

@@ -44,4 +44,9 @@ class DeleteTagInstrumentedUnitTest: InstrumentedTestBase() {
         ))
     }
 
+    @Test
+    fun deleteTag_doesnt_delete_tag_if_there_is_at_least_one_card_using_this_tag() {
+        TODO()
+    }
+
 }
