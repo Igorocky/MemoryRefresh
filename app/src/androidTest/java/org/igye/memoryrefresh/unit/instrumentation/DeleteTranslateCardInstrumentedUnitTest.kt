@@ -29,22 +29,22 @@ class DeleteTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
         //then
         assertTrue(deleteTranslateCardResp.data!!)
 
-        assertTableContent(repo = repo, table = c, matchColumn = c.id, exactMatch = true, expectedRows = listOf())
-        assertTableContent(repo = repo, table = c.ver, exactMatch = true, expectedRows = listOf(
+        assertTableContent(repo = repo, table = c, matchColumn = c.id, expectedRows = listOf())
+        assertTableContent(repo = repo, table = c.ver, expectedRows = listOf(
             listOf(c.ver.timestamp to timeDeleted, c.id to cardId, c.type to TR_TP, c.createdAt to timeCreated)
         ))
 
-        assertTableContent(repo = repo, table = t, matchColumn = t.cardId, exactMatch = true, expectedRows = listOf())
-        assertTableContent(repo = repo, table = t.ver, exactMatch = true, expectedRows = listOf(
+        assertTableContent(repo = repo, table = t, matchColumn = t.cardId, expectedRows = listOf())
+        assertTableContent(repo = repo, table = t.ver, expectedRows = listOf(
             listOf(t.ver.timestamp to timeDeleted, t.cardId to cardId, t.textToTranslate to expectedTextToTranslate, t.translation to expectedTranslation)
         ))
 
-        assertTableContent(repo = repo, table = s, matchColumn = s.cardId, exactMatch = true, expectedRows = listOf())
-        assertTableContent(repo = repo, table = s.ver, exactMatch = true, expectedRows = listOf(
+        assertTableContent(repo = repo, table = s, matchColumn = s.cardId, expectedRows = listOf())
+        assertTableContent(repo = repo, table = s.ver, expectedRows = listOf(
             listOf(s.ver.timestamp to timeDeleted, s.cardId to cardId, s.delay to "0s", s.nextAccessInMillis to 0L, s.nextAccessAt to timeCreated)
         ))
 
-        assertTableContent(repo = repo, table = l, exactMatch = true, expectedRows = listOf())
+        assertTableContent(repo = repo, table = l, expectedRows = listOf())
     }
 
     @Test
@@ -70,28 +70,28 @@ class DeleteTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
         //then
         assertNotEquals(cardId1, cardId2)
 
-        assertTableContent(repo = repo, table = c, matchColumn = c.id, exactMatch = true, expectedRows = listOf(
+        assertTableContent(repo = repo, table = c, matchColumn = c.id, expectedRows = listOf(
             listOf(c.id to cardId2, c.type to TR_TP, c.createdAt to timeCreated2)
         ))
-        assertTableContent(repo = repo, table = c.ver, exactMatch = true, expectedRows = listOf(
+        assertTableContent(repo = repo, table = c.ver, expectedRows = listOf(
             listOf(c.ver.timestamp to timeDeleted1, c.id to cardId1, c.type to TR_TP, c.createdAt to timeCreated1)
         ))
 
-        assertTableContent(repo = repo, table = t, matchColumn = t.cardId, exactMatch = true, expectedRows = listOf(
+        assertTableContent(repo = repo, table = t, matchColumn = t.cardId, expectedRows = listOf(
             listOf(t.cardId to cardId2, t.textToTranslate to expectedTextToTranslate2, t.translation to expectedTranslation2)
         ))
-        assertTableContent(repo = repo, table = t.ver, exactMatch = true, expectedRows = listOf(
+        assertTableContent(repo = repo, table = t.ver, expectedRows = listOf(
             listOf(t.ver.timestamp to timeDeleted1, t.cardId to cardId1, t.textToTranslate to expectedTextToTranslate1, t.translation to expectedTranslation1)
         ))
 
-        assertTableContent(repo = repo, table = s, matchColumn = s.cardId, exactMatch = true, expectedRows = listOf(
+        assertTableContent(repo = repo, table = s, matchColumn = s.cardId, expectedRows = listOf(
             listOf(s.cardId to cardId2, s.updatedAt to timeCreated2, s.delay to "0s", s.nextAccessInMillis to 0L, s.nextAccessAt to timeCreated2)
         ))
-        assertTableContent(repo = repo, table = s.ver, exactMatch = true, expectedRows = listOf(
+        assertTableContent(repo = repo, table = s.ver, expectedRows = listOf(
             listOf(s.ver.timestamp to timeDeleted1, s.cardId to cardId1, s.updatedAt to timeCreated1, s.delay to "0s", s.nextAccessInMillis to 0L, s.nextAccessAt to timeCreated1)
         ))
 
-        assertTableContent(repo = repo, table = l, exactMatch = true, expectedRows = listOf())
+        assertTableContent(repo = repo, table = l, expectedRows = listOf())
     }
 
 }

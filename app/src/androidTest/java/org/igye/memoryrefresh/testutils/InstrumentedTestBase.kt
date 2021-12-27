@@ -65,7 +65,7 @@ open class InstrumentedTestBase {
     }
 
     protected fun assertTableContent(
-        repo: Repository, table: Table, exactMatch: Boolean = false, matchColumn: String = "", expectedRows: List<List<Pair<String,Any?>>>
+        repo: Repository, table: Table, exactMatch: Boolean = true, matchColumn: String = "", expectedRows: List<List<Pair<String,Any?>>>
     ) {
         val allData = readAllDataFrom(repo, table.tableName)
         if (exactMatch) {

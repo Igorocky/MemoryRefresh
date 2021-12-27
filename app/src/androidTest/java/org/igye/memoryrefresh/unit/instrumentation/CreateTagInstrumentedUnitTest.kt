@@ -26,7 +26,7 @@ class CreateTagInstrumentedUnitTest: InstrumentedTestBase() {
         val tagId3 = dm.createTag(CreateTagArgs(name = "\t $expectedTag3Name \t")).data!!
 
         //then
-        assertTableContent(repo = repo, table = tg, exactMatch = true, matchColumn = tg.id, expectedRows = listOf(
+        assertTableContent(repo = repo, table = tg, matchColumn = tg.id, expectedRows = listOf(
             listOf(tg.id to tagId1, tg.createdAt to time1, tg.name to expectedTag1Name),
             listOf(tg.id to tagId2, tg.createdAt to time2, tg.name to expectedTag2Name),
             listOf(tg.id to tagId3, tg.createdAt to time3, tg.name to expectedTag3Name),
@@ -39,7 +39,7 @@ class CreateTagInstrumentedUnitTest: InstrumentedTestBase() {
         insert(repo = repo, table = tg, rows = listOf(
             listOf(tg.id to 1, tg.createdAt to 1000, tg.name to "ttt")
         ))
-        assertTableContent(repo = repo, table = tg, exactMatch = true, matchColumn = tg.id, expectedRows = listOf(
+        assertTableContent(repo = repo, table = tg, matchColumn = tg.id, expectedRows = listOf(
             listOf(tg.id to 1, tg.createdAt to 1000, tg.name to "ttt"),
         ))
 
@@ -49,7 +49,7 @@ class CreateTagInstrumentedUnitTest: InstrumentedTestBase() {
         //then
         assertEquals("A tag with name 'ttt' already exists.", err.msg)
 
-        assertTableContent(repo = repo, table = tg, exactMatch = true, matchColumn = tg.id, expectedRows = listOf(
+        assertTableContent(repo = repo, table = tg, matchColumn = tg.id, expectedRows = listOf(
             listOf(tg.id to 1, tg.createdAt to 1000, tg.name to "ttt"),
         ))
     }

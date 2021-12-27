@@ -25,7 +25,7 @@ class UpdateTagInstrumentedUnitTest: InstrumentedTestBase() {
         val time3 = testClock.plus(2000)
         val tagId3 = dm.createTag(CreateTagArgs(name = "\t $expectedTag3Name \t")).data!!
 
-        assertTableContent(repo = repo, table = tg, exactMatch = true, matchColumn = tg.id, expectedRows = listOf(
+        assertTableContent(repo = repo, table = tg, matchColumn = tg.id, expectedRows = listOf(
             listOf(tg.id to tagId1, tg.createdAt to time1, tg.name to expectedTag1Name),
             listOf(tg.id to tagId2, tg.createdAt to time2, tg.name to expectedTag2Name),
             listOf(tg.id to tagId3, tg.createdAt to time3, tg.name to expectedTag3Name),
@@ -38,7 +38,7 @@ class UpdateTagInstrumentedUnitTest: InstrumentedTestBase() {
         //then
         assertEquals("ddssdd", tag4.name)
 
-        assertTableContent(repo = repo, table = tg, exactMatch = true, matchColumn = tg.id, expectedRows = listOf(
+        assertTableContent(repo = repo, table = tg, matchColumn = tg.id, expectedRows = listOf(
             listOf(tg.id to tagId1, tg.createdAt to time1, tg.name to expectedTag1Name),
             listOf(tg.id to tagId2, tg.createdAt to time2, tg.name to "ddssdd"),
             listOf(tg.id to tagId3, tg.createdAt to time3, tg.name to expectedTag3Name),
@@ -59,7 +59,7 @@ class UpdateTagInstrumentedUnitTest: InstrumentedTestBase() {
         val time3 = testClock.plus(2000)
         val tagId3 = dm.createTag(CreateTagArgs(name = "\t $expectedTag3Name \t")).data!!
 
-        assertTableContent(repo = repo, table = tg, exactMatch = true, matchColumn = tg.id, expectedRows = listOf(
+        assertTableContent(repo = repo, table = tg, matchColumn = tg.id, expectedRows = listOf(
             listOf(tg.id to tagId1, tg.createdAt to time1, tg.name to expectedTag1Name),
             listOf(tg.id to tagId2, tg.createdAt to time2, tg.name to expectedTag2Name),
             listOf(tg.id to tagId3, tg.createdAt to time3, tg.name to expectedTag3Name),
@@ -71,7 +71,7 @@ class UpdateTagInstrumentedUnitTest: InstrumentedTestBase() {
         //then
         assertEquals("A tag with name '$expectedTag3Name' already exists.", err.msg)
 
-        assertTableContent(repo = repo, table = tg, exactMatch = true, matchColumn = tg.id, expectedRows = listOf(
+        assertTableContent(repo = repo, table = tg, matchColumn = tg.id, expectedRows = listOf(
             listOf(tg.id to tagId1, tg.createdAt to time1, tg.name to expectedTag1Name),
             listOf(tg.id to tagId2, tg.createdAt to time2, tg.name to expectedTag2Name),
             listOf(tg.id to tagId3, tg.createdAt to time3, tg.name to expectedTag3Name),

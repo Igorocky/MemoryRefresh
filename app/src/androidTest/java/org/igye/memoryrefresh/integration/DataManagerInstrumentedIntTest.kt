@@ -49,19 +49,19 @@ class DataManagerInstrumentedIntTest: InstrumentedTestBase() {
         assertTableContent(repo = repo, table = c, matchColumn = c.id, expectedRows = listOf(
             listOf(c.id to actualCreatedCard.id, c.type to TR_TP, c.createdAt to timeCrt)
         ))
-        assertTableContent(repo = repo, table = c.ver, exactMatch = true, expectedRows = listOf())
+        assertTableContent(repo = repo, table = c.ver, expectedRows = listOf())
 
         assertTableContent(repo = repo, table = t, matchColumn = t.cardId, expectedRows = listOf(
             listOf(t.cardId to actualCreatedCard.id, t.textToTranslate to expectedTextToTranslate1, t.translation to expectedTranslation1)
         ))
-        assertTableContent(repo = repo, table = t.ver, exactMatch = true, expectedRows = listOf())
+        assertTableContent(repo = repo, table = t.ver, expectedRows = listOf())
 
         assertTableContent(repo = repo, table = s, matchColumn = s.cardId, expectedRows = listOf(
             listOf(s.cardId to actualCreatedCard.id, s.delay to "0s", s.nextAccessInMillis to 0L, s.nextAccessAt to timeCrt)
         ))
-        assertTableContent(repo = repo, table = s.ver, exactMatch = true, expectedRows = listOf())
+        assertTableContent(repo = repo, table = s.ver, expectedRows = listOf())
 
-        assertTableContent(repo = repo, table = l, exactMatch = true, expectedRows = listOf())
+        assertTableContent(repo = repo, table = l, expectedRows = listOf())
 
         //when: edit the card but provide same values
         testClock.plus(5000)
@@ -81,19 +81,19 @@ class DataManagerInstrumentedIntTest: InstrumentedTestBase() {
         assertTableContent(repo = repo, table = c, matchColumn = c.id, expectedRows = listOf(
             listOf(c.id to translateCardAfterEdit1.id, c.type to TR_TP, c.createdAt to timeCrt)
         ))
-        assertTableContent(repo = repo, table = c.ver, exactMatch = true, expectedRows = listOf())
+        assertTableContent(repo = repo, table = c.ver, expectedRows = listOf())
 
         assertTableContent(repo = repo, table = t, matchColumn = t.cardId, expectedRows = listOf(
             listOf(t.cardId to translateCardAfterEdit1.id, t.textToTranslate to expectedTextToTranslate1, t.translation to expectedTranslation1)
         ))
-        assertTableContent(repo = repo, table = t.ver, exactMatch = true, expectedRows = listOf())
+        assertTableContent(repo = repo, table = t.ver, expectedRows = listOf())
 
         assertTableContent(repo = repo, table = s, matchColumn = s.cardId, expectedRows = listOf(
             listOf(s.cardId to translateCardAfterEdit1.id, s.delay to "0s", s.nextAccessInMillis to 0L, s.nextAccessAt to timeCrt)
         ))
-        assertTableContent(repo = repo, table = s.ver, exactMatch = true, expectedRows = listOf())
+        assertTableContent(repo = repo, table = s.ver, expectedRows = listOf())
 
-        assertTableContent(repo = repo, table = l, exactMatch = true, expectedRows = listOf())
+        assertTableContent(repo = repo, table = l, expectedRows = listOf())
 
         //when: provide new values when editing the card
         val timeEdt2 = testClock.plus(5000)
@@ -113,12 +113,12 @@ class DataManagerInstrumentedIntTest: InstrumentedTestBase() {
         assertTableContent(repo = repo, table = c, matchColumn = c.id, expectedRows = listOf(
             listOf(c.id to translateCardAfterEdit2.id, c.type to TR_TP, c.createdAt to timeCrt)
         ))
-        assertTableContent(repo = repo, table = c.ver, exactMatch = true, expectedRows = listOf())
+        assertTableContent(repo = repo, table = c.ver, expectedRows = listOf())
 
         assertTableContent(repo = repo, table = t, matchColumn = t.cardId, expectedRows = listOf(
             listOf(t.cardId to translateCardAfterEdit2.id, t.textToTranslate to expectedTextToTranslate2, t.translation to expectedTranslation2)
         ))
-        assertTableContent(repo = repo, table = t.ver, exactMatch = true, expectedRows = listOf(
+        assertTableContent(repo = repo, table = t.ver, expectedRows = listOf(
             listOf(t.cardId to translateCardAfterEdit2.id, t.textToTranslate to expectedTextToTranslate1, t.translation to expectedTranslation1,
                 t.ver.timestamp to timeEdt2)
         ))
@@ -126,24 +126,24 @@ class DataManagerInstrumentedIntTest: InstrumentedTestBase() {
         assertTableContent(repo = repo, table = s, matchColumn = s.cardId, expectedRows = listOf(
             listOf(s.cardId to translateCardAfterEdit2.id, s.delay to "0s", s.nextAccessInMillis to 0L, s.nextAccessAt to timeCrt)
         ))
-        assertTableContent(repo = repo, table = s.ver, exactMatch = true, expectedRows = listOf())
+        assertTableContent(repo = repo, table = s.ver, expectedRows = listOf())
 
-        assertTableContent(repo = repo, table = l, exactMatch = true, expectedRows = listOf())
+        assertTableContent(repo = repo, table = l, expectedRows = listOf())
     }
 
     @Test
     fun test_scenario_2() {
         //given
-        assertTableContent(repo = repo, table = c, exactMatch = true, expectedRows = listOf())
-        assertTableContent(repo = repo, table = c.ver, exactMatch = true, expectedRows = listOf())
+        assertTableContent(repo = repo, table = c, expectedRows = listOf())
+        assertTableContent(repo = repo, table = c.ver, expectedRows = listOf())
 
-        assertTableContent(repo = repo, table = t, exactMatch = true, expectedRows = listOf())
-        assertTableContent(repo = repo, table = t.ver, exactMatch = true, expectedRows = listOf())
+        assertTableContent(repo = repo, table = t, expectedRows = listOf())
+        assertTableContent(repo = repo, table = t.ver, expectedRows = listOf())
 
-        assertTableContent(repo = repo, table = s, exactMatch = true, expectedRows = listOf())
-        assertTableContent(repo = repo, table = s.ver, exactMatch = true, expectedRows = listOf())
+        assertTableContent(repo = repo, table = s, expectedRows = listOf())
+        assertTableContent(repo = repo, table = s.ver, expectedRows = listOf())
 
-        assertTableContent(repo = repo, table = l, exactMatch = true, expectedRows = listOf())
+        assertTableContent(repo = repo, table = l, expectedRows = listOf())
 
         //when: 1. get next card when there are no cards at all
         val resp1 = dm.getNextCardToRepeat().data!!
@@ -166,22 +166,22 @@ class DataManagerInstrumentedIntTest: InstrumentedTestBase() {
         assertEquals(0, createCard1Resp.schedule.nextAccessInMillis)
         assertEquals(time2, createCard1Resp.schedule.nextAccessAt)
 
-        assertTableContent(repo = repo, table = c, matchColumn = c.id, exactMatch = true, expectedRows = listOf(
+        assertTableContent(repo = repo, table = c, matchColumn = c.id, expectedRows = listOf(
             listOf(c.id to card1Id, c.type to TR_TP, c.createdAt to time2)
         ))
-        assertTableContent(repo = repo, table = c.ver, matchColumn = c.id, exactMatch = true, expectedRows = listOf())
+        assertTableContent(repo = repo, table = c.ver, matchColumn = c.id, expectedRows = listOf())
 
-        assertTableContent(repo = repo, table = t, matchColumn = t.cardId, exactMatch = true, expectedRows = listOf(
+        assertTableContent(repo = repo, table = t, matchColumn = t.cardId, expectedRows = listOf(
             listOf(t.cardId to card1Id, t.textToTranslate to "karta1", t.translation to "card1")
         ))
-        assertTableContent(repo = repo, table = t.ver, matchColumn = t.cardId, exactMatch = true, expectedRows = listOf())
+        assertTableContent(repo = repo, table = t.ver, matchColumn = t.cardId, expectedRows = listOf())
 
-        assertTableContent(repo = repo, table = s, matchColumn = s.cardId, exactMatch = true, expectedRows = listOf(
+        assertTableContent(repo = repo, table = s, matchColumn = s.cardId, expectedRows = listOf(
             listOf(s.cardId to card1Id, s.updatedAt to time2, s.delay to "0s", s.nextAccessInMillis to 0L, s.nextAccessAt to time2)
         ))
-        assertTableContent(repo = repo, table = s.ver, matchColumn = s.cardId, exactMatch = true, expectedRows = listOf())
+        assertTableContent(repo = repo, table = s.ver, matchColumn = s.cardId, expectedRows = listOf())
 
-        assertTableContent(repo = repo, table = l, matchColumn = l.cardId, exactMatch = true, expectedRows = listOf())
+        assertTableContent(repo = repo, table = l, matchColumn = l.cardId, expectedRows = listOf())
 
         //when: 3. get next card
         testClock.plus(1, ChronoUnit.MINUTES)
@@ -212,22 +212,22 @@ class DataManagerInstrumentedIntTest: InstrumentedTestBase() {
         assertEquals("card1", validateCard1Resp1.answer)
         assertTrue(validateCard1Resp1.isCorrect)
 
-        assertTableContent(repo = repo, table = c, matchColumn = c.id, exactMatch = true, expectedRows = listOf(
+        assertTableContent(repo = repo, table = c, matchColumn = c.id, expectedRows = listOf(
             listOf(c.id to card1Id, c.type to TR_TP, c.createdAt to time2)
         ))
-        assertTableContent(repo = repo, table = c.ver, matchColumn = c.id, exactMatch = true, expectedRows = listOf())
+        assertTableContent(repo = repo, table = c.ver, matchColumn = c.id, expectedRows = listOf())
 
-        assertTableContent(repo = repo, table = t, matchColumn = t.cardId, exactMatch = true, expectedRows = listOf(
+        assertTableContent(repo = repo, table = t, matchColumn = t.cardId, expectedRows = listOf(
             listOf(t.cardId to card1Id, t.textToTranslate to "karta1", t.translation to "card1")
         ))
-        assertTableContent(repo = repo, table = t.ver, matchColumn = t.cardId, exactMatch = true, expectedRows = listOf())
+        assertTableContent(repo = repo, table = t.ver, matchColumn = t.cardId, expectedRows = listOf())
 
-        assertTableContent(repo = repo, table = s, matchColumn = s.cardId, exactMatch = true, expectedRows = listOf(
+        assertTableContent(repo = repo, table = s, matchColumn = s.cardId, expectedRows = listOf(
             listOf(s.cardId to card1Id, s.updatedAt to time2, s.delay to "0s", s.nextAccessInMillis to 0L, s.nextAccessAt to time2)
         ))
-        assertTableContent(repo = repo, table = s.ver, matchColumn = s.cardId, exactMatch = true, expectedRows = listOf())
+        assertTableContent(repo = repo, table = s.ver, matchColumn = s.cardId, expectedRows = listOf())
 
-        assertTableContent(repo = repo, table = l, matchColumn = l.cardId, exactMatch = true, expectedRows = listOf(
+        assertTableContent(repo = repo, table = l, matchColumn = l.cardId, expectedRows = listOf(
             listOf(l.cardId to card1Id, l.timestamp to time5, l.translation to "card1", l.matched to 1)
         ))
 
@@ -240,24 +240,24 @@ class DataManagerInstrumentedIntTest: InstrumentedTestBase() {
         assertEquals(card1Id, card1Id)
         assertEquals("1d", setDelayCard1Resp1.schedule.delay)
 
-        assertTableContent(repo = repo, table = c, matchColumn = c.id, exactMatch = true, expectedRows = listOf(
+        assertTableContent(repo = repo, table = c, matchColumn = c.id, expectedRows = listOf(
             listOf(c.id to card1Id, c.type to TR_TP, c.createdAt to time2)
         ))
-        assertTableContent(repo = repo, table = c.ver, matchColumn = c.id, exactMatch = true, expectedRows = listOf())
+        assertTableContent(repo = repo, table = c.ver, matchColumn = c.id, expectedRows = listOf())
 
-        assertTableContent(repo = repo, table = t, matchColumn = t.cardId, exactMatch = true, expectedRows = listOf(
+        assertTableContent(repo = repo, table = t, matchColumn = t.cardId, expectedRows = listOf(
             listOf(t.cardId to card1Id, t.textToTranslate to "karta1", t.translation to "card1")
         ))
-        assertTableContent(repo = repo, table = t.ver, matchColumn = t.cardId, exactMatch = true, expectedRows = listOf())
+        assertTableContent(repo = repo, table = t.ver, matchColumn = t.cardId, expectedRows = listOf())
 
-        assertTableContent(repo = repo, table = s, matchColumn = s.cardId, exactMatch = true, expectedRows = listOf(
+        assertTableContent(repo = repo, table = s, matchColumn = s.cardId, expectedRows = listOf(
             listOf(s.cardId to card1Id, s.updatedAt to time6, s.delay to "1d")
         ))
-        assertTableContent(repo = repo, table = s.ver, matchColumn = s.cardId, exactMatch = true, expectedRows = listOf(
+        assertTableContent(repo = repo, table = s.ver, matchColumn = s.cardId, expectedRows = listOf(
             listOf(s.ver.timestamp to time6, s.cardId to card1Id, s.updatedAt to time2, s.delay to "0s")
         ))
 
-        assertTableContent(repo = repo, table = l, matchColumn = l.cardId, exactMatch = true, expectedRows = listOf(
+        assertTableContent(repo = repo, table = l, matchColumn = l.cardId, expectedRows = listOf(
             listOf(l.cardId to card1Id, l.timestamp to time5, l.translation to "card1", l.matched to 1)
         ))
 
@@ -272,26 +272,26 @@ class DataManagerInstrumentedIntTest: InstrumentedTestBase() {
         assertEquals("card1+", updTranslationCard1Resp1.translation)
         assertEquals("1d", updTranslationCard1Resp1.schedule.delay)
 
-        assertTableContent(repo = repo, table = c, matchColumn = c.id, exactMatch = true, expectedRows = listOf(
+        assertTableContent(repo = repo, table = c, matchColumn = c.id, expectedRows = listOf(
             listOf(c.id to card1Id, c.type to TR_TP, c.createdAt to time2)
         ))
-        assertTableContent(repo = repo, table = c.ver, matchColumn = c.id, exactMatch = true, expectedRows = listOf())
+        assertTableContent(repo = repo, table = c.ver, matchColumn = c.id, expectedRows = listOf())
 
-        assertTableContent(repo = repo, table = t, matchColumn = t.cardId, exactMatch = true, expectedRows = listOf(
+        assertTableContent(repo = repo, table = t, matchColumn = t.cardId, expectedRows = listOf(
             listOf(t.cardId to card1Id, t.textToTranslate to "karta1", t.translation to "card1+")
         ))
-        assertTableContent(repo = repo, table = t.ver, matchColumn = t.cardId, exactMatch = true, expectedRows = listOf(
+        assertTableContent(repo = repo, table = t.ver, matchColumn = t.cardId, expectedRows = listOf(
             listOf(t.cardId to card1Id, t.ver.timestamp to time7, t.textToTranslate to "karta1", t.translation to "card1")
         ))
 
-        assertTableContent(repo = repo, table = s, matchColumn = s.cardId, exactMatch = true, expectedRows = listOf(
+        assertTableContent(repo = repo, table = s, matchColumn = s.cardId, expectedRows = listOf(
             listOf(s.cardId to card1Id, s.updatedAt to time6, s.delay to "1d")
         ))
-        assertTableContent(repo = repo, table = s.ver, matchColumn = s.cardId, exactMatch = true, expectedRows = listOf(
+        assertTableContent(repo = repo, table = s.ver, matchColumn = s.cardId, expectedRows = listOf(
             listOf(s.ver.timestamp to time6, s.cardId to card1Id, s.updatedAt to time2, s.delay to "0s")
         ))
 
-        assertTableContent(repo = repo, table = l, matchColumn = l.cardId, exactMatch = true, expectedRows = listOf(
+        assertTableContent(repo = repo, table = l, matchColumn = l.cardId, expectedRows = listOf(
             listOf(l.cardId to card1Id, l.timestamp to time5, l.translation to "card1", l.matched to 1)
         ))
 
@@ -309,29 +309,29 @@ class DataManagerInstrumentedIntTest: InstrumentedTestBase() {
         assertEquals(0, createCard2Resp.schedule.nextAccessInMillis)
         assertEquals(time8, createCard2Resp.schedule.nextAccessAt)
 
-        assertTableContent(repo = repo, table = c, matchColumn = c.id, exactMatch = true, expectedRows = listOf(
+        assertTableContent(repo = repo, table = c, matchColumn = c.id, expectedRows = listOf(
             listOf(c.id to card1Id, c.type to TR_TP, c.createdAt to time2),
             listOf(c.id to card2Id, c.type to TR_TP, c.createdAt to time8),
         ))
-        assertTableContent(repo = repo, table = c.ver, matchColumn = c.id, exactMatch = true, expectedRows = listOf())
+        assertTableContent(repo = repo, table = c.ver, matchColumn = c.id, expectedRows = listOf())
 
-        assertTableContent(repo = repo, table = t, matchColumn = t.cardId, exactMatch = true, expectedRows = listOf(
+        assertTableContent(repo = repo, table = t, matchColumn = t.cardId, expectedRows = listOf(
             listOf(t.cardId to card1Id, t.textToTranslate to "karta1", t.translation to "card1+"),
             listOf(t.cardId to card2Id, t.textToTranslate to "karta2", t.translation to "card2"),
         ))
-        assertTableContent(repo = repo, table = t.ver, matchColumn = t.cardId, exactMatch = true, expectedRows = listOf(
+        assertTableContent(repo = repo, table = t.ver, matchColumn = t.cardId, expectedRows = listOf(
             listOf(t.cardId to card1Id, t.ver.timestamp to time7, t.textToTranslate to "karta1", t.translation to "card1"),
         ))
 
-        assertTableContent(repo = repo, table = s, matchColumn = s.cardId, exactMatch = true, expectedRows = listOf(
+        assertTableContent(repo = repo, table = s, matchColumn = s.cardId, expectedRows = listOf(
             listOf(s.cardId to card1Id, s.updatedAt to time6, s.delay to "1d"),
             listOf(s.cardId to card2Id, s.updatedAt to time8, s.delay to "0s"),
         ))
-        assertTableContent(repo = repo, table = s.ver, matchColumn = s.cardId, exactMatch = true, expectedRows = listOf(
+        assertTableContent(repo = repo, table = s.ver, matchColumn = s.cardId, expectedRows = listOf(
             listOf(s.ver.timestamp to time6, s.cardId to card1Id, s.updatedAt to time2, s.delay to "0s"),
         ))
 
-        assertTableContent(repo = repo, table = l, matchColumn = l.cardId, exactMatch = true, expectedRows = listOf(
+        assertTableContent(repo = repo, table = l, matchColumn = l.cardId, expectedRows = listOf(
             listOf(l.cardId to card1Id, l.timestamp to time5, l.translation to "card1", l.matched to 1),
         ))
 
@@ -364,29 +364,29 @@ class DataManagerInstrumentedIntTest: InstrumentedTestBase() {
         assertEquals("card2", validateCard2Resp1.answer)
         assertFalse(validateCard2Resp1.isCorrect)
 
-        assertTableContent(repo = repo, table = c, matchColumn = c.id, exactMatch = true, expectedRows = listOf(
+        assertTableContent(repo = repo, table = c, matchColumn = c.id, expectedRows = listOf(
             listOf(c.id to card1Id, c.type to TR_TP, c.createdAt to time2),
             listOf(c.id to card2Id, c.type to TR_TP, c.createdAt to time8),
         ))
-        assertTableContent(repo = repo, table = c.ver, matchColumn = c.id, exactMatch = true, expectedRows = listOf())
+        assertTableContent(repo = repo, table = c.ver, matchColumn = c.id, expectedRows = listOf())
 
-        assertTableContent(repo = repo, table = t, matchColumn = t.cardId, exactMatch = true, expectedRows = listOf(
+        assertTableContent(repo = repo, table = t, matchColumn = t.cardId, expectedRows = listOf(
             listOf(t.cardId to card1Id, t.textToTranslate to "karta1", t.translation to "card1+"),
             listOf(t.cardId to card2Id, t.textToTranslate to "karta2", t.translation to "card2"),
         ))
-        assertTableContent(repo = repo, table = t.ver, matchColumn = t.cardId, exactMatch = true, expectedRows = listOf(
+        assertTableContent(repo = repo, table = t.ver, matchColumn = t.cardId, expectedRows = listOf(
             listOf(t.cardId to card1Id, t.ver.timestamp to time7, t.textToTranslate to "karta1", t.translation to "card1"),
         ))
 
-        assertTableContent(repo = repo, table = s, matchColumn = s.cardId, exactMatch = true, expectedRows = listOf(
+        assertTableContent(repo = repo, table = s, matchColumn = s.cardId, expectedRows = listOf(
             listOf(s.cardId to card1Id, s.updatedAt to time6, s.delay to "1d"),
             listOf(s.cardId to card2Id, s.updatedAt to time8, s.delay to "0s"),
         ))
-        assertTableContent(repo = repo, table = s.ver, matchColumn = s.cardId, exactMatch = true, expectedRows = listOf(
+        assertTableContent(repo = repo, table = s.ver, matchColumn = s.cardId, expectedRows = listOf(
             listOf(s.ver.timestamp to time6, s.cardId to card1Id, s.updatedAt to time2, s.delay to "0s"),
         ))
 
-        assertTableContent(repo = repo, table = l, matchColumn = l.cardId, exactMatch = true, expectedRows = listOf(
+        assertTableContent(repo = repo, table = l, matchColumn = l.cardId, expectedRows = listOf(
             listOf(l.cardId to card1Id, l.timestamp to time5, l.translation to "card1", l.matched to 1),
             listOf(l.cardId to card2Id, l.timestamp to time11, l.translation to "card2-inc", l.matched to 0),
         ))
@@ -400,30 +400,30 @@ class DataManagerInstrumentedIntTest: InstrumentedTestBase() {
         assertEquals(card2Id, setDelayCard2Resp1.id)
         assertEquals("5m", setDelayCard2Resp1.schedule.delay)
 
-        assertTableContent(repo = repo, table = c, matchColumn = c.id, exactMatch = true, expectedRows = listOf(
+        assertTableContent(repo = repo, table = c, matchColumn = c.id, expectedRows = listOf(
             listOf(c.id to card1Id, c.type to TR_TP, c.createdAt to time2),
             listOf(c.id to card2Id, c.type to TR_TP, c.createdAt to time8),
         ))
-        assertTableContent(repo = repo, table = c.ver, matchColumn = c.id, exactMatch = true, expectedRows = listOf())
+        assertTableContent(repo = repo, table = c.ver, matchColumn = c.id, expectedRows = listOf())
 
-        assertTableContent(repo = repo, table = t, matchColumn = t.cardId, exactMatch = true, expectedRows = listOf(
+        assertTableContent(repo = repo, table = t, matchColumn = t.cardId, expectedRows = listOf(
             listOf(t.cardId to card1Id, t.textToTranslate to "karta1", t.translation to "card1+"),
             listOf(t.cardId to card2Id, t.textToTranslate to "karta2", t.translation to "card2"),
         ))
-        assertTableContent(repo = repo, table = t.ver, matchColumn = t.cardId, exactMatch = true, expectedRows = listOf(
+        assertTableContent(repo = repo, table = t.ver, matchColumn = t.cardId, expectedRows = listOf(
             listOf(t.cardId to card1Id, t.ver.timestamp to time7, t.textToTranslate to "karta1", t.translation to "card1"),
         ))
 
-        assertTableContent(repo = repo, table = s, matchColumn = s.cardId, exactMatch = true, expectedRows = listOf(
+        assertTableContent(repo = repo, table = s, matchColumn = s.cardId, expectedRows = listOf(
             listOf(s.cardId to card1Id, s.updatedAt to time6, s.delay to "1d"),
             listOf(s.cardId to card2Id, s.updatedAt to time12, s.delay to "5m"),
         ))
-        assertTableContent(repo = repo, table = s.ver, matchColumn = s.cardId, exactMatch = true, expectedRows = listOf(
+        assertTableContent(repo = repo, table = s.ver, matchColumn = s.cardId, expectedRows = listOf(
             listOf(s.ver.timestamp to time6, s.cardId to card1Id, s.updatedAt to time2, s.delay to "0s"),
             listOf(s.ver.timestamp to time12, s.cardId to card2Id, s.updatedAt to time8, s.delay to "0s"),
         ))
 
-        assertTableContent(repo = repo, table = l, matchColumn = l.cardId, exactMatch = true, expectedRows = listOf(
+        assertTableContent(repo = repo, table = l, matchColumn = l.cardId, expectedRows = listOf(
             listOf(l.cardId to card1Id, l.timestamp to time5, l.translation to "card1", l.matched to 1),
             listOf(l.cardId to card2Id, l.timestamp to time11, l.translation to "card2-inc", l.matched to 0),
         ))
@@ -447,31 +447,31 @@ class DataManagerInstrumentedIntTest: InstrumentedTestBase() {
         assertEquals("card2", updTextToTranslateCard2Resp1.translation)
         assertEquals("5m", updTextToTranslateCard2Resp1.schedule.delay)
 
-        assertTableContent(repo = repo, table = c, matchColumn = c.id, exactMatch = true, expectedRows = listOf(
+        assertTableContent(repo = repo, table = c, matchColumn = c.id, expectedRows = listOf(
             listOf(c.id to card1Id, c.type to TR_TP, c.createdAt to time2),
             listOf(c.id to card2Id, c.type to TR_TP, c.createdAt to time8),
         ))
-        assertTableContent(repo = repo, table = c.ver, matchColumn = c.id, exactMatch = true, expectedRows = listOf())
+        assertTableContent(repo = repo, table = c.ver, matchColumn = c.id, expectedRows = listOf())
 
-        assertTableContent(repo = repo, table = t, matchColumn = t.cardId, exactMatch = true, expectedRows = listOf(
+        assertTableContent(repo = repo, table = t, matchColumn = t.cardId, expectedRows = listOf(
             listOf(t.cardId to card1Id, t.textToTranslate to "karta1", t.translation to "card1+"),
             listOf(t.cardId to card2Id, t.textToTranslate to "karta2+", t.translation to "card2"),
         ))
-        assertTableContent(repo = repo, table = t.ver, matchColumn = t.cardId, exactMatch = true, expectedRows = listOf(
+        assertTableContent(repo = repo, table = t.ver, matchColumn = t.cardId, expectedRows = listOf(
             listOf(t.ver.timestamp to time7, t.cardId to card1Id, t.textToTranslate to "karta1", t.translation to "card1"),
             listOf(t.ver.timestamp to time14, t.cardId to card2Id, t.textToTranslate to "karta2", t.translation to "card2"),
         ))
 
-        assertTableContent(repo = repo, table = s, matchColumn = s.cardId, exactMatch = true, expectedRows = listOf(
+        assertTableContent(repo = repo, table = s, matchColumn = s.cardId, expectedRows = listOf(
             listOf(s.cardId to card1Id, s.updatedAt to time6, s.delay to "1d"),
             listOf(s.cardId to card2Id, s.updatedAt to time12, s.delay to "5m"),
         ))
-        assertTableContent(repo = repo, table = s.ver, matchColumn = s.cardId, exactMatch = true, expectedRows = listOf(
+        assertTableContent(repo = repo, table = s.ver, matchColumn = s.cardId, expectedRows = listOf(
             listOf(s.ver.timestamp to time6, s.cardId to card1Id, s.updatedAt to time2, s.delay to "0s"),
             listOf(s.ver.timestamp to time12, s.cardId to card2Id, s.updatedAt to time8, s.delay to "0s"),
         ))
 
-        assertTableContent(repo = repo, table = l, matchColumn = l.cardId, exactMatch = true, expectedRows = listOf(
+        assertTableContent(repo = repo, table = l, matchColumn = l.cardId, expectedRows = listOf(
             listOf(l.cardId to card1Id, l.timestamp to time5, l.translation to "card1", l.matched to 1),
             listOf(l.cardId to card2Id, l.timestamp to time11, l.translation to "card2-inc", l.matched to 0),
         ))
@@ -505,31 +505,31 @@ class DataManagerInstrumentedIntTest: InstrumentedTestBase() {
         assertEquals("card2", validateCard2Resp2.answer)
         assertTrue(validateCard2Resp2.isCorrect)
 
-        assertTableContent(repo = repo, table = c, matchColumn = c.id, exactMatch = true, expectedRows = listOf(
+        assertTableContent(repo = repo, table = c, matchColumn = c.id, expectedRows = listOf(
             listOf(c.id to card1Id, c.type to TR_TP, c.createdAt to time2),
             listOf(c.id to card2Id, c.type to TR_TP, c.createdAt to time8),
         ))
-        assertTableContent(repo = repo, table = c.ver, matchColumn = c.id, exactMatch = true, expectedRows = listOf())
+        assertTableContent(repo = repo, table = c.ver, matchColumn = c.id, expectedRows = listOf())
 
-        assertTableContent(repo = repo, table = t, matchColumn = t.cardId, exactMatch = true, expectedRows = listOf(
+        assertTableContent(repo = repo, table = t, matchColumn = t.cardId, expectedRows = listOf(
             listOf(t.cardId to card1Id, t.textToTranslate to "karta1", t.translation to "card1+"),
             listOf(t.cardId to card2Id, t.textToTranslate to "karta2+", t.translation to "card2"),
         ))
-        assertTableContent(repo = repo, table = t.ver, matchColumn = t.cardId, exactMatch = true, expectedRows = listOf(
+        assertTableContent(repo = repo, table = t.ver, matchColumn = t.cardId, expectedRows = listOf(
             listOf(t.ver.timestamp to time7, t.cardId to card1Id, t.textToTranslate to "karta1", t.translation to "card1"),
             listOf(t.ver.timestamp to time14, t.cardId to card2Id, t.textToTranslate to "karta2", t.translation to "card2"),
         ))
 
-        assertTableContent(repo = repo, table = s, matchColumn = s.cardId, exactMatch = true, expectedRows = listOf(
+        assertTableContent(repo = repo, table = s, matchColumn = s.cardId, expectedRows = listOf(
             listOf(s.cardId to card1Id, s.updatedAt to time6, s.delay to "1d"),
             listOf(s.cardId to card2Id, s.updatedAt to time12, s.delay to "5m"),
         ))
-        assertTableContent(repo = repo, table = s.ver, matchColumn = s.cardId, exactMatch = true, expectedRows = listOf(
+        assertTableContent(repo = repo, table = s.ver, matchColumn = s.cardId, expectedRows = listOf(
             listOf(s.ver.timestamp to time6, s.cardId to card1Id, s.updatedAt to time2, s.delay to "0s"),
             listOf(s.ver.timestamp to time12, s.cardId to card2Id, s.updatedAt to time8, s.delay to "0s"),
         ))
 
-        assertTableContent(repo = repo, table = l, matchColumn = l.cardId, exactMatch = true, expectedRows = listOf(
+        assertTableContent(repo = repo, table = l, matchColumn = l.cardId, expectedRows = listOf(
             listOf(l.cardId to card1Id, l.timestamp to time5, l.translation to "card1", l.matched to 1),
             listOf(l.cardId to card2Id, l.timestamp to time11, l.translation to "card2-inc", l.matched to 0),
             listOf(l.cardId to card2Id, l.timestamp to time17, l.translation to "card2", l.matched to 1),
@@ -544,32 +544,32 @@ class DataManagerInstrumentedIntTest: InstrumentedTestBase() {
         assertEquals(card2Id, setDelayCard2Resp2.id)
         assertEquals("5m", setDelayCard2Resp2.schedule.delay)
 
-        assertTableContent(repo = repo, table = c, matchColumn = c.id, exactMatch = true, expectedRows = listOf(
+        assertTableContent(repo = repo, table = c, matchColumn = c.id, expectedRows = listOf(
             listOf(c.id to card1Id, c.type to TR_TP, c.createdAt to time2),
             listOf(c.id to card2Id, c.type to TR_TP, c.createdAt to time8),
         ))
-        assertTableContent(repo = repo, table = c.ver, matchColumn = c.id, exactMatch = true, expectedRows = listOf())
+        assertTableContent(repo = repo, table = c.ver, matchColumn = c.id, expectedRows = listOf())
 
-        assertTableContent(repo = repo, table = t, matchColumn = t.cardId, exactMatch = true, expectedRows = listOf(
+        assertTableContent(repo = repo, table = t, matchColumn = t.cardId, expectedRows = listOf(
             listOf(t.cardId to card1Id, t.textToTranslate to "karta1", t.translation to "card1+"),
             listOf(t.cardId to card2Id, t.textToTranslate to "karta2+", t.translation to "card2"),
         ))
-        assertTableContent(repo = repo, table = t.ver, matchColumn = t.cardId, exactMatch = true, expectedRows = listOf(
+        assertTableContent(repo = repo, table = t.ver, matchColumn = t.cardId, expectedRows = listOf(
             listOf(t.ver.timestamp to time7, t.cardId to card1Id, t.textToTranslate to "karta1", t.translation to "card1"),
             listOf(t.ver.timestamp to time14, t.cardId to card2Id, t.textToTranslate to "karta2", t.translation to "card2"),
         ))
 
-        assertTableContent(repo = repo, table = s, matchColumn = s.cardId, exactMatch = true, expectedRows = listOf(
+        assertTableContent(repo = repo, table = s, matchColumn = s.cardId, expectedRows = listOf(
             listOf(s.cardId to card1Id, s.updatedAt to time6, s.delay to "1d"),
             listOf(s.cardId to card2Id, s.updatedAt to time18, s.delay to "5m"),
         ))
-        assertTableContent(repo = repo, table = s.ver, matchColumn = s.cardId, exactMatch = true, expectedRows = listOf(
+        assertTableContent(repo = repo, table = s.ver, matchColumn = s.cardId, expectedRows = listOf(
             listOf(s.ver.timestamp to time6, s.cardId to card1Id, s.updatedAt to time2, s.delay to "0s"),
             listOf(s.ver.timestamp to time12, s.cardId to card2Id, s.updatedAt to time8, s.delay to "0s"),
             listOf(s.ver.timestamp to time18, s.cardId to card2Id, s.updatedAt to time12, s.delay to "5m"),
         ))
 
-        assertTableContent(repo = repo, table = l, matchColumn = l.cardId, exactMatch = true, expectedRows = listOf(
+        assertTableContent(repo = repo, table = l, matchColumn = l.cardId, expectedRows = listOf(
             listOf(l.cardId to card1Id, l.timestamp to time5, l.translation to "card1", l.matched to 1),
             listOf(l.cardId to card2Id, l.timestamp to time11, l.translation to "card2-inc", l.matched to 0),
             listOf(l.cardId to card2Id, l.timestamp to time17, l.translation to "card2", l.matched to 1),
@@ -602,32 +602,32 @@ class DataManagerInstrumentedIntTest: InstrumentedTestBase() {
         assertEquals(card1Id, setDelayCard1Resp2.id)
         assertEquals("1d", setDelayCard1Resp2.schedule.delay)
 
-        assertTableContent(repo = repo, table = c, matchColumn = c.id, exactMatch = true, expectedRows = listOf(
+        assertTableContent(repo = repo, table = c, matchColumn = c.id, expectedRows = listOf(
             listOf(c.id to card1Id, c.type to TR_TP, c.createdAt to time2),
             listOf(c.id to card2Id, c.type to TR_TP, c.createdAt to time8),
         ))
-        assertTableContent(repo = repo, table = c.ver, matchColumn = c.id, exactMatch = true, expectedRows = listOf())
+        assertTableContent(repo = repo, table = c.ver, matchColumn = c.id, expectedRows = listOf())
 
-        assertTableContent(repo = repo, table = t, matchColumn = t.cardId, exactMatch = true, expectedRows = listOf(
+        assertTableContent(repo = repo, table = t, matchColumn = t.cardId, expectedRows = listOf(
             listOf(t.cardId to card1Id, t.textToTranslate to "karta1", t.translation to "card1+"),
             listOf(t.cardId to card2Id, t.textToTranslate to "karta2+", t.translation to "card2"),
         ))
-        assertTableContent(repo = repo, table = t.ver, matchColumn = t.cardId, exactMatch = true, expectedRows = listOf(
+        assertTableContent(repo = repo, table = t.ver, matchColumn = t.cardId, expectedRows = listOf(
             listOf(t.ver.timestamp to time7, t.cardId to card1Id, t.textToTranslate to "karta1", t.translation to "card1"),
             listOf(t.ver.timestamp to time14, t.cardId to card2Id, t.textToTranslate to "karta2", t.translation to "card2"),
         ))
 
-        assertTableContent(repo = repo, table = s, matchColumn = s.cardId, exactMatch = true, expectedRows = listOf(
+        assertTableContent(repo = repo, table = s, matchColumn = s.cardId, expectedRows = listOf(
             listOf(s.cardId to card1Id, s.updatedAt to time6, s.delay to "1d"),
             listOf(s.cardId to card2Id, s.updatedAt to time18, s.delay to "5m"),
         ))
-        assertTableContent(repo = repo, table = s.ver, matchColumn = s.cardId, exactMatch = true, expectedRows = listOf(
+        assertTableContent(repo = repo, table = s.ver, matchColumn = s.cardId, expectedRows = listOf(
             listOf(s.ver.timestamp to time6, s.cardId to card1Id, s.updatedAt to time2, s.delay to "0s"),
             listOf(s.ver.timestamp to time12, s.cardId to card2Id, s.updatedAt to time8, s.delay to "0s"),
             listOf(s.ver.timestamp to time18, s.cardId to card2Id, s.updatedAt to time12, s.delay to "5m"),
         ))
 
-        assertTableContent(repo = repo, table = l, matchColumn = l.cardId, exactMatch = true, expectedRows = listOf(
+        assertTableContent(repo = repo, table = l, matchColumn = l.cardId, expectedRows = listOf(
             listOf(l.cardId to card1Id, l.timestamp to time5, l.translation to "card1", l.matched to 1),
             listOf(l.cardId to card2Id, l.timestamp to time11, l.translation to "card2-inc", l.matched to 0),
             listOf(l.cardId to card2Id, l.timestamp to time17, l.translation to "card2", l.matched to 1),
@@ -652,33 +652,33 @@ class DataManagerInstrumentedIntTest: InstrumentedTestBase() {
         assertEquals(card1Id, setDelayCard1Resp3.id)
         assertEquals("0s", setDelayCard1Resp3.schedule.delay)
 
-        assertTableContent(repo = repo, table = c, matchColumn = c.id, exactMatch = true, expectedRows = listOf(
+        assertTableContent(repo = repo, table = c, matchColumn = c.id, expectedRows = listOf(
             listOf(c.id to card1Id, c.type to TR_TP, c.createdAt to time2),
             listOf(c.id to card2Id, c.type to TR_TP, c.createdAt to time8),
         ))
-        assertTableContent(repo = repo, table = c.ver, matchColumn = c.id, exactMatch = true, expectedRows = listOf())
+        assertTableContent(repo = repo, table = c.ver, matchColumn = c.id, expectedRows = listOf())
 
-        assertTableContent(repo = repo, table = t, matchColumn = t.cardId, exactMatch = true, expectedRows = listOf(
+        assertTableContent(repo = repo, table = t, matchColumn = t.cardId, expectedRows = listOf(
             listOf(t.cardId to card1Id, t.textToTranslate to "karta1", t.translation to "card1+"),
             listOf(t.cardId to card2Id, t.textToTranslate to "karta2+", t.translation to "card2"),
         ))
-        assertTableContent(repo = repo, table = t.ver, matchColumn = t.cardId, exactMatch = true, expectedRows = listOf(
+        assertTableContent(repo = repo, table = t.ver, matchColumn = t.cardId, expectedRows = listOf(
             listOf(t.ver.timestamp to time7, t.cardId to card1Id, t.textToTranslate to "karta1", t.translation to "card1"),
             listOf(t.ver.timestamp to time14, t.cardId to card2Id, t.textToTranslate to "karta2", t.translation to "card2"),
         ))
 
-        assertTableContent(repo = repo, table = s, matchColumn = s.cardId, exactMatch = true, expectedRows = listOf(
+        assertTableContent(repo = repo, table = s, matchColumn = s.cardId, expectedRows = listOf(
             listOf(s.cardId to card1Id, s.updatedAt to time23, s.delay to "0s"),
             listOf(s.cardId to card2Id, s.updatedAt to time18, s.delay to "5m"),
         ))
-        assertTableContent(repo = repo, table = s.ver, matchColumn = s.cardId, exactMatch = true, expectedRows = listOf(
+        assertTableContent(repo = repo, table = s.ver, matchColumn = s.cardId, expectedRows = listOf(
             listOf(s.ver.timestamp to time6, s.cardId to card1Id, s.updatedAt to time2, s.delay to "0s"),
             listOf(s.ver.timestamp to time23, s.cardId to card1Id, s.updatedAt to time6, s.delay to "1d"),
             listOf(s.ver.timestamp to time12, s.cardId to card2Id, s.updatedAt to time8, s.delay to "0s"),
             listOf(s.ver.timestamp to time18, s.cardId to card2Id, s.updatedAt to time12, s.delay to "5m"),
         ))
 
-        assertTableContent(repo = repo, table = l, matchColumn = l.cardId, exactMatch = true, expectedRows = listOf(
+        assertTableContent(repo = repo, table = l, matchColumn = l.cardId, expectedRows = listOf(
             listOf(l.cardId to card1Id, l.timestamp to time5, l.translation to "card1", l.matched to 1),
             listOf(l.cardId to card2Id, l.timestamp to time11, l.translation to "card2-inc", l.matched to 0),
             listOf(l.cardId to card2Id, l.timestamp to time17, l.translation to "card2", l.matched to 1),
@@ -702,26 +702,26 @@ class DataManagerInstrumentedIntTest: InstrumentedTestBase() {
         //then
         assertTrue(deleteCard1Resp)
 
-        assertTableContent(repo = repo, table = c, matchColumn = c.id, exactMatch = true, expectedRows = listOf(
+        assertTableContent(repo = repo, table = c, matchColumn = c.id, expectedRows = listOf(
             listOf(c.id to card2Id, c.type to TR_TP, c.createdAt to time8),
         ))
-        assertTableContent(repo = repo, table = c.ver, matchColumn = c.id, exactMatch = true, expectedRows = listOf(
+        assertTableContent(repo = repo, table = c.ver, matchColumn = c.id, expectedRows = listOf(
             listOf(c.ver.timestamp to time25, c.id to card1Id, c.type to TR_TP, c.createdAt to time2),
         ))
 
-        assertTableContent(repo = repo, table = t, matchColumn = t.cardId, exactMatch = true, expectedRows = listOf(
+        assertTableContent(repo = repo, table = t, matchColumn = t.cardId, expectedRows = listOf(
             listOf(t.cardId to card2Id, t.textToTranslate to "karta2+", t.translation to "card2"),
         ))
-        assertTableContent(repo = repo, table = t.ver, matchColumn = t.cardId, exactMatch = true, expectedRows = listOf(
+        assertTableContent(repo = repo, table = t.ver, matchColumn = t.cardId, expectedRows = listOf(
             listOf(t.ver.timestamp to time7, t.cardId to card1Id, t.textToTranslate to "karta1", t.translation to "card1"),
             listOf(t.ver.timestamp to time25, t.cardId to card1Id, t.textToTranslate to "karta1", t.translation to "card1+"),
             listOf(t.ver.timestamp to time14, t.cardId to card2Id, t.textToTranslate to "karta2", t.translation to "card2"),
         ))
 
-        assertTableContent(repo = repo, table = s, matchColumn = s.cardId, exactMatch = true, expectedRows = listOf(
+        assertTableContent(repo = repo, table = s, matchColumn = s.cardId, expectedRows = listOf(
             listOf(s.cardId to card2Id, s.updatedAt to time18, s.delay to "5m"),
         ))
-        assertTableContent(repo = repo, table = s.ver, matchColumn = s.cardId, exactMatch = true, expectedRows = listOf(
+        assertTableContent(repo = repo, table = s.ver, matchColumn = s.cardId, expectedRows = listOf(
             listOf(s.ver.timestamp to time6, s.cardId to card1Id, s.updatedAt to time2, s.delay to "0s"),
             listOf(s.ver.timestamp to time23, s.cardId to card1Id, s.updatedAt to time6, s.delay to "1d"),
             listOf(s.ver.timestamp to time25, s.cardId to card1Id, s.updatedAt to time23, s.delay to "0s"),
@@ -729,7 +729,7 @@ class DataManagerInstrumentedIntTest: InstrumentedTestBase() {
             listOf(s.ver.timestamp to time18, s.cardId to card2Id, s.updatedAt to time12, s.delay to "5m"),
         ))
 
-        assertTableContent(repo = repo, table = l, matchColumn = l.cardId, exactMatch = true, expectedRows = listOf(
+        assertTableContent(repo = repo, table = l, matchColumn = l.cardId, expectedRows = listOf(
             listOf(l.cardId to card1Id, l.timestamp to time5, l.translation to "card1", l.matched to 1),
             listOf(l.cardId to card2Id, l.timestamp to time11, l.translation to "card2-inc", l.matched to 0),
             listOf(l.cardId to card2Id, l.timestamp to time17, l.translation to "card2", l.matched to 1),

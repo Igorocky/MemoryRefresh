@@ -18,13 +18,13 @@ class UpdateTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
         val tagId3 = dm.createTag(CreateTagArgs(name = "C")).data!!
         val cardId = dm.createTranslateCard(CreateTranslateCardArgs(textToTranslate = "X", translation = "x")).data!!
 
-        assertTableContent(repo = repo, table = ctg, exactMatch = true, expectedRows = listOf())
+        assertTableContent(repo = repo, table = ctg, expectedRows = listOf())
 
         //when
         dm.updateTranslateCard(UpdateTranslateCardArgs(cardId = cardId, tagIds = setOf(tagId1,tagId2,tagId3)))
 
         //then
-        assertTableContent(repo = repo, table = ctg, exactMatch = true, expectedRows = listOf(
+        assertTableContent(repo = repo, table = ctg, expectedRows = listOf(
             listOf(ctg.cardId to cardId, ctg.tagId to tagId1),
             listOf(ctg.cardId to cardId, ctg.tagId to tagId2),
             listOf(ctg.cardId to cardId, ctg.tagId to tagId3),
@@ -42,7 +42,7 @@ class UpdateTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
             textToTranslate = "X", translation = "x", tagIds = setOf(tagId1, tagId2)
         )).data!!
 
-        assertTableContent(repo = repo, table = ctg, exactMatch = true, expectedRows = listOf(
+        assertTableContent(repo = repo, table = ctg, expectedRows = listOf(
             listOf(ctg.cardId to cardId, ctg.tagId to tagId1),
             listOf(ctg.cardId to cardId, ctg.tagId to tagId2),
         ))
@@ -51,7 +51,7 @@ class UpdateTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
         dm.updateTranslateCard(UpdateTranslateCardArgs(cardId = cardId, tagIds = setOf(tagId1,tagId2,tagId3,tagId4)))
 
         //then
-        assertTableContent(repo = repo, table = ctg, exactMatch = true, expectedRows = listOf(
+        assertTableContent(repo = repo, table = ctg, expectedRows = listOf(
             listOf(ctg.cardId to cardId, ctg.tagId to tagId1),
             listOf(ctg.cardId to cardId, ctg.tagId to tagId2),
             listOf(ctg.cardId to cardId, ctg.tagId to tagId3),
@@ -68,7 +68,7 @@ class UpdateTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
             textToTranslate = "X", translation = "x", tagIds = setOf(tagId1, tagId2)
         )).data!!
 
-        assertTableContent(repo = repo, table = ctg, exactMatch = true, expectedRows = listOf(
+        assertTableContent(repo = repo, table = ctg, expectedRows = listOf(
             listOf(ctg.cardId to cardId, ctg.tagId to tagId1),
             listOf(ctg.cardId to cardId, ctg.tagId to tagId2),
         ))
@@ -77,7 +77,7 @@ class UpdateTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
         dm.updateTranslateCard(UpdateTranslateCardArgs(cardId = cardId, tagIds = emptySet()))
 
         //then
-        assertTableContent(repo = repo, table = ctg, exactMatch = true, expectedRows = listOf())
+        assertTableContent(repo = repo, table = ctg, expectedRows = listOf())
     }
 
     @Test
@@ -89,7 +89,7 @@ class UpdateTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
             textToTranslate = "X", translation = "x", tagIds = setOf(tagId1, tagId2)
         )).data!!
 
-        assertTableContent(repo = repo, table = ctg, exactMatch = true, expectedRows = listOf(
+        assertTableContent(repo = repo, table = ctg, expectedRows = listOf(
             listOf(ctg.cardId to cardId, ctg.tagId to tagId1),
             listOf(ctg.cardId to cardId, ctg.tagId to tagId2),
         ))
@@ -98,7 +98,7 @@ class UpdateTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
         dm.updateTranslateCard(UpdateTranslateCardArgs(cardId = cardId, tagIds = null))
 
         //then
-        assertTableContent(repo = repo, table = ctg, exactMatch = true, expectedRows = listOf(
+        assertTableContent(repo = repo, table = ctg, expectedRows = listOf(
             listOf(ctg.cardId to cardId, ctg.tagId to tagId1),
             listOf(ctg.cardId to cardId, ctg.tagId to tagId2),
         ))
@@ -111,13 +111,13 @@ class UpdateTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
             textToTranslate = "X", translation = "x"
         )).data!!
 
-        assertTableContent(repo = repo, table = ctg, exactMatch = true, expectedRows = listOf())
+        assertTableContent(repo = repo, table = ctg, expectedRows = listOf())
 
         //when
         dm.updateTranslateCard(UpdateTranslateCardArgs(cardId = cardId, tagIds = emptySet()))
 
         //then
-        assertTableContent(repo = repo, table = ctg, exactMatch = true, expectedRows = listOf())
+        assertTableContent(repo = repo, table = ctg, expectedRows = listOf())
     }
 
     @Test
@@ -133,7 +133,7 @@ class UpdateTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
             textToTranslate = "X", translation = "x", tagIds = setOf(tagId1, tagId2, tagId3, tagId4)
         )).data!!
 
-        assertTableContent(repo = repo, table = ctg, exactMatch = true, expectedRows = listOf(
+        assertTableContent(repo = repo, table = ctg, expectedRows = listOf(
             listOf(ctg.cardId to cardId, ctg.tagId to tagId1),
             listOf(ctg.cardId to cardId, ctg.tagId to tagId2),
             listOf(ctg.cardId to cardId, ctg.tagId to tagId3),
@@ -144,7 +144,7 @@ class UpdateTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
         dm.updateTranslateCard(UpdateTranslateCardArgs(cardId = cardId, tagIds = setOf(tagId5,tagId6,tagId3,tagId4)))
 
         //then
-        assertTableContent(repo = repo, table = ctg, exactMatch = true, expectedRows = listOf(
+        assertTableContent(repo = repo, table = ctg, expectedRows = listOf(
             listOf(ctg.cardId to cardId, ctg.tagId to tagId5),
             listOf(ctg.cardId to cardId, ctg.tagId to tagId6),
             listOf(ctg.cardId to cardId, ctg.tagId to tagId3),
@@ -170,17 +170,17 @@ class UpdateTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
             textToTranslate = textToTranslateBeforeUpdate, translation = translationBeforeUpdate, tagIds = setOf(tagId1, tagId2, tagId3, tagId4)
         )).data!!
 
-        assertTableContent(repo = repo, table = t, exactMatch = true, expectedRows = listOf(
+        assertTableContent(repo = repo, table = t, expectedRows = listOf(
             listOf(t.cardId to cardId, t.textToTranslate to textToTranslateBeforeUpdate, t.translation to translationBeforeUpdate),
         ))
-        assertTableContent(repo = repo, table = t.ver, exactMatch = true, expectedRows = listOf())
+        assertTableContent(repo = repo, table = t.ver, expectedRows = listOf())
 
-        assertTableContent(repo = repo, table = s, exactMatch = true, expectedRows = listOf(
+        assertTableContent(repo = repo, table = s, expectedRows = listOf(
             listOf(s.cardId to cardId, s.updatedAt to createTime, s.delay to "0s"),
         ))
-        assertTableContent(repo = repo, table = s.ver, exactMatch = true, expectedRows = listOf())
+        assertTableContent(repo = repo, table = s.ver, expectedRows = listOf())
 
-        assertTableContent(repo = repo, table = ctg, exactMatch = true, expectedRows = listOf(
+        assertTableContent(repo = repo, table = ctg, expectedRows = listOf(
             listOf(ctg.cardId to cardId, ctg.tagId to tagId1),
             listOf(ctg.cardId to cardId, ctg.tagId to tagId2),
             listOf(ctg.cardId to cardId, ctg.tagId to tagId3),
@@ -198,21 +198,21 @@ class UpdateTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
         ))
 
         //then
-        assertTableContent(repo = repo, table = t, exactMatch = true, expectedRows = listOf(
+        assertTableContent(repo = repo, table = t, expectedRows = listOf(
             listOf(t.cardId to cardId, t.textToTranslate to textToTranslateAfterUpdate, t.translation to translationAfterUpdate),
         ))
-        assertTableContent(repo = repo, table = t.ver, exactMatch = true, expectedRows = listOf(
+        assertTableContent(repo = repo, table = t.ver, expectedRows = listOf(
             listOf(t.cardId to cardId, t.ver.timestamp to updateTime, t.textToTranslate to textToTranslateBeforeUpdate, t.translation to translationBeforeUpdate),
         ))
 
-        assertTableContent(repo = repo, table = s, exactMatch = true, expectedRows = listOf(
+        assertTableContent(repo = repo, table = s, expectedRows = listOf(
             listOf(s.cardId to cardId, s.updatedAt to updateTime, s.delay to "5m"),
         ))
-        assertTableContent(repo = repo, table = s.ver, exactMatch = true, expectedRows = listOf(
+        assertTableContent(repo = repo, table = s.ver, expectedRows = listOf(
             listOf(s.cardId to cardId, s.ver.timestamp to updateTime, s.cardId to cardId, s.updatedAt to createTime, s.delay to "0s"),
         ))
 
-        assertTableContent(repo = repo, table = ctg, exactMatch = true, expectedRows = listOf(
+        assertTableContent(repo = repo, table = ctg, expectedRows = listOf(
             listOf(ctg.cardId to cardId, ctg.tagId to tagId5),
             listOf(ctg.cardId to cardId, ctg.tagId to tagId6),
             listOf(ctg.cardId to cardId, ctg.tagId to tagId3),
@@ -232,7 +232,7 @@ class UpdateTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
         insert(repo = repo, table = t, rows = listOf(
             listOf(t.cardId to expectedCardId, t.textToTranslate to "A", t.translation to " a\t"),
         ))
-        assertTableContent(repo = repo, table = l, exactMatch = true, expectedRows = listOf())
+        assertTableContent(repo = repo, table = l, expectedRows = listOf())
 
         //when
         testClock.setFixedTime(baseTime)
@@ -243,7 +243,7 @@ class UpdateTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
         val actualValidationResults = actualResp.data!!
         assertTrue(actualValidationResults.isCorrect)
         assertEquals("a", actualValidationResults.answer)
-        assertTableContent(repo = repo, table = l, exactMatch = true, expectedRows = listOf(
+        assertTableContent(repo = repo, table = l, expectedRows = listOf(
             listOf(l.timestamp to time1, l.cardId to expectedCardId, l.translation to "a", l.matched to 1L)
         ))
     }
@@ -260,7 +260,7 @@ class UpdateTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
         insert(repo = repo, table = t, rows = listOf(
             listOf(t.cardId to expectedCardId, t.textToTranslate to "A", t.translation to " a\t"),
         ))
-        assertTableContent(repo = repo, table = l, exactMatch = true, expectedRows = listOf())
+        assertTableContent(repo = repo, table = l, expectedRows = listOf())
 
         //when
         testClock.setFixedTime(baseTime)
@@ -271,7 +271,7 @@ class UpdateTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
         val actualValidationResults = actualResp.data!!
         assertFalse(actualValidationResults.isCorrect)
         assertEquals("a", actualValidationResults.answer)
-        assertTableContent(repo = repo, table = l, exactMatch = true, expectedRows = listOf(
+        assertTableContent(repo = repo, table = l, expectedRows = listOf(
             listOf(l.timestamp to time1, l.cardId to expectedCardId, l.translation to "b", l.matched to 0L)
         ))
     }

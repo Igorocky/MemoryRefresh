@@ -33,22 +33,22 @@ class CreateTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
         assertTableContent(repo = repo, table = c, matchColumn = c.id, expectedRows = listOf(
             listOf(c.id to translateCard.id, c.type to TR_TP, c.createdAt to time1)
         ))
-        assertTableContent(repo = repo, table = c.ver, exactMatch = true, expectedRows = listOf())
+        assertTableContent(repo = repo, table = c.ver, expectedRows = listOf())
 
-        assertTableContent(repo = repo, table = tg, exactMatch = true, expectedRows = listOf())
-        assertTableContent(repo = repo, table = ctg, exactMatch = true, expectedRows = listOf())
+        assertTableContent(repo = repo, table = tg, expectedRows = listOf())
+        assertTableContent(repo = repo, table = ctg, expectedRows = listOf())
 
         assertTableContent(repo = repo, table = t, matchColumn = t.cardId, expectedRows = listOf(
             listOf(t.cardId to translateCard.id, t.textToTranslate to expectedTextToTranslate, t.translation to expectedTranslation)
         ))
-        assertTableContent(repo = repo, table = t.ver, exactMatch = true, expectedRows = listOf())
+        assertTableContent(repo = repo, table = t.ver, expectedRows = listOf())
 
         assertTableContent(repo = repo, table = s, matchColumn = s.cardId, expectedRows = listOf(
             listOf(s.cardId to translateCard.id, s.delay to "0s", s.nextAccessInMillis to 0L, s.nextAccessAt to time1)
         ))
-        assertTableContent(repo = repo, table = s.ver, exactMatch = true, expectedRows = listOf())
+        assertTableContent(repo = repo, table = s.ver, expectedRows = listOf())
 
-        assertTableContent(repo = repo, table = l, exactMatch = true, expectedRows = listOf())
+        assertTableContent(repo = repo, table = l, expectedRows = listOf())
     }
 
     @Test
@@ -80,13 +80,13 @@ class CreateTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
         assertTableContent(repo = repo, table = c, matchColumn = c.id, expectedRows = listOf(
             listOf(c.id to translateCard.id, c.type to TR_TP, c.createdAt to time1)
         ))
-        assertTableContent(repo = repo, table = c.ver, exactMatch = true, expectedRows = listOf())
+        assertTableContent(repo = repo, table = c.ver, expectedRows = listOf())
 
-        assertTableContent(repo = repo, table = tg, exactMatch = true, expectedRows = listOf(
+        assertTableContent(repo = repo, table = tg, expectedRows = listOf(
             listOf(tg.id to tagId1, tg.createdAt to time1, tg.name to "t1"),
             listOf(tg.id to tagId2, tg.createdAt to time1, tg.name to "t2"),
         ))
-        assertTableContent(repo = repo, table = ctg, exactMatch = true, expectedRows = listOf(
+        assertTableContent(repo = repo, table = ctg, expectedRows = listOf(
             listOf(ctg.cardId to translateCardId, ctg.tagId to tagId1),
             listOf(ctg.cardId to translateCardId, ctg.tagId to tagId2),
         ))
@@ -94,14 +94,14 @@ class CreateTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
         assertTableContent(repo = repo, table = t, matchColumn = t.cardId, expectedRows = listOf(
             listOf(t.cardId to translateCard.id, t.textToTranslate to expectedTextToTranslate, t.translation to expectedTranslation)
         ))
-        assertTableContent(repo = repo, table = t.ver, exactMatch = true, expectedRows = listOf())
+        assertTableContent(repo = repo, table = t.ver, expectedRows = listOf())
 
         assertTableContent(repo = repo, table = s, matchColumn = s.cardId, expectedRows = listOf(
             listOf(s.cardId to translateCard.id, s.delay to "0s", s.nextAccessInMillis to 0L, s.nextAccessAt to time1)
         ))
-        assertTableContent(repo = repo, table = s.ver, exactMatch = true, expectedRows = listOf())
+        assertTableContent(repo = repo, table = s.ver, expectedRows = listOf())
 
-        assertTableContent(repo = repo, table = l, exactMatch = true, expectedRows = listOf())
+        assertTableContent(repo = repo, table = l, expectedRows = listOf())
     }
 
 }
