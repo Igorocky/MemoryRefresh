@@ -27,20 +27,13 @@ class DataManagerInstrumentedIntTest: InstrumentedTestBase() {
     @Test
     fun test_scenario_1_create_card_and_edit_it_twice() {
         //given
-        val dm = createInmemoryDataManager()
-        val repo = dm.getRepo()
-        val c = repo.cards
-        val t = repo.translationCards
-        val s = repo.cardsSchedule
-        val l = repo.translationCardsLog
         val expectedTextToTranslate1 = "A"
         val expectedTranslation1 = "a"
         val expectedTextToTranslate2 = "B"
         val expectedTranslation2 = "b"
 
         //when: create a new translation card
-        testClock.setFixedTime(1000L)
-        val timeCrt = testClock.instant().toEpochMilli()
+        val timeCrt = testClock.currentMillis()
         val actualCreatedCardId = dm.createTranslateCard(
             CreateTranslateCardArgs(textToTranslate = expectedTextToTranslate1, translation = expectedTranslation1)
         ).data!!
@@ -103,8 +96,7 @@ class DataManagerInstrumentedIntTest: InstrumentedTestBase() {
         assertTableContent(repo = repo, table = l, exactMatch = true, expectedRows = listOf())
 
         //when: provide new values when editing the card
-        testClock.plus(5000)
-        val timeEdt2 = testClock.instant().toEpochMilli()
+        val timeEdt2 = testClock.plus(5000)
         dm.updateTranslateCard(
             UpdateTranslateCardArgs(cardId = actualCreatedCard.id, textToTranslate = "  $expectedTextToTranslate2  ", translation = "\t$expectedTranslation2  ")
         )
@@ -142,13 +134,6 @@ class DataManagerInstrumentedIntTest: InstrumentedTestBase() {
     @Test
     fun test_scenario_2() {
         //given
-        val dm = createInmemoryDataManager()
-        val repo = dm.getRepo()
-        val c = repo.cards
-        val t = repo.translationCards
-        val s = repo.cardsSchedule
-        val l = repo.translationCardsLog
-
         assertTableContent(repo = repo, table = c, exactMatch = true, expectedRows = listOf())
         assertTableContent(repo = repo, table = c.ver, exactMatch = true, expectedRows = listOf())
 
@@ -161,7 +146,6 @@ class DataManagerInstrumentedIntTest: InstrumentedTestBase() {
         assertTableContent(repo = repo, table = l, exactMatch = true, expectedRows = listOf())
 
         //when: 1. get next card when there are no cards at all
-        testClock.setFixedTime(1000L)
         val resp1 = dm.getNextCardToRepeat().data!!
 
         //then: response contains empty "wait" time
@@ -790,10 +774,6 @@ class DataManagerInstrumentedIntTest: InstrumentedTestBase() {
     @Test
     fun getNextCardToRepeat_returns_random_card_if_there_few_cards_with_same_overdue() {
         //given
-        val dm = createInmemoryDataManager()
-        val repo = dm.getRepo()
-        val c = repo.cards
-        val s = repo.cardsSchedule
         val expectedCardId1 = 1236L
         val expectedCardId2 = 1244L
         val baseTime = 1_000
@@ -829,11 +809,7 @@ class DataManagerInstrumentedIntTest: InstrumentedTestBase() {
         delayStr: String, baseDurationMillis: Long, bucketWidthMillis: Long
     ) {
         //given
-        val dm = createInmemoryDataManager()
-        val repo = dm.getRepo()
-        val c = repo.cards
-        val s = repo.cardsSchedule
-        val t = repo.translationCards
+        init()
         val cardId = 12L
         insert(repo = repo, table = c, rows = listOf(
             listOf(c.id to cardId, c.type to TR_TP, c.createdAt to 0)

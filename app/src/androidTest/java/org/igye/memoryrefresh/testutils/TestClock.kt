@@ -41,6 +41,10 @@ class TestClock(private var fixedTime: ZonedDateTime) : Clock() {
         )
     }
 
+    fun currentMillis(): Long {
+        return instant().toEpochMilli()
+    }
+
     override fun getZone(): ZoneId {
         return fixedTime.zone
     }

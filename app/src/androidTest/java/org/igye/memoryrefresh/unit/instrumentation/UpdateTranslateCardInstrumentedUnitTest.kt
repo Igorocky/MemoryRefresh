@@ -13,11 +13,6 @@ class UpdateTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
     @Test
     fun validateTranslateCard_returns_expected_response_when_translation_is_correct() {
         //given
-        val dm = createInmemoryDataManager()
-        val repo = dm.getRepo()
-        val c = repo.cards
-        val t = repo.translationCards
-        val l = repo.translationCardsLog
         val expectedCardId = 1236L
         val baseTime = 1_000
         fun createCardRecord(cardId: Long) = listOf(c.id to cardId, c.type to TR_TP, c.createdAt to 0)
@@ -46,11 +41,6 @@ class UpdateTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
     @Test
     fun validateTranslateCard_returns_expected_response_when_translation_is_incorrect() {
         //given
-        val dm = createInmemoryDataManager()
-        val repo = dm.getRepo()
-        val c = repo.cards
-        val t = repo.translationCards
-        val l = repo.translationCardsLog
         val expectedCardId = 1236L
         val baseTime = 1_000
         fun createCardRecord(cardId: Long) = listOf(c.id to cardId, c.type to TR_TP, c.createdAt to 0)
@@ -64,7 +54,7 @@ class UpdateTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
 
         //when
         testClock.setFixedTime(baseTime)
-        val time1 = testClock.instant().toEpochMilli()
+        val time1 = testClock.currentMillis()
         val actualResp = dm.validateTranslateCard(ValidateTranslateCardArgs(cardId = expectedCardId, userProvidedTranslation = "b"))
 
         //then

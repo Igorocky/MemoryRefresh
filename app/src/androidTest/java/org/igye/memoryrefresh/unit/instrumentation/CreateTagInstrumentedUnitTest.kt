@@ -13,13 +13,9 @@ class CreateTagInstrumentedUnitTest: InstrumentedTestBase() {
     @Test
     fun createTag_creates_new_tag() {
         //given
-        val dm = createInmemoryDataManager()
-        val repo = dm.getRepo()
-        val t = repo.tags
         val expectedTag1Name = "t1"
         val expectedTag2Name = "t2"
         val expectedTag3Name = "t3"
-        testClock.setFixedTime(1000)
 
         //when
         val time1 = testClock.plus(2000)
@@ -30,25 +26,21 @@ class CreateTagInstrumentedUnitTest: InstrumentedTestBase() {
         val tagId3 = dm.createTag(CreateTagArgs(name = "\t $expectedTag3Name \t")).data!!
 
         //then
-        assertTableContent(repo = repo, table = t, exactMatch = true, matchColumn = t.id, expectedRows = listOf(
-            listOf(t.id to tagId1, t.createdAt to time1, t.name to expectedTag1Name),
-            listOf(t.id to tagId2, t.createdAt to time2, t.name to expectedTag2Name),
-            listOf(t.id to tagId3, t.createdAt to time3, t.name to expectedTag3Name),
+        assertTableContent(repo = repo, table = tg, exactMatch = true, matchColumn = tg.id, expectedRows = listOf(
+            listOf(tg.id to tagId1, tg.createdAt to time1, tg.name to expectedTag1Name),
+            listOf(tg.id to tagId2, tg.createdAt to time2, tg.name to expectedTag2Name),
+            listOf(tg.id to tagId3, tg.createdAt to time3, tg.name to expectedTag3Name),
         ))
     }
 
     @Test
     fun createTag_doesnt_allow_to_save_tag_with_same_name() {
         //given
-        val dm = createInmemoryDataManager()
-        val repo = dm.getRepo()
-        val t = repo.tags
-        testClock.setFixedTime(1000)
-        insert(repo = repo, table = t, rows = listOf(
-            listOf(t.id to 1, t.createdAt to 1000, t.name to "ttt")
+        insert(repo = repo, table = tg, rows = listOf(
+            listOf(tg.id to 1, tg.createdAt to 1000, tg.name to "ttt")
         ))
-        assertTableContent(repo = repo, table = t, exactMatch = true, matchColumn = t.id, expectedRows = listOf(
-            listOf(t.id to 1, t.createdAt to 1000, t.name to "ttt"),
+        assertTableContent(repo = repo, table = tg, exactMatch = true, matchColumn = tg.id, expectedRows = listOf(
+            listOf(tg.id to 1, tg.createdAt to 1000, tg.name to "ttt"),
         ))
 
         //when
@@ -57,8 +49,8 @@ class CreateTagInstrumentedUnitTest: InstrumentedTestBase() {
         //then
         assertEquals("A tag with name 'ttt' already exists.", err.msg)
 
-        assertTableContent(repo = repo, table = t, exactMatch = true, matchColumn = t.id, expectedRows = listOf(
-            listOf(t.id to 1, t.createdAt to 1000, t.name to "ttt"),
+        assertTableContent(repo = repo, table = tg, exactMatch = true, matchColumn = tg.id, expectedRows = listOf(
+            listOf(tg.id to 1, tg.createdAt to 1000, tg.name to "ttt"),
         ))
     }
 }

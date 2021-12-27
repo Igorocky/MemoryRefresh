@@ -18,10 +18,6 @@ class ReadTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
     @Test
     fun selectTopOverdueCards_returns_correct_results_when_only_one_card_is_present_in_the_database() {
         //given
-        val dm = createInmemoryDataManager()
-        val repo = dm.getRepo()
-        val c = repo.cards
-        val s = repo.cardsSchedule
         val expectedCardId = 1L
         val expectedCardType = CardType.TRANSLATION
         val baseTime = 27000
@@ -47,10 +43,6 @@ class ReadTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
     @Test
     fun selectTopOverdueCards_doesnt_return_cards_without_overdue() {
         //given
-        val dm = createInmemoryDataManager()
-        val repo = dm.getRepo()
-        val c = repo.cards
-        val s = repo.cardsSchedule
         val expectedCardId = 1L
         val baseTime = 27000
         insert(repo = repo, table = c, rows = listOf(
@@ -72,10 +64,6 @@ class ReadTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
     @Test
     fun selectTopOverdueCards_selects_cards_correctly_when_there_are_many_cards() {
         //given
-        val dm = createInmemoryDataManager()
-        val repo = dm.getRepo()
-        val c = repo.cards
-        val s = repo.cardsSchedule
         val cardIdWithoutOverdue1 = 1L
         val cardIdWithBigOverdue = 2L
         val cardIdWithZeroOverdue = 3L
@@ -141,10 +129,6 @@ class ReadTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
     @Test
     fun getNextCardToRepeat_returns_correct_card_if_there_is_one_card_only_in_the_database() {
         //given
-        val dm = createInmemoryDataManager()
-        val repo = dm.getRepo()
-        val c = repo.cards
-        val s = repo.cardsSchedule
         val expectedCardId = 1236L
         val baseTime = 1_000
         val timeElapsed = 27_000
@@ -173,10 +157,6 @@ class ReadTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
     @Test
     fun getNextCardToRepeat_returns_time_to_wait_str() {
         //given
-        val dm = createInmemoryDataManager()
-        val repo = dm.getRepo()
-        val c = repo.cards
-        val s = repo.cardsSchedule
         val expectedCardId = 1236L
         val baseTime = 1_000
         val timeElapsed = 27_000
@@ -203,7 +183,6 @@ class ReadTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
     @Test
     fun getNextCardToRepeat_returns_empty_time_to_wait_str_if_there_are_no_cards_at_all() {
         //given
-        val dm = createInmemoryDataManager()
         val baseTime = 1_000
         val timeElapsed = 27_000
 
@@ -220,10 +199,6 @@ class ReadTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
     @Test
     fun getNextCardToRepeat_returns_correct_card_if_there_are_many_cards_in_the_database() {
         //given
-        val dm = createInmemoryDataManager()
-        val repo = dm.getRepo()
-        val c = repo.cards
-        val s = repo.cardsSchedule
         val cardIdWithoutOverdue1 = 1L
         val cardIdWithBigOverdue = 2L
         val cardIdWithZeroOverdue = 3L
@@ -273,9 +248,6 @@ class ReadTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
     @Test
     fun getTranslateCardHistory_returns_history_of_a_translate_card() {
         //given
-        val dm = createInmemoryDataManager()
-        val repo = dm.getRepo()
-        val l = repo.translationCardsLog
         val baseTime = 1_000
 
         testClock.setFixedTime(baseTime)

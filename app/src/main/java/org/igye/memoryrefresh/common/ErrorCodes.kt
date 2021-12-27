@@ -1,6 +1,7 @@
 package org.igye.memoryrefresh
 
 enum class ErrorCode(val code: Long) {
+    READ_ALL_TAGS(38L),
     UPDATE_TAG_NAME_IS_NOT_UNIQUE(37L),
     SAVE_NEW_TAG_NAME_IS_NOT_UNIQUE(36L),
     DELETE_TAG(35L),

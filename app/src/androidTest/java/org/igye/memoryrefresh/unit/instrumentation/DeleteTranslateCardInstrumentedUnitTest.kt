@@ -15,16 +15,9 @@ class DeleteTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
     @Test
     fun deleteTranslateCard_deletes_translate_card() {
         //given
-        val dm = createInmemoryDataManager()
-        val repo = dm.getRepo()
-        val c = repo.cards
-        val t = repo.translationCards
-        val s = repo.cardsSchedule
-        val l = repo.translationCardsLog
         val expectedTextToTranslate = "A"
         val expectedTranslation = "a"
-        testClock.setFixedTime(1000)
-        val timeCreated = testClock.instant().toEpochMilli()
+        val timeCreated = testClock.currentMillis()
         val cardId = dm.createTranslateCard(
             CreateTranslateCardArgs(textToTranslate = expectedTextToTranslate, translation = expectedTranslation)
         ).data!!
@@ -57,18 +50,11 @@ class DeleteTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
     @Test
     fun deleteTranslateCard_ids_of_deleted_cards_are_not_reused() {
         //given
-        val dm = createInmemoryDataManager()
-        val repo = dm.getRepo()
-        val c = repo.cards
-        val t = repo.translationCards
-        val s = repo.cardsSchedule
-        val l = repo.translationCardsLog
         val expectedTextToTranslate1 = "A"
         val expectedTranslation1 = "a"
         val expectedTextToTranslate2 = "B"
         val expectedTranslation2 = "b"
-        testClock.setFixedTime(1000)
-        val timeCreated1 = testClock.instant().toEpochMilli()
+        val timeCreated1 = testClock.currentMillis()
         val cardId1 = dm.createTranslateCard(
             CreateTranslateCardArgs(textToTranslate = expectedTextToTranslate1, translation = expectedTranslation1)
         ).data!!

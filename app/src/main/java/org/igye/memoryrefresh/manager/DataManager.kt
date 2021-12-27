@@ -23,6 +23,96 @@ class DataManager(
     private val s = getRepo().cardsSchedule
     private val t = getRepo().translationCards
     private val l = getRepo().translationCardsLog
+    private val tg = getRepo().tags
+    private val ctg = getRepo().cardToTag
+
+    data class CreateTagArgs(val name:String)
+    @BeMethod
+    @Synchronized
+    fun createTag(args:CreateTagArgs): BeRespose<Long> {
+        val name = args.name.trim()
+        return if (name.isBlank()) {
+            BeRespose(err = BeErr(code = SAVE_NEW_TAG_NAME_IS_EMPTY.code, msg = "Name of a new tag should not be empty."))
+        } else {
+            val repo = getRepo()
+            repo.writableDatabase.doInTransaction {
+                repositoryManager.tagsStat.tagsCouldChange()
+                repo.tags.insert(name = name)
+            }
+                .ifErrorThen { throwable ->
+                    Failure(
+                        if (throwable is SQLiteConstraintException && (throwable.message?:"").contains("UNIQUE constraint failed: TAGS.NAME")) {
+                            MemoryRefreshException(
+                                errCode = SAVE_NEW_TAG_NAME_IS_NOT_UNIQUE,
+                                msg = "A tag with name '$name' already exists."
+                            )
+                        } else {
+                            throwable
+                        }
+                    )
+                }
+                .apply(toBeResponse(SAVE_NEW_TAG))
+        }
+    }
+
+    private val readAllTagsQuery = "select ${tg.id}, ${tg.name} from $tg"
+    private val readAllTagsColumnNames = arrayOf(tg.id, tg.name)
+    @BeMethod
+    @Synchronized
+    fun readAllTags(): BeRespose<List<Tag>> {
+        val repo = getRepo()
+        return Try {
+            repo.readableDatabase.select(
+                query = readAllTagsQuery,
+                columnNames = readAllTagsColumnNames
+            ) {
+                Tag(id = it.getLong(), name = it.getString())
+            }
+        }
+            .map { it.rows }
+            .apply(toBeResponse(READ_ALL_TAGS))
+    }
+
+    data class UpdateTagArgs(val tagId:Long, val name:String)
+    @BeMethod
+    fun updateTag(args:UpdateTagArgs): BeRespose<Tag> {
+        val newName = args.name.trim()
+        return if (newName.isBlank()) {
+            BeRespose(err = BeErr(code = UPDATE_TAG_NAME_IS_EMPTY.code, msg = "Name of a tag should not be empty."))
+        } else {
+            val repo = getRepo()
+            repo.writableDatabase.doInTransaction {
+                repo.tags.update(id = args.tagId, name = newName)
+                Tag(
+                    id = args.tagId,
+                    name = newName
+                )
+            }
+                .ifErrorThen { throwable ->
+                    Failure(
+                        if (throwable is SQLiteConstraintException && (throwable.message?:"").contains("UNIQUE constraint failed: TAGS.NAME")) {
+                            MemoryRefreshException(
+                                errCode = UPDATE_TAG_NAME_IS_NOT_UNIQUE,
+                                msg = "A tag with name '$newName' already exists."
+                            )
+                        } else {
+                            throwable
+                        }
+                    )
+                }
+                .apply(toBeResponse(UPDATE_TAG))
+        }
+    }
+
+    data class DeleteTagArgs(val tagId:Long)
+    @BeMethod
+    fun deleteTag(args:DeleteTagArgs): BeRespose<Boolean> {
+        val repo = getRepo()
+        return repo.writableDatabase.doInTransaction {
+            repo.tags.delete(id = args.tagId)
+            true
+        }.apply(toBeResponse(DELETE_TAG))
+    }
 
     data class CreateTranslateCardArgs(val textToTranslate:String, val translation:String, val tagIds: Set<Long> = emptySet())
     @BeMethod
@@ -44,6 +134,67 @@ class DataManager(
                 }
             }.apply(toBeResponse(SAVE_NEW_TRANSLATE_CARD_EXCEPTION))
         }
+    }
+
+    @BeMethod
+    @Synchronized
+    fun getNextCardToRepeat(): BeRespose<GetNextCardToRepeatResp> {
+        return selectTopOverdueCards(maxCardsNum = Int.MAX_VALUE).map { cardsToRepeat ->
+            val rows = cardsToRepeat.rows
+            if (rows.isNotEmpty()) {
+                val topCards = rows.asSequence().filter { it.overdue >= rows[0].overdue }.toList()
+                val nextCard = topCards[Random.nextInt(topCards.size)]
+                GetNextCardToRepeatResp(
+                    cardId = nextCard.cardId,
+                    cardType = nextCard.cardType,
+                    cardsRemain = rows.size,
+                    isCardsRemainExact = cardsToRepeat.allRawsRead
+                )
+            } else {
+                val currTime = clock.instant().toEpochMilli()
+                GetNextCardToRepeatResp(
+                    cardsRemain = 0,
+                    nextCardIn = selectMinNextAccessAt().map { Utils.millisToDurationStr(it - currTime) }.orElse("")
+                )
+            }
+        }.apply(toBeResponse(GET_NEXT_CARD_TO_REPEAT))
+    }
+
+    data class ReadTranslateCardByIdArgs(val cardId: Long)
+    @BeMethod
+    @Synchronized
+    fun readTranslateCardById(args: ReadTranslateCardByIdArgs): BeRespose<TranslateCard> {
+        return readTranslateCardById(cardId = args.cardId).apply(toBeResponse(GET_TRANSLATE_CARD_BY_ID))
+    }
+
+    data class ReadTranslateCardHistoryArgs(val cardId:Long)
+    private val getTranslateCardHistoryQuery =
+        "select ${l.recId}, ${l.cardId}, ${l.timestamp}, ${l.translation}, ${l.matched} from $l where ${l.cardId} = ? order by ${l.timestamp} desc"
+    private val getTranslateCardHistoryQueryColumnNames = arrayOf(l.recId, l.cardId, l.timestamp, l.translation, l.matched)
+    @BeMethod
+    @Synchronized
+    fun readTranslateCardHistory(args: ReadTranslateCardHistoryArgs): BeRespose<TranslateCardHistResp> {
+        return getRepo().writableDatabase.doInTransaction {
+            val historyRecords = select(
+                rowsMax = 30,
+                query = getTranslateCardHistoryQuery,
+                args = arrayOf(args.cardId.toString()),
+                columnNames = getTranslateCardHistoryQueryColumnNames,
+                rowMapper = {
+                    TranslateCardHistRecord(
+                        recId = it.getLong(),
+                        cardId = it.getLong(),
+                        timestamp = it.getLong(),
+                        translation = it.getString(),
+                        isCorrect = it.getLong() == 1L,
+                    )
+                }
+            )
+            TranslateCardHistResp(
+                historyRecords = historyRecords.rows,
+                isHistoryFull = historyRecords.allRawsRead
+            )
+        }.apply(toBeResponse(GET_TRANSLATE_CARD_HISTORY))
     }
 
     data class UpdateTranslateCardArgs(
@@ -86,37 +237,6 @@ class DataManager(
                 Unit
             }
         }.apply(toBeResponse(EDIT_TRANSLATE_CARD_EXCEPTION))
-    }
-
-    @BeMethod
-    @Synchronized
-    fun getNextCardToRepeat(): BeRespose<GetNextCardToRepeatResp> {
-        return selectTopOverdueCards(maxCardsNum = Int.MAX_VALUE).map { cardsToRepeat ->
-            val rows = cardsToRepeat.rows
-            if (rows.isNotEmpty()) {
-                val topCards = rows.asSequence().filter { it.overdue >= rows[0].overdue }.toList()
-                val nextCard = topCards[Random.nextInt(topCards.size)]
-                GetNextCardToRepeatResp(
-                    cardId = nextCard.cardId,
-                    cardType = nextCard.cardType,
-                    cardsRemain = rows.size,
-                    isCardsRemainExact = cardsToRepeat.allRawsRead
-                )
-            } else {
-                val currTime = clock.instant().toEpochMilli()
-                GetNextCardToRepeatResp(
-                    cardsRemain = 0,
-                    nextCardIn = selectMinNextAccessAt().map { Utils.millisToDurationStr(it - currTime) }.orElse("")
-                )
-            }
-        }.apply(toBeResponse(GET_NEXT_CARD_TO_REPEAT))
-    }
-
-    data class ReadTranslateCardByIdArgs(val cardId: Long)
-    @BeMethod
-    @Synchronized
-    fun readTranslateCardById(args: ReadTranslateCardByIdArgs): BeRespose<TranslateCard> {
-        return readTranslateCardById(cardId = args.cardId).apply(toBeResponse(GET_TRANSLATE_CARD_BY_ID))
     }
 
     data class ValidateTranslateCardArgs(val cardId:Long, val userProvidedTranslation:String)
@@ -163,104 +283,7 @@ class DataManager(
         }.apply(toBeResponse(DELETE_TRANSLATE_CARD_EXCEPTION))
     }
 
-    data class ReadTranslateCardHistoryArgs(val cardId:Long)
-    private val getTranslateCardHistoryQuery =
-        "select ${l.recId}, ${l.cardId}, ${l.timestamp}, ${l.translation}, ${l.matched} from $l where ${l.cardId} = ? order by ${l.timestamp} desc"
-    private val getTranslateCardHistoryQueryColumnNames = arrayOf(l.recId, l.cardId, l.timestamp, l.translation, l.matched)
-    @BeMethod
-    @Synchronized
-    fun readTranslateCardHistory(args: ReadTranslateCardHistoryArgs): BeRespose<TranslateCardHistResp> {
-        return getRepo().writableDatabase.doInTransaction {
-            val historyRecords = select(
-                rowsMax = 30,
-                query = getTranslateCardHistoryQuery,
-                args = arrayOf(args.cardId.toString()),
-                columnNames = getTranslateCardHistoryQueryColumnNames,
-                rowMapper = {
-                    TranslateCardHistRecord(
-                        recId = it.getLong(),
-                        cardId = it.getLong(),
-                        timestamp = it.getLong(),
-                        translation = it.getString(),
-                        isCorrect = it.getLong() == 1L,
-                    )
-                }
-            )
-            TranslateCardHistResp(
-                historyRecords = historyRecords.rows,
-                isHistoryFull = historyRecords.allRawsRead
-            )
-        }.apply(toBeResponse(GET_TRANSLATE_CARD_HISTORY))
-    }
-
-    data class CreateTagArgs(val name:String)
-    @BeMethod
-    fun createTag(args:CreateTagArgs): BeRespose<Long> {
-        val name = args.name.trim()
-        return if (name.isBlank()) {
-            BeRespose(err = BeErr(code = SAVE_NEW_TAG_NAME_IS_EMPTY.code, msg = "Name of a new tag should not be empty."))
-        } else {
-            val repo = getRepo()
-            repo.writableDatabase.doInTransaction {
-                repositoryManager.tagsStat.tagsCouldChange()
-                repo.tags.insert(name = name)
-            }
-                .ifErrorThen { throwable ->
-                    Failure(
-                        if (throwable is SQLiteConstraintException && (throwable.message?:"").contains("UNIQUE constraint failed: TAGS.NAME")) {
-                            MemoryRefreshException(
-                                errCode = SAVE_NEW_TAG_NAME_IS_NOT_UNIQUE,
-                                msg = "A tag with name '$name' already exists."
-                            )
-                        } else {
-                            throwable
-                        }
-                    )
-                }
-                .apply(toBeResponse(SAVE_NEW_TAG))
-        }
-    }
-
-    data class UpdateTagArgs(val tagId:Long, val name:String)
-    @BeMethod
-    fun updateTag(args:UpdateTagArgs): BeRespose<Tag> {
-        val newName = args.name.trim()
-        return if (newName.isBlank()) {
-            BeRespose(err = BeErr(code = UPDATE_TAG_NAME_IS_EMPTY.code, msg = "Name of a tag should not be empty."))
-        } else {
-            val repo = getRepo()
-            repo.writableDatabase.doInTransaction {
-                repo.tags.update(id = args.tagId, name = newName)
-                Tag(
-                    id = args.tagId,
-                    name = newName
-                )
-            }
-                .ifErrorThen { throwable ->
-                    Failure(
-                        if (throwable is SQLiteConstraintException && (throwable.message?:"").contains("UNIQUE constraint failed: TAGS.NAME")) {
-                            MemoryRefreshException(
-                                errCode = UPDATE_TAG_NAME_IS_NOT_UNIQUE,
-                                msg = "A tag with name '$newName' already exists."
-                            )
-                        } else {
-                            throwable
-                        }
-                    )
-                }
-                .apply(toBeResponse(UPDATE_TAG))
-        }
-    }
-
-    data class DeleteTagArgs(val tagId:Long)
-    @BeMethod
-    fun deleteTag(args:DeleteTagArgs): BeRespose<Boolean> {
-        val repo = getRepo()
-        return repo.writableDatabase.doInTransaction {
-            repo.tags.delete(id = args.tagId)
-            true
-        }.apply(toBeResponse(DELETE_TAG))
-    }
+    //------------------------------------------------------------------------------------------------------------------
 
     @Synchronized
     private fun deleteCard(cardId: Long) {

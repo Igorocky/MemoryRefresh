@@ -13,12 +13,38 @@ import org.igye.memoryrefresh.manager.DataManager
 import org.igye.memoryrefresh.manager.RepositoryManager
 import org.junit.Assert.assertTrue
 import org.junit.Assert.fail
+import org.junit.Before
 import java.util.*
+import kotlin.random.Random
 
 open class InstrumentedTestBase {
     protected val appContext = InstrumentationRegistry.getInstrumentation().targetContext
     protected val testClock = TestClock(1000)
     protected val TR_TP = CardType.TRANSLATION.intValue
+
+    protected lateinit var dm: DataManager
+    protected lateinit var repo: Repository
+    protected lateinit var c: CardsTable
+    protected lateinit var tg: TagsTable
+    protected lateinit var ctg: CardToTagTable
+    protected lateinit var t: TranslationCardsTable
+    protected lateinit var s: CardsScheduleTable
+    protected lateinit var l: TranslationCardsLogTable
+
+    @Before
+    fun init() {
+        dm = createInmemoryDataManager()
+        repo = dm.getRepo()
+
+        c = repo.cards
+        tg = repo.tags
+        ctg = repo.cardToTag
+        t = repo.translationCards
+        s = repo.cardsSchedule
+        l = repo.translationCardsLog
+
+        testClock.setFixedTime(Random.nextLong(from = 1000L, until = 10_000L))
+    }
 
     protected fun insert(repo: Repository, table: Table, rows: List<List<Pair<String,Any?>>>) {
         val query = """

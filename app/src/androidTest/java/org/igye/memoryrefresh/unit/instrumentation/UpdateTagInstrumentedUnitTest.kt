@@ -14,13 +14,9 @@ class UpdateTagInstrumentedUnitTest: InstrumentedTestBase() {
     @Test
     fun updateTag_updates_tag() {
         //given
-        val dm = createInmemoryDataManager()
-        val repo = dm.getRepo()
-        val t = repo.tags
         val expectedTag1Name = "t1"
         val expectedTag2Name = "t2"
         val expectedTag3Name = "t3"
-        testClock.setFixedTime(1000)
 
         val time1 = testClock.plus(2000)
         val tagId1 = dm.createTag(CreateTagArgs(name = expectedTag1Name)).data!!
@@ -29,10 +25,10 @@ class UpdateTagInstrumentedUnitTest: InstrumentedTestBase() {
         val time3 = testClock.plus(2000)
         val tagId3 = dm.createTag(CreateTagArgs(name = "\t $expectedTag3Name \t")).data!!
 
-        assertTableContent(repo = repo, table = t, exactMatch = true, matchColumn = t.id, expectedRows = listOf(
-            listOf(t.id to tagId1, t.createdAt to time1, t.name to expectedTag1Name),
-            listOf(t.id to tagId2, t.createdAt to time2, t.name to expectedTag2Name),
-            listOf(t.id to tagId3, t.createdAt to time3, t.name to expectedTag3Name),
+        assertTableContent(repo = repo, table = tg, exactMatch = true, matchColumn = tg.id, expectedRows = listOf(
+            listOf(tg.id to tagId1, tg.createdAt to time1, tg.name to expectedTag1Name),
+            listOf(tg.id to tagId2, tg.createdAt to time2, tg.name to expectedTag2Name),
+            listOf(tg.id to tagId3, tg.createdAt to time3, tg.name to expectedTag3Name),
         ))
 
         //when
@@ -42,23 +38,19 @@ class UpdateTagInstrumentedUnitTest: InstrumentedTestBase() {
         //then
         assertEquals("ddssdd", tag4.name)
 
-        assertTableContent(repo = repo, table = t, exactMatch = true, matchColumn = t.id, expectedRows = listOf(
-            listOf(t.id to tagId1, t.createdAt to time1, t.name to expectedTag1Name),
-            listOf(t.id to tagId2, t.createdAt to time2, t.name to "ddssdd"),
-            listOf(t.id to tagId3, t.createdAt to time3, t.name to expectedTag3Name),
+        assertTableContent(repo = repo, table = tg, exactMatch = true, matchColumn = tg.id, expectedRows = listOf(
+            listOf(tg.id to tagId1, tg.createdAt to time1, tg.name to expectedTag1Name),
+            listOf(tg.id to tagId2, tg.createdAt to time2, tg.name to "ddssdd"),
+            listOf(tg.id to tagId3, tg.createdAt to time3, tg.name to expectedTag3Name),
         ))
     }
 
     @Test
     fun updateTag_doesnt_allow_to_update_tag_with_same_name() {
         //given
-        val dm = createInmemoryDataManager()
-        val repo = dm.getRepo()
-        val t = repo.tags
         val expectedTag1Name = "t1"
         val expectedTag2Name = "t2"
         val expectedTag3Name = "t3"
-        testClock.setFixedTime(1000)
 
         val time1 = testClock.plus(2000)
         val tagId1 = dm.createTag(CreateTagArgs(name = expectedTag1Name)).data!!
@@ -67,10 +59,10 @@ class UpdateTagInstrumentedUnitTest: InstrumentedTestBase() {
         val time3 = testClock.plus(2000)
         val tagId3 = dm.createTag(CreateTagArgs(name = "\t $expectedTag3Name \t")).data!!
 
-        assertTableContent(repo = repo, table = t, exactMatch = true, matchColumn = t.id, expectedRows = listOf(
-            listOf(t.id to tagId1, t.createdAt to time1, t.name to expectedTag1Name),
-            listOf(t.id to tagId2, t.createdAt to time2, t.name to expectedTag2Name),
-            listOf(t.id to tagId3, t.createdAt to time3, t.name to expectedTag3Name),
+        assertTableContent(repo = repo, table = tg, exactMatch = true, matchColumn = tg.id, expectedRows = listOf(
+            listOf(tg.id to tagId1, tg.createdAt to time1, tg.name to expectedTag1Name),
+            listOf(tg.id to tagId2, tg.createdAt to time2, tg.name to expectedTag2Name),
+            listOf(tg.id to tagId3, tg.createdAt to time3, tg.name to expectedTag3Name),
         ))
 
         //when
@@ -79,10 +71,10 @@ class UpdateTagInstrumentedUnitTest: InstrumentedTestBase() {
         //then
         assertEquals("A tag with name '$expectedTag3Name' already exists.", err.msg)
 
-        assertTableContent(repo = repo, table = t, exactMatch = true, matchColumn = t.id, expectedRows = listOf(
-            listOf(t.id to tagId1, t.createdAt to time1, t.name to expectedTag1Name),
-            listOf(t.id to tagId2, t.createdAt to time2, t.name to expectedTag2Name),
-            listOf(t.id to tagId3, t.createdAt to time3, t.name to expectedTag3Name),
+        assertTableContent(repo = repo, table = tg, exactMatch = true, matchColumn = tg.id, expectedRows = listOf(
+            listOf(tg.id to tagId1, tg.createdAt to time1, tg.name to expectedTag1Name),
+            listOf(tg.id to tagId2, tg.createdAt to time2, tg.name to expectedTag2Name),
+            listOf(tg.id to tagId3, tg.createdAt to time3, tg.name to expectedTag3Name),
         ))
     }
 

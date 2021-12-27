@@ -13,18 +13,9 @@ class CreateTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
     @Test
     fun createTranslateCard_saves_new_translate_card_without_tags() {
         //given
-        val dm = createInmemoryDataManager()
-        val repo = dm.getRepo()
-        val c = repo.cards
-        val tg = repo.tags
-        val ctg = repo.cardToTag
-        val t = repo.translationCards
-        val s = repo.cardsSchedule
-        val l = repo.translationCardsLog
         val expectedTextToTranslate = "A"
         val expectedTranslation = "a"
-        val time1 = 1000L
-        testClock.setFixedTime(time1)
+        val time1 = testClock.currentMillis()
 
         //when
         val translateCardId = dm.createTranslateCard(
@@ -63,18 +54,9 @@ class CreateTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
     @Test
     fun createTranslateCard_saves_new_translate_card_with_tags() {
         //given
-        val dm = createInmemoryDataManager()
-        val repo = dm.getRepo()
-        val c = repo.cards
-        val tg = repo.tags
-        val ctg = repo.cardToTag
-        val t = repo.translationCards
-        val s = repo.cardsSchedule
-        val l = repo.translationCardsLog
         val expectedTextToTranslate = "A"
         val expectedTranslation = "a"
-        val time1 = 1000L
-        testClock.setFixedTime(time1)
+        val time1 = testClock.currentMillis()
         val tagId1 = dm.createTag(CreateTagArgs("t1")).data!!
         val tagId2 = dm.createTag(CreateTagArgs("t2")).data!!
 
