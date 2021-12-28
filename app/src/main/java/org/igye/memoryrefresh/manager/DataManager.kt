@@ -187,6 +187,7 @@ class DataManager(
             s.${s.updatedAt},
             c.${c.createdAt},
             c.${c.paused},
+            (? - s.${s.nextAccessAt} ) * 1.0 / (case when s.${s.nextAccessInMillis} = 0 then 1 else s.${s.nextAccessInMillis} end),
             (select group_concat(ctg.${ctg.tagId}) from $ctg ctg where ctg.${ctg.cardId} = c.${c.id}) as tagIds,
             s.${s.delay},
             s.${s.nextAccessInMillis},
@@ -204,13 +205,14 @@ class DataManager(
     fun readTranslateCardById(args: ReadTranslateCardByIdArgs): BeRespose<TranslateCard> {
         return getRepo().readableDatabase.doInTransaction {
             val currTime = clock.instant().toEpochMilli()
-            select(query = readTranslateCardByIdQuery, args = arrayOf(args.cardId.toString())){
+            select(query = readTranslateCardByIdQuery, args = arrayOf(currTime.toString(), args.cardId.toString())){
                 val cardId = it.getLong()
                 val updatedAt = it.getLong()
                 TranslateCard(
                     id = cardId,
                     createdAt = it.getLong(),
                     paused = it.getLong() == 1L,
+                    overdue = it.getDouble(),
                     tagIds = (it.getStringOrNull()?:"").splitToSequence(",").filter { it.isNotBlank() }.map { it.toLong() }.toList(),
                     schedule = CardSchedule(
                         cardId = cardId,
@@ -239,6 +241,7 @@ class DataManager(
         val translationLengthGreaterThan: Long? = null,
         val createdFrom: Long? = null,
         val createdTill: Long? = null,
+        val overdueGreaterEq: Double? = null,
         val rowsLimit: Long? = null,
         val sortBy: TranslateCardSortBy? = null,
         val sortDir: SortDirection? = null,
@@ -252,6 +255,8 @@ class DataManager(
         } else {
             tagsStat.getLeastUsedTagId(tagIdsToInclude)
         }
+        val currTime = clock.instant().toEpochMilli()
+        val overdueFormula = "(($currTime - s.${s.nextAccessAt} ) * 1.0 / (case when s.${s.nextAccessInMillis} = 0 then 1 else s.${s.nextAccessInMillis} end))"
         fun havingFilterForTag(tagId:Long, include: Boolean) =
             "max(case when ctg.${ctg.tagId} = $tagId then 1 else 0 end) = ${if (include) "1" else "0"}"
         fun havingFilterForTags(tagIds:Sequence<Long>, include: Boolean) =
@@ -300,6 +305,16 @@ class DataManager(
         if (args.createdTill != null) {
             whereFilters.add("c.${c.createdAt} <= ${args.createdTill}")
         }
+        if (args.overdueGreaterEq != null) {
+            whereFilters.add("$overdueFormula >= ${args.overdueGreaterEq}")
+        }
+        var orderBy = ""
+        if (args.sortBy != null) {
+            orderBy = "order by " + when (args.sortBy) {
+                TranslateCardSortBy.TIME_CREATED -> "c.${c.createdAt}"
+                TranslateCardSortBy.OVERDUE -> overdueFormula
+            } + " " + (args.sortDir?:SortDirection.ASC)
+        }
 
         var query = """
             select
@@ -307,6 +322,7 @@ class DataManager(
                 s.${s.updatedAt},
                 c.${c.createdAt},
                 c.${c.paused},
+                $overdueFormula overdue,
                 c.tagIds,
                 s.${s.delay},
                 s.${s.nextAccessInMillis},
@@ -328,6 +344,7 @@ class DataManager(
                 left join $s s on c.${c.id} = s.${s.cardId}
                 left join $t t on c.${c.id} = t.${t.cardId}
             ${if (whereFilters.isEmpty()) "" else whereFilters.joinToString(prefix = "where ", separator = " and ")}
+            $orderBy
         """.trimIndent()
 
         return getRepo().readableDatabase.doInTransaction {
@@ -339,6 +356,7 @@ class DataManager(
                     id = cardId,
                     createdAt = it.getLong(),
                     paused = it.getLong() == 1L,
+                    overdue = it.getDouble(),
                     tagIds = (it.getStringOrNull()?:"").splitToSequence(",").filter { it.isNotBlank() }.map { it.toLong() }.toList(),
                     schedule = CardSchedule(
                         cardId = cardId,

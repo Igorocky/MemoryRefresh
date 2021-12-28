@@ -9,6 +9,7 @@ data class TranslateCard(
     val tagIds: List<Long>,
     val schedule: CardSchedule,
     val timeSinceLastCheck: String,
+    val overdue: Double,
     val textToTranslate:String,
     val translation:String
 ) {

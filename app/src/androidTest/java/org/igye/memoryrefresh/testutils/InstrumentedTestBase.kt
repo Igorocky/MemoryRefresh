@@ -126,6 +126,7 @@ open class InstrumentedTestBase {
         assertEquals("doesn't match: schedule.nextAccessAt", expected.schedule.nextAccessAt, actual.schedule.nextAccessAt)
 
         assertEquals("doesn't match: timeSinceLastCheck", expected.timeSinceLastCheck, actual.timeSinceLastCheck)
+        assertEquals("doesn't match: overdue", expected.overdue, actual.overdue, 0.0001)
         assertEquals("doesn't match: textToTranslate", expected.textToTranslate, actual.textToTranslate)
         assertEquals("doesn't match: translation", expected.translation, actual.translation)
     }

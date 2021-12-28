@@ -7,9 +7,7 @@ import org.igye.memoryrefresh.common.Utils.MILLIS_IN_MINUTE
 import org.igye.memoryrefresh.common.Utils.MILLIS_IN_SECOND
 import org.igye.memoryrefresh.database.CardType
 import org.igye.memoryrefresh.dto.common.BeRespose
-import org.igye.memoryrefresh.dto.domain.CardSchedule
-import org.igye.memoryrefresh.dto.domain.ReadTranslateCardsByFilterResp
-import org.igye.memoryrefresh.dto.domain.TranslateCard
+import org.igye.memoryrefresh.dto.domain.*
 import org.igye.memoryrefresh.manager.DataManager.*
 import org.igye.memoryrefresh.testutils.InstrumentedTestBase
 import org.junit.Assert.*
@@ -693,9 +691,88 @@ class ReadTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
         )
     }
 
+    @Test
+    fun readTranslateCardsByFilter_filters_by_overdueGreaterEq() {
+        val card1 = createCard(cardId = 1L, mapper = {it.copy(overdue = -0.5)})
+        val card2 = createCard(cardId = 2L, mapper = {it.copy(overdue = -0.1)})
+        val card3 = createCard(cardId = 3L, mapper = {it.copy(overdue = 0.0)})
+        val card4 = createCard(cardId = 4L, mapper = {it.copy(overdue = 0.5)})
+        val card5 = createCard(cardId = 5L, mapper = {it.copy(overdue = 1.0)})
+
+        assertSearchResult(
+            listOf(card3,card4,card5),
+            dm.readTranslateCardsByFilter(ReadTranslateCardsByFilter(
+                overdueGreaterEq = 0.0
+            ))
+        )
+    }
+
+    @Test
+    fun readTranslateCardsByFilter_sorts_according_to_sortBy() {
+        val card1 = createCard(cardId = 1L, mapper = {it.copy(overdue = -0.5, createdAt = 4)})
+        val card2 = createCard(cardId = 2L, mapper = {it.copy(overdue = -0.1, createdAt = 1)})
+        val card3 = createCard(cardId = 3L, mapper = {it.copy(overdue = 0.0, createdAt = 5)})
+        val card4 = createCard(cardId = 4L, mapper = {it.copy(overdue = 0.5, createdAt = 3)})
+        val card5 = createCard(cardId = 5L, mapper = {it.copy(overdue = 1.0, createdAt = 2)})
+
+        assertSearchResult(
+            listOf(card1,card2,card3,card4,card5),
+            dm.readTranslateCardsByFilter(ReadTranslateCardsByFilter(
+                sortBy = TranslateCardSortBy.OVERDUE
+            )),
+            matchOrder = true
+        )
+
+        assertSearchResult(
+            listOf(card1,card2,card3,card4,card5),
+            dm.readTranslateCardsByFilter(ReadTranslateCardsByFilter(
+                sortBy = TranslateCardSortBy.OVERDUE,
+                sortDir = SortDirection.ASC
+            )),
+            matchOrder = true
+        )
+
+        assertSearchResult(
+            listOf(card5,card4,card3,card2,card1),
+            dm.readTranslateCardsByFilter(ReadTranslateCardsByFilter(
+                sortBy = TranslateCardSortBy.OVERDUE,
+                sortDir = SortDirection.DESC
+            )),
+            matchOrder = true
+        )
+
+        assertSearchResult(
+            listOf(card2,card5,card4,card1,card3),
+            dm.readTranslateCardsByFilter(ReadTranslateCardsByFilter(
+                sortBy = TranslateCardSortBy.TIME_CREATED
+            )),
+            matchOrder = true
+        )
+
+        assertSearchResult(
+            listOf(card2,card5,card4,card1,card3),
+            dm.readTranslateCardsByFilter(ReadTranslateCardsByFilter(
+                sortBy = TranslateCardSortBy.TIME_CREATED,
+                sortDir = SortDirection.ASC
+            )),
+            matchOrder = true
+        )
+
+        assertSearchResult(
+            listOf(card3,card1,card4,card5,card2),
+            dm.readTranslateCardsByFilter(ReadTranslateCardsByFilter(
+                sortBy = TranslateCardSortBy.TIME_CREATED,
+                sortDir = SortDirection.DESC
+            )),
+            matchOrder = true
+        )
+    }
+
     private fun createCard(cardId: Long, tagIds: List<Long> = emptyList(), mapper: (TranslateCard) -> TranslateCard = {it}): TranslateCard {
         val createdAt = 1000 * cardId + 1
         val updatedAt = 10000 * cardId + 1
+        val currTime = testClock.currentMillis()
+        val nextAccessInMillis = MILLIS_IN_HOUR * cardId + 2
         val modifiedCard = mapper(
             TranslateCard(
                 id = cardId,
@@ -706,32 +783,45 @@ class ReadTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
                     cardId = cardId,
                     updatedAt = updatedAt,
                     delay = "delay-" + cardId,
-                    nextAccessInMillis = 1000 * cardId + 2,
-                    nextAccessAt = 1000 * cardId + 3,
+                    nextAccessInMillis = nextAccessInMillis,
+                    nextAccessAt = updatedAt + nextAccessInMillis,
                 ),
-                timeSinceLastCheck = Utils.millisToDurationStr(testClock.currentMillis() - updatedAt),
+                timeSinceLastCheck = Utils.millisToDurationStr(currTime - updatedAt),
+                overdue = 0.0,
                 textToTranslate = "textToTranslate-" + cardId,
                 translation = "translation-" + cardId,
             )
         )
-        createTranslateCard(modifiedCard)
-        return modifiedCard
+        val finalCard = modifiedCard.copy(
+            schedule = modifiedCard.schedule.copy(
+                nextAccessAt = (currTime - modifiedCard.overdue * modifiedCard.schedule.nextAccessInMillis).toLong()
+            )
+        )
+        createTranslateCard(finalCard)
+        return finalCard
     }
 
-    private fun assertSearchResult(expected: List<TranslateCard>, actual: BeRespose<ReadTranslateCardsByFilterResp>) {
-        val foundCards = actual.data!!.cards.map { it.id to it }.toMap()
-
-        assertEquals(expected.size, foundCards.size)
+    private fun assertSearchResult(expected: List<TranslateCard>, actual: BeRespose<ReadTranslateCardsByFilterResp>, matchOrder:Boolean = false) {
+        val actualCardsList = actual.data!!.cards
+        assertEquals(expected.size, actualCardsList.size)
         var cnt = 0
-        for (i in expected.indices) {
-            val id = expected[i].id
-            val actualCard = foundCards[id]
-            if (actualCard == null) {
-                fail("Missing cardId=$id in actual result.")
-            } else {
-                assertTranslateCardsEqual(expected[i], actualCard)
+        if (matchOrder) {
+            for (i in expected.indices) {
+                assertTranslateCardsEqual(expected[i], actualCardsList[i])
+                cnt++
             }
-            cnt++
+        } else {
+            val cardsMap = actualCardsList.map { it.id to it }.toMap()
+            for (i in expected.indices) {
+                val id = expected[i].id
+                val actualCard = cardsMap[id]
+                if (actualCard == null) {
+                    fail("Missing cardId=$id in actual result.")
+                } else {
+                    assertTranslateCardsEqual(expected[i], actualCard)
+                }
+                cnt++
+            }
         }
         assertEquals(expected.size, cnt)
     }
