@@ -9,10 +9,10 @@ import org.igye.memoryrefresh.database.CardType
 import org.igye.memoryrefresh.database.Repository
 import org.igye.memoryrefresh.database.Table
 import org.igye.memoryrefresh.database.tables.*
+import org.igye.memoryrefresh.dto.domain.TranslateCard
 import org.igye.memoryrefresh.manager.DataManager
 import org.igye.memoryrefresh.manager.RepositoryManager
-import org.junit.Assert.assertTrue
-import org.junit.Assert.fail
+import org.junit.Assert.*
 import org.junit.Before
 import java.util.*
 import kotlin.random.Random
@@ -78,6 +78,55 @@ open class InstrumentedTestBase {
                 fail("Data comparison failed for table $table\n" + formatActualAndExpected(allData = allData, expected = expectedRow, matchColumn = matchColumn))
             }
         }
+    }
+
+    protected fun createTag(tagId:Long, name:String): Long {
+        insert(repo = repo, table = tg, rows = listOf(
+            listOf(tg.id to tagId, tg.createdAt to 1000, tg.name to name),
+        ))
+        return tagId
+    }
+
+    protected fun createTranslateCard(card: TranslateCard): Long {
+        insert(repo = repo, table = c, rows = listOf(
+            listOf(c.id to card.id, c.createdAt to 1000, c.type to TR_TP, c.paused to if (card.paused) 1 else 0)
+        ))
+        insert(repo = repo, table = s, rows = listOf(
+            listOf(
+                s.cardId to card.id,
+                s.updatedAt to card.schedule.updatedAt,
+                s.delay to card.schedule.delay,
+                s.randomFactor to 1.0,
+                s.nextAccessInMillis to card.schedule.nextAccessInMillis,
+                s.nextAccessAt to card.schedule.nextAccessAt
+            )
+        ))
+        insert(repo = repo, table = t, rows = listOf(
+            listOf(t.cardId to card.id, t.textToTranslate to card.textToTranslate, t.translation to card.translation)
+        ))
+        card.tagIds.forEach {
+            insert(repo = repo, table = ctg, rows = listOf(
+                listOf(ctg.cardId to card.id, ctg.tagId to it)
+            ))
+        }
+        return card.id
+    }
+
+    protected fun assertTranslateCardsEqual(expected: TranslateCard, actual: TranslateCard) {
+        assertEquals("doesn't match: id", expected.id, actual.id)
+        assertEquals("doesn't match: paused", expected.paused, actual.paused)
+
+        assertEquals("doesn't match: tagIds", expected.tagIds, actual.tagIds)
+
+        assertEquals("doesn't match: schedule.cardId", expected.schedule.cardId, actual.schedule.cardId)
+        assertEquals("doesn't match: schedule.updatedAt", expected.schedule.updatedAt, actual.schedule.updatedAt)
+        assertEquals("doesn't match: schedule.delay", expected.schedule.delay, actual.schedule.delay)
+        assertEquals("doesn't match: schedule.nextAccessInMillis", expected.schedule.nextAccessInMillis, actual.schedule.nextAccessInMillis)
+        assertEquals("doesn't match: schedule.nextAccessAt", expected.schedule.nextAccessAt, actual.schedule.nextAccessAt)
+
+        assertEquals("doesn't match: timeSinceLastCheck", expected.timeSinceLastCheck, actual.timeSinceLastCheck)
+        assertEquals("doesn't match: textToTranslate", expected.textToTranslate, actual.textToTranslate)
+        assertEquals("doesn't match: translation", expected.translation, actual.translation)
     }
 
     private fun formatActualAndExpected(allData: List<Map<String, Any?>>, expected: List<Pair<String, Any?>>, matchColumn: String): String {

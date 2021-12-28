@@ -1,6 +1,7 @@
 package org.igye.memoryrefresh
 
 enum class ErrorCode(val code: Long) {
+    READ_TRANSLATE_CARD_BY_FILTER(41L),
     READ_TRANSLATE_CARD_BY_ID(40L),
     DELETE_TAG_TAG_IS_USED(39L),
     READ_ALL_TAGS(38L),

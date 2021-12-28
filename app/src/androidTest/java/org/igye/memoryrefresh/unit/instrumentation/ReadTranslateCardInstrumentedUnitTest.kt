@@ -1,10 +1,15 @@
 package org.igye.memoryrefresh.unit.instrumentation
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import org.igye.memoryrefresh.common.Utils
 import org.igye.memoryrefresh.common.Utils.MILLIS_IN_HOUR
 import org.igye.memoryrefresh.common.Utils.MILLIS_IN_MINUTE
 import org.igye.memoryrefresh.common.Utils.MILLIS_IN_SECOND
 import org.igye.memoryrefresh.database.CardType
+import org.igye.memoryrefresh.dto.common.BeRespose
+import org.igye.memoryrefresh.dto.domain.CardSchedule
+import org.igye.memoryrefresh.dto.domain.ReadTranslateCardsByFilterResp
+import org.igye.memoryrefresh.dto.domain.TranslateCard
 import org.igye.memoryrefresh.manager.DataManager.*
 import org.igye.memoryrefresh.testutils.InstrumentedTestBase
 import org.junit.Assert.*
@@ -322,5 +327,157 @@ class ReadTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
         assertEquals(validationTime1, actualHistory[2].timestamp)
         assertEquals("a", actualHistory[2].translation)
         assertEquals(true, actualHistory[2].isCorrect)
+    }
+
+    @Test
+    fun readTranslateCardsByFilter_returns_all_cards_if_no_filters_were_specified() {
+        //given
+        val tagId1 = createTag(tagId = 1, name = "t1")
+        val tagId2 = createTag(tagId = 2, name = "t2")
+        val tagId3 = createTag(tagId = 3, name = "t3")
+        val card1 = createCard(cardId = 1L, tagIds = listOf(tagId1, tagId2))
+        val card2 = createCard(cardId = 2L, tagIds = listOf())
+        val card3 = createCard(cardId = 3L, tagIds = listOf(tagId2, tagId3))
+
+        //when
+        val foundCards = dm.readTranslateCardsByFilter(ReadTranslateCardsByFilter())
+
+        //then
+        assertSearchResult(listOf(card1, card2, card3), foundCards)
+    }
+
+    @Test
+    fun readTranslateCardsByFilter_filters_by_tags_to_include() {
+        //given
+        val tagId1 = createTag(tagId = 1, name = "t1")
+        val tagId2 = createTag(tagId = 2, name = "t2")
+        val tagId3 = createTag(tagId = 3, name = "t3")
+        val tagId4 = createTag(tagId = 4, name = "t4")
+        val tagId5 = createTag(tagId = 5, name = "t5")
+        val tagId6 = createTag(tagId = 6, name = "t6")
+        val card1 = createCard(cardId = 1L, tagIds = listOf(tagId1, tagId2))
+        val card2 = createCard(cardId = 2L, tagIds = listOf())
+        val card3 = createCard(cardId = 3L, tagIds = listOf(tagId2, tagId3), mapper = {it.copy(paused = !it.paused)})
+        val card4 = createCard(cardId = 4L, tagIds = listOf(tagId4, tagId5, tagId6))
+
+        //search by one tag
+        assertSearchResult(
+            listOf(card1, card3),
+            dm.readTranslateCardsByFilter(
+                ReadTranslateCardsByFilter(
+                    tagIdsToInclude = setOf(tagId2)
+                )
+            )
+        )
+
+        //search by two tags
+        assertSearchResult(
+            listOf(card3),
+            dm.readTranslateCardsByFilter(
+                ReadTranslateCardsByFilter(
+                    tagIdsToInclude = setOf(tagId3, tagId2)
+                )
+            )
+        )
+
+        //search by three tags - empty result
+        assertSearchResult(
+            listOf(),
+            dm.readTranslateCardsByFilter(
+                ReadTranslateCardsByFilter(
+                    tagIdsToInclude = setOf(tagId1, tagId2, tagId3)
+                )
+            )
+        )
+
+        //search by three tags - non-empty result
+        assertSearchResult(
+            listOf(card4),
+            dm.readTranslateCardsByFilter(
+                ReadTranslateCardsByFilter(
+                    tagIdsToInclude = setOf(tagId4, tagId5, tagId6)
+                )
+            )
+        )
+    }
+
+    @Test
+    fun readTranslateCardsByFilter_filters_by_two_tags_to_include() {
+        TODO()
+    }
+
+    @Test
+    fun readTranslateCardsByFilter_filters_by_more_than_two_tags_to_include() {
+        TODO()
+    }
+
+    @Test
+    fun readTranslateCardsByFilter_filters_by_one_tag_to_exclude() {
+        TODO()
+    }
+
+    @Test
+    fun readTranslateCardsByFilter_filters_by_two_tags_to_exclude() {
+        TODO()
+    }
+
+    @Test
+    fun readTranslateCardsByFilter_filters_by_more_then_two_tags_to_exclude() {
+        TODO()
+    }
+
+    @Test
+    fun readTranslateCardsByFilter_filters_by_few_tags_to_include_and_few_tags_to_exclude() {
+        TODO()
+        //given
+        val tagId1 = dm.createTag(CreateTagArgs(name = "t1"))
+        val tagId2 = dm.createTag(CreateTagArgs(name = "t2"))
+        val tagId3 = dm.createTag(CreateTagArgs(name = "t3"))
+        val tagId4 = dm.createTag(CreateTagArgs(name = "t4"))
+        val tagId5 = dm.createTag(CreateTagArgs(name = "t5"))
+        val tagId6 = dm.createTag(CreateTagArgs(name = "t6"))
+
+
+    }
+
+    private fun createCard(cardId: Long, tagIds: List<Long>, mapper: (TranslateCard) -> TranslateCard = {it}): TranslateCard {
+        val updatedAt = 1000 * cardId + 1
+        val modifiedCard = mapper(
+            TranslateCard(
+                id = cardId,
+                paused = false,
+                tagIds = tagIds,
+                schedule = CardSchedule(
+                    cardId = cardId,
+                    updatedAt = updatedAt,
+                    delay = "delay-" + cardId,
+                    nextAccessInMillis = 1000 * cardId + 2,
+                    nextAccessAt = 1000 * cardId + 3,
+                ),
+                timeSinceLastCheck = Utils.millisToDurationStr(testClock.currentMillis() - updatedAt),
+                textToTranslate = "textToTranslate-" + cardId,
+                translation = "translation-" + cardId,
+            )
+        )
+        createTranslateCard(modifiedCard)
+        return modifiedCard
+    }
+
+    private fun assertSearchResult(expected: List<TranslateCard>, actual: BeRespose<ReadTranslateCardsByFilterResp>) {
+        val foundCards = actual.data!!.cards.map { it.id to it }.toMap()
+
+        assertEquals(expected.size, foundCards.size)
+        var cnt = 0
+        for (i in expected.indices) {
+            val id = expected[i].id
+            val actualCard = foundCards[id]
+            if (actualCard == null) {
+                fail("Missing cardId=$id in actual result.")
+            } else {
+                assertTranslateCardsEqual(expected[i], actualCard)
+            }
+            cnt++
+        }
+        assertEquals(expected.size, cnt)
     }
 }

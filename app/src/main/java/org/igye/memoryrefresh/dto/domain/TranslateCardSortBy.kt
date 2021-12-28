@@ -1,5 +1,5 @@
 package org.igye.memoryrefresh.dto.domain
 
-enum class TranslateCardOrderBy {
+enum class TranslateCardSortBy {
     OVERDUE, TIME_CREATED
 }

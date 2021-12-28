@@ -10,6 +10,7 @@ import org.igye.memoryrefresh.dto.common.BeRespose
 import org.igye.memoryrefresh.dto.domain.*
 import java.time.Clock
 import java.util.*
+import kotlin.collections.ArrayList
 import kotlin.random.Random
 
 
@@ -26,6 +27,8 @@ class DataManager(
     private val tg = getRepo().tags
     private val ctg = getRepo().cardToTag
 
+    private val tagsStat = repositoryManager.tagsStat
+
     data class CreateTagArgs(val name:String)
     @BeMethod
     @Synchronized
@@ -36,7 +39,7 @@ class DataManager(
         } else {
             val repo = getRepo()
             repo.writableDatabase.doInTransaction {
-                repositoryManager.tagsStat.tagsCouldChange()
+                tagsStat.tagsCouldChange()
                 repo.tags.insert(name = name)
             }
                 .ifErrorThen { throwable ->
@@ -143,7 +146,7 @@ class DataManager(
         } else if (translation.isBlank()) {
             return BeRespose(err = BeErr(code = SAVE_NEW_TRANSLATE_CARD_TRANSLATION_IS_EMPTY.code, msg = "Translation should not be empty."))
         } else {
-            repositoryManager.tagsStat.tagsCouldChange()
+            tagsStat.tagsCouldChange()
             val repo = getRepo()
             return repo.writableDatabase.doInTransactionTry {
                 createCard(cardType = CardType.TRANSLATION, tagIds = args.tagIds, paused = args.paused).map { cardId ->
@@ -240,13 +243,89 @@ class DataManager(
         val createdFrom: Long? = null,
         val createdTill: Long? = null,
         val rowsLimit: Long? = null,
-        val sortBy: TranslateCardOrderBy? = null,
+        val sortBy: TranslateCardSortBy? = null,
         val sortDir: SortDirection? = null,
     )
     @BeMethod
     @Synchronized
     fun readTranslateCardsByFilter(args: ReadTranslateCardsByFilter): BeRespose<ReadTranslateCardsByFilterResp> {
-        return BeRespose()
+        val tagIdsToInclude: List<Long>? = args.tagIdsToInclude?.toList()
+        val leastUsedTagId: Long? = if (tagIdsToInclude == null || tagIdsToInclude.isEmpty()) {
+            null
+        } else {
+            tagsStat.getLeastUsedTagId(tagIdsToInclude)
+        }
+        fun havingFilterForTag(tagId:Long, include: Boolean) =
+            "max(case when ctg.${ctg.tagId} = $tagId then 1 else 0 end) = ${if (include) "1" else "0"}"
+        fun havingFilterForTags(tagIds:Sequence<Long>, include: Boolean) =
+            tagIds.map { havingFilterForTag(tagId = it, include = include) }.joinToString(" and ")
+        val havingFilters = ArrayList<String>()
+        if (tagIdsToInclude != null && tagIdsToInclude.size > 1) {
+            havingFilters.add(havingFilterForTags(
+                tagIds = tagIdsToInclude.asSequence().filter { it != leastUsedTagId },
+                include = true
+            ))
+        }
+        if (args.tagIdsToExclude != null && args.tagIdsToExclude.isNotEmpty()) {
+            havingFilters.add(havingFilterForTags(
+                tagIds = args.tagIdsToExclude.asSequence(),
+                include = false
+            ))
+        }
+        val whereFilters = ArrayList<String>()
+
+        var query = """
+            select
+                c.${c.id},
+                s.${s.updatedAt},
+                c.${c.paused},
+                c.tagIds,
+                s.${s.delay},
+                s.${s.nextAccessInMillis},
+                s.${s.nextAccessAt},
+                t.${t.textToTranslate}, 
+                t.${t.translation}
+            from
+                (
+                    select
+                        c.${c.id},
+                        max(c.${c.paused}) ${c.paused},
+                        group_concat(ctg.${ctg.tagId}) as tagIds
+                    from $c c left join $ctg ctg on c.${c.id} = ctg.${ctg.cardId}
+                        ${if (leastUsedTagId == null) "" else "inner join $ctg tg_incl on c.${c.id} = tg_incl.${ctg.cardId} and tg_incl.${ctg.tagId} = $leastUsedTagId"}
+                    group by c.${c.id}
+                    ${if (havingFilters.isEmpty()) "" else havingFilters.joinToString(prefix = "having ", separator = " and ")}
+                ) c
+                left join $s s on c.${c.id} = s.${s.cardId}
+                left join $t t on c.${c.id} = t.${t.cardId}
+        """.trimIndent()
+
+        return getRepo().readableDatabase.doInTransaction {
+            val currTime = clock.instant().toEpochMilli()
+            val result = select(
+                query = query,
+                rowMapper = {
+                    val cardId = it.getLong()
+                    val updatedAt = it.getLong()
+                    TranslateCard(
+                        id = cardId,
+                        paused = it.getLong() == 1L,
+                        tagIds = (it.getStringOrNull()?:"").splitToSequence(",").filter { it.isNotBlank() }.map { it.toLong() }.toList(),
+                        schedule = CardSchedule(
+                            cardId = cardId,
+                            updatedAt = updatedAt,
+                            delay = it.getString(),
+                            nextAccessInMillis = it.getLong(),
+                            nextAccessAt = it.getLong(),
+                        ),
+                        timeSinceLastCheck = Utils.millisToDurationStr(currTime - updatedAt),
+                        textToTranslate = it.getString(),
+                        translation = it.getString(),
+                    )
+                }
+            ).rows
+            ReadTranslateCardsByFilterResp(cards = result)
+        }.apply(toBeResponse(READ_TRANSLATE_CARD_BY_FILTER))
     }
 
     data class ReadTranslateCardHistoryArgs(val cardId:Long)
@@ -369,7 +448,7 @@ class DataManager(
         val repo = getRepo()
         repo.writableDatabase.doInTransaction {
             repo.cardToTag.delete(cardId = cardId)
-            repositoryManager.tagsStat.tagsCouldChange()
+            tagsStat.tagsCouldChange()
             repo.cardsSchedule.delete(cardId = cardId)
             repo.cards.delete(id = cardId)
         }
@@ -392,7 +471,7 @@ class DataManager(
 
     @Synchronized
     private fun createCard(cardType: CardType, paused: Boolean, tagIds: Set<Long>): Try<Long> {
-        repositoryManager.tagsStat.tagsCouldChange()
+        tagsStat.tagsCouldChange()
         val repo = getRepo()
         return repo.writableDatabase.doInTransaction {
             val currTime = clock.instant().toEpochMilli()
