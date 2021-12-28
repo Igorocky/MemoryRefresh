@@ -10,13 +10,15 @@ class CardsTable(private val clock: Clock): TableWithVersioning(name = "CARDS") 
     val id = "ID"
     val type = "TYPE"
     val createdAt = "CREATED_AT"
+    val paused = "PAUSED"
 
     override fun create(db: SQLiteDatabase) {
         db.execSQL("""
                 CREATE TABLE $this (
                     $id integer primary key autoincrement,
                     $type integer not null,
-                    $createdAt integer not null
+                    $createdAt integer not null,
+                    $paused integer not null check ($paused in (0,1))
                 )
         """)
         db.execSQL("""
@@ -31,8 +33,8 @@ class CardsTable(private val clock: Clock): TableWithVersioning(name = "CARDS") 
         """)
     }
 
-    interface InsertStmt {operator fun invoke(cardType: CardType): Long } lateinit var insert: InsertStmt
-    interface UpdateStmt {operator fun invoke(id:Long, cardType: CardType): Int} lateinit var update: UpdateStmt
+    interface InsertStmt {operator fun invoke(cardType: CardType, paused: Boolean): Long } lateinit var insert: InsertStmt
+    interface UpdateStmt {operator fun invoke(id:Long, cardType: CardType, paused: Boolean): Int} lateinit var update: UpdateStmt
     interface DeleteStmt {operator fun invoke(id:Long): Int } lateinit var delete: DeleteStmt
 
     override fun prepareStatements(db: SQLiteDatabase) {
@@ -45,20 +47,22 @@ class CardsTable(private val clock: Clock): TableWithVersioning(name = "CARDS") 
             Utils.executeInsert(self.ver, stmtVer)
         }
         insert = object : InsertStmt {
-            val stmt = db.compileStatement("insert into $self ($type,$createdAt) values (?,?)")
-            override fun invoke(cardType: CardType): Long {
+            val stmt = db.compileStatement("insert into $self ($type,$createdAt,$paused) values (?,?,?)")
+            override fun invoke(cardType: CardType, paused: Boolean): Long {
                 val currTime = clock.instant().toEpochMilli()
                 stmt.bindLong(1, cardType.intValue)
                 stmt.bindLong(2, currTime)
+                stmt.bindLong(2, if (paused) 1 else 0)
                 return Utils.executeInsert(self, stmt)
             }
         }
         update = object : UpdateStmt {
-            private val stmt = db.compileStatement("update $self set $type = ? where $id = ?")
-            override fun invoke(id: Long, cardType: CardType): Int {
+            private val stmt = db.compileStatement("update $self set $type = ? , $paused = ? where $id = ?")
+            override fun invoke(id: Long, cardType: CardType, paused: Boolean): Int {
                 saveCurrentVersion(id = id)
                 stmt.bindLong(1, cardType.intValue)
-                stmt.bindLong(2, id)
+                stmt.bindLong(2, if (paused) 1 else 0)
+                stmt.bindLong(3, id)
                 return Utils.executeUpdateDelete(self, stmt, 1)
             }
 

@@ -31,7 +31,7 @@ class CreateTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
         assertEquals(time1, translateCard.schedule.nextAccessAt)
 
         assertTableContent(repo = repo, table = c, matchColumn = c.id, expectedRows = listOf(
-            listOf(c.id to translateCard.id, c.type to TR_TP, c.createdAt to time1)
+            listOf(c.id to translateCard.id, c.type to TR_TP, c.createdAt to time1, c.paused to 0)
         ))
         assertTableContent(repo = repo, table = c.ver, expectedRows = listOf())
 
@@ -102,6 +102,21 @@ class CreateTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
         assertTableContent(repo = repo, table = s.ver, expectedRows = listOf())
 
         assertTableContent(repo = repo, table = l, expectedRows = listOf())
+    }
+
+    @Test
+    fun createTranslateCard_creates_unpaused_card_if_paused_flag_was_not_specified() {
+        TODO()
+    }
+
+    @Test
+    fun createTranslateCard_creates_unpaused_card_if_paused_flag_was_specified_as_false() {
+        TODO()
+    }
+
+    @Test
+    fun createTranslateCard_creates_paused_card_if_paused_flag_was_specified_as_true() {
+        TODO()
     }
 
 }

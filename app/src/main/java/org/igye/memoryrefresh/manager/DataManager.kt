@@ -127,7 +127,12 @@ class DataManager(
             .apply(toBeResponse(DELETE_TAG))
     }
 
-    data class CreateTranslateCardArgs(val textToTranslate:String, val translation:String, val tagIds: Set<Long> = emptySet())
+    data class CreateTranslateCardArgs(
+        val textToTranslate:String,
+        val translation:String,
+        val tagIds: Set<Long> = emptySet(),
+        val paused: Boolean = false,
+    )
     @BeMethod
     @Synchronized
     fun createTranslateCard(args: CreateTranslateCardArgs): BeRespose<Long> {
@@ -141,7 +146,7 @@ class DataManager(
             repositoryManager.tagsStat.tagsCouldChange()
             val repo = getRepo()
             return repo.writableDatabase.doInTransactionTry {
-                createCard(cardType = CardType.TRANSLATION, tagIds = args.tagIds).map { cardId ->
+                createCard(cardType = CardType.TRANSLATION, tagIds = args.tagIds, paused = args.paused).map { cardId ->
                     repo.translationCards.insert(cardId = cardId, textToTranslate = textToTranslate, translation = translation)
                     cardId
                 }
@@ -252,9 +257,12 @@ class DataManager(
 
     data class UpdateTranslateCardArgs(
         val cardId:Long,
-        val delay: String? = null, val recalculateDelay: Boolean = false,
+        val paused: Boolean? = null,
+        val delay: String? = null,
+        val recalculateDelay: Boolean = false,
         val tagIds: Set<Long>? = null,
-        val textToTranslate:String? = null, val translation:String? = null
+        val textToTranslate:String? = null,
+        val translation:String? = null
     )
     private val updateTranslateCardQuery = "select ${t.textToTranslate}, ${t.translation} from $t where ${t.cardId} = ?"
     private val updateTranslateCardQueryColumnNames = arrayOf(t.textToTranslate, t.translation)
@@ -263,7 +271,7 @@ class DataManager(
     fun updateTranslateCard(args: UpdateTranslateCardArgs): BeRespose<Unit> {
         val repo = getRepo()
         return repo.writableDatabase.doInTransaction {
-            updateCard(cardId = args.cardId, delay = args.delay, recalculateDelay = args.recalculateDelay, tagIds = args.tagIds)
+            updateCard(cardId = args.cardId, delay = args.delay, recalculateDelay = args.recalculateDelay, tagIds = args.tagIds, paused = args.paused)
             val (existingTextToTranslate: String, existingTranslation: String) = select(
                 query = updateTranslateCardQuery,
                 args = arrayOf(args.cardId.toString()),
@@ -396,12 +404,12 @@ class DataManager(
     }
 
     @Synchronized
-    private fun createCard(cardType: CardType, tagIds: Set<Long>): Try<Long> {
+    private fun createCard(cardType: CardType, paused: Boolean, tagIds: Set<Long>): Try<Long> {
         repositoryManager.tagsStat.tagsCouldChange()
         val repo = getRepo()
         return repo.writableDatabase.doInTransaction {
             val currTime = clock.instant().toEpochMilli()
-            val cardId = repo.cards.insert(cardType = cardType)
+            val cardId = repo.cards.insert(cardType = cardType, paused = paused)
             repo.cardsSchedule.insert(cardId = cardId, timestamp = currTime, delay = "0s", randomFactor = 1.0, nextAccessInMillis = 0, nextAccessAt = currTime)
             tagIds.forEach { repo.cardToTag.insert(cardId = cardId, tagId = it) }
             cardId
@@ -445,10 +453,14 @@ class DataManager(
         }
     }
 
+    private val selectCardParamsQuery = "select ${c.paused}, ${c.type} from $c where ${c.id} = ?"
     @Synchronized
     private fun updateCard(
-        cardId:Long, tagIds: Set<Long>? = null,
-        delay: String? = null, recalculateDelay: Boolean = false
+        cardId:Long,
+        tagIds: Set<Long>?,
+        paused: Boolean?,
+        delay: String?,
+        recalculateDelay: Boolean
     ) {
         val repo = getRepo()
         repo.writableDatabase.doInTransaction {
@@ -474,6 +486,17 @@ class DataManager(
                 if (tagIds != null) {
                     repo.cardToTag.delete(cardId = cardId)
                     tagIds.forEach { repo.cardToTag.insert(cardId = cardId, tagId = it) }
+                }
+                if (paused != null) {
+                    val (existingPaused: Boolean, existingType: CardType) = repo.readableDatabase.select(
+                        query = selectCardParamsQuery,
+                        args = arrayOf(cardId.toString())
+                    ) {
+                        (it.getLong() == 1L) to CardType.fromInt(it.getLong())
+                    }.rows[0]
+                    if (existingPaused != paused) {
+                        repo.cards.update(id = cardId, cardType = existingType, paused = paused)
+                    }
                 }
                 Unit
             }

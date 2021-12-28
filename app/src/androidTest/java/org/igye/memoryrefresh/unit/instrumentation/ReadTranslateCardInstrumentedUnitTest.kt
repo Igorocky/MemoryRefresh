@@ -146,6 +146,11 @@ class ReadTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
     }
 
     @Test
+    fun selectTopOverdueCards_doesnt_return_paused_cards() {
+        TODO()
+    }
+
+    @Test
     fun getNextCardToRepeat_returns_correct_card_if_there_is_one_card_only_in_the_database() {
         //given
         val expectedCardId = 1236L
@@ -262,6 +267,11 @@ class ReadTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
         assertEquals(CardType.TRANSLATION, nextCard.cardType)
         assertEquals(4, nextCard.cardsRemain)
         assertTrue(nextCard.isCardsRemainExact)
+    }
+
+    @Test
+    fun getNextCardToRepeat_doesnt_return_paused_cards() {
+        TODO()
     }
 
     @Test
