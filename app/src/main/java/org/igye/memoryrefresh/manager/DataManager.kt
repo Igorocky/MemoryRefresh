@@ -315,6 +315,7 @@ class DataManager(
                 TranslateCardSortBy.OVERDUE -> overdueFormula
             } + " " + (args.sortDir?:SortDirection.ASC)
         }
+        val rowNumLimit = if (args.rowsLimit == null) "" else "limit ${args.rowsLimit}"
 
         var query = """
             select
@@ -345,6 +346,7 @@ class DataManager(
                 left join $t t on c.${c.id} = t.${t.cardId}
             ${if (whereFilters.isEmpty()) "" else whereFilters.joinToString(prefix = "where ", separator = " and ")}
             $orderBy
+            $rowNumLimit
         """.trimIndent()
 
         return getRepo().readableDatabase.doInTransaction {

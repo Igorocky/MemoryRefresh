@@ -768,6 +768,68 @@ class ReadTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
         )
     }
 
+    @Test
+    fun readTranslateCardsByFilter_limits_number_of_rows_according_to_rowsLimit() {
+        val card1 = createCard(cardId = 1L, mapper = {it.copy(overdue = -0.5, createdAt = 4)})
+        val card2 = createCard(cardId = 2L, mapper = {it.copy(overdue = -0.1, createdAt = 1)})
+        val card3 = createCard(cardId = 3L, mapper = {it.copy(overdue = 0.0, createdAt = 5)})
+        val card4 = createCard(cardId = 4L, mapper = {it.copy(overdue = 0.5, createdAt = 3)})
+        val card5 = createCard(cardId = 5L, mapper = {it.copy(overdue = 1.0, createdAt = 2)})
+
+        assertSearchResult(
+            listOf(card1,card2,card3,card4,card5),
+            dm.readTranslateCardsByFilter(ReadTranslateCardsByFilter(
+                sortBy = TranslateCardSortBy.OVERDUE
+            )),
+            matchOrder = true
+        )
+
+        assertSearchResult(
+            listOf(card1,card2,card3,card4,card5),
+            dm.readTranslateCardsByFilter(ReadTranslateCardsByFilter(
+                sortBy = TranslateCardSortBy.OVERDUE,
+                rowsLimit = 100
+            )),
+            matchOrder = true
+        )
+
+        assertSearchResult(
+            listOf(card1,card2,card3,card4,card5),
+            dm.readTranslateCardsByFilter(ReadTranslateCardsByFilter(
+                sortBy = TranslateCardSortBy.OVERDUE,
+                rowsLimit = 5
+            )),
+            matchOrder = true
+        )
+
+        assertSearchResult(
+            listOf(card1,card2,card3,card4),
+            dm.readTranslateCardsByFilter(ReadTranslateCardsByFilter(
+                sortBy = TranslateCardSortBy.OVERDUE,
+                rowsLimit = 4
+            )),
+            matchOrder = true
+        )
+
+        assertSearchResult(
+            listOf(card1,card2),
+            dm.readTranslateCardsByFilter(ReadTranslateCardsByFilter(
+                sortBy = TranslateCardSortBy.OVERDUE,
+                rowsLimit = 2
+            )),
+            matchOrder = true
+        )
+
+        assertSearchResult(
+            listOf(card1),
+            dm.readTranslateCardsByFilter(ReadTranslateCardsByFilter(
+                sortBy = TranslateCardSortBy.OVERDUE,
+                rowsLimit = 1
+            )),
+            matchOrder = true
+        )
+    }
+
     private fun createCard(cardId: Long, tagIds: List<Long> = emptyList(), mapper: (TranslateCard) -> TranslateCard = {it}): TranslateCard {
         val createdAt = 1000 * cardId + 1
         val updatedAt = 10000 * cardId + 1
