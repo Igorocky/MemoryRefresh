@@ -221,23 +221,23 @@ class UpdateTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
     }
 
     @Test
-    fun updateTranslateCard_doesnt_modify_paused_flag_if_it_is_not_specified_in_the_request() {
+    fun TODO_updateTranslateCard_doesnt_modify_paused_flag_if_it_is_not_specified_in_the_request() {
         //consider two cases - one for false and another for true
         TODO()
     }
 
     @Test
-    fun updateTranslateCard_modifies_paused_flag_from_false_to_true() {
+    fun TODO_updateTranslateCard_modifies_paused_flag_from_false_to_true() {
         TODO()
     }
 
     @Test
-    fun updateTranslateCard_modifies_paused_flag_from_true_to_false() {
+    fun TODO_updateTranslateCard_modifies_paused_flag_from_true_to_false() {
         TODO()
     }
 
     @Test
-    fun updateTranslateCard_doesnt_create_a_history_record_for_a_card_if_passed_paused_flag_is_same_as_current() {
+    fun TODO_updateTranslateCard_doesnt_create_a_history_record_for_a_card_if_passed_paused_flag_is_same_as_current() {
         //consider two cases - one for false and another for true
         TODO()
     }

@@ -105,17 +105,17 @@ class CreateTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
     }
 
     @Test
-    fun createTranslateCard_creates_unpaused_card_if_paused_flag_was_not_specified() {
+    fun TODO_createTranslateCard_creates_unpaused_card_if_paused_flag_was_not_specified() {
         TODO()
     }
 
     @Test
-    fun createTranslateCard_creates_unpaused_card_if_paused_flag_was_specified_as_false() {
+    fun TODO_createTranslateCard_creates_unpaused_card_if_paused_flag_was_specified_as_false() {
         TODO()
     }
 
     @Test
-    fun createTranslateCard_creates_paused_card_if_paused_flag_was_specified_as_true() {
+    fun TODO_createTranslateCard_creates_paused_card_if_paused_flag_was_specified_as_true() {
         TODO()
     }
 

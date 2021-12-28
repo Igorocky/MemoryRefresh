@@ -5,5 +5,7 @@ import org.igye.memoryrefresh.database.CardType
 open class Card(
     val id: Long,
     val type: CardType,
-    val tagIds: Set<Long>
+    val paused: Boolean,
+    val tagIds: List<Long>,
+    val schedule: CardSchedule,
 )

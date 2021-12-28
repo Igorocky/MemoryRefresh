@@ -35,6 +35,17 @@ class ReadTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
     }
 
     @Test
+    fun TODO_readTranslateCardById_returns_correct_values_for_each_parameter() {
+        //consider both cases - paused=true and paused=false
+        TODO()
+    }
+
+    @Test
+    fun TODO_readTranslateCardById_returns_empty_collection_of_tag_ids_if_card_doesnt_have_tags() {
+        TODO()
+    }
+
+    @Test
     fun selectTopOverdueCards_returns_correct_results_when_only_one_card_is_present_in_the_database() {
         //given
         val expectedCardId = 1L
@@ -146,7 +157,7 @@ class ReadTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
     }
 
     @Test
-    fun selectTopOverdueCards_doesnt_return_paused_cards() {
+    fun TODO_selectTopOverdueCards_doesnt_return_paused_cards() {
         TODO()
     }
 
@@ -270,7 +281,7 @@ class ReadTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
     }
 
     @Test
-    fun getNextCardToRepeat_doesnt_return_paused_cards() {
+    fun TODO_getNextCardToRepeat_doesnt_return_paused_cards() {
         TODO()
     }
 

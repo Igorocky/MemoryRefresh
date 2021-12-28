@@ -861,7 +861,7 @@ class DataManagerInstrumentedIntTest: InstrumentedTestBase() {
             }
         }
 
-        val allSchedules = readAllDataFrom(repo, s.ver.tableName).filter { it[s.delay] != "0s" }
+        val allSchedules = readAllDataFrom(repo, s.ver).filter { it[s.delay] != "0s" }
         assertEquals(numOfCalcs-1, allSchedules.size)
         assertEquals(
             numOfCalcs-1,

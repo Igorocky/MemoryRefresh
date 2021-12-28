@@ -164,6 +164,7 @@ object Utils {
         it
             .map { BeRespose(data = it) }
             .getIfSuccessOrElse {
+//                if (true) throw it
                 BeRespose(
                     err = BeErr(
                         code = (if (it is MemoryRefreshException) it.errCode.code else null)?:errCode.code,

@@ -67,7 +67,7 @@ open class InstrumentedTestBase {
     protected fun assertTableContent(
         repo: Repository, table: Table, exactMatch: Boolean = true, matchColumn: String = "", expectedRows: List<List<Pair<String,Any?>>>
     ) {
-        val allData = readAllDataFrom(repo, table.tableName)
+        val allData = readAllDataFrom(repo, table)
         if (exactMatch) {
             assertTrue(expectedRows.size == allData.size)
         } else {
@@ -139,9 +139,9 @@ open class InstrumentedTestBase {
         }
     }
 
-    protected fun readAllDataFrom(repo: Repository, tableName: String): List<Map<String,Any?>> {
+    protected fun readAllDataFrom(repo: Repository, table: Table): List<Map<String,Any?>> {
         val result = ArrayList<Map<String,Any?>>()
-        repo.readableDatabase.rawQuery("select * from $tableName", null).use { cursor ->
+        repo.readableDatabase.rawQuery("select * from $table", null).use { cursor ->
             if (cursor.moveToFirst()) {
                 while (!cursor.isAfterLast) {
                     result.add(readRow(cursor))

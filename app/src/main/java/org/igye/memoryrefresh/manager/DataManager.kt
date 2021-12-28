@@ -179,22 +179,46 @@ class DataManager(
     }
 
     data class ReadTranslateCardByIdArgs(val cardId: Long)
-    private val selectTranslateCardByIdQuery = "select ${t.textToTranslate}, ${t.translation} from $t where ${t.cardId} = ?"
+    private val readTranslateCardByIdQuery = """
+        select
+            c.${c.id},
+            s.${s.updatedAt},
+            c.${c.paused},
+            (select group_concat(ctg.${ctg.tagId}) from $ctg ctg where ctg.${ctg.cardId} = c.${c.id}) as tagIds,
+            s.${s.delay},
+            s.${s.nextAccessInMillis},
+            s.${s.nextAccessAt},
+            t.${t.textToTranslate}, 
+            t.${t.translation} 
+        from 
+            $c c
+            left join $s s on c.${c.id} = s.${s.cardId}
+            left join $t t on c.${c.id} = t.${t.cardId}
+        where c.${c.id} = ?
+    """.trimIndent()
     @BeMethod
     @Synchronized
     fun readTranslateCardById(args: ReadTranslateCardByIdArgs): BeRespose<TranslateCard> {
         return getRepo().readableDatabase.doInTransaction {
             val currTime = clock.instant().toEpochMilli()
             select(
-                query = selectTranslateCardByIdQuery,
+                query = readTranslateCardByIdQuery,
                 args = arrayOf(args.cardId.toString()),
                 rowMapper = {
-                    val schedule = selectCurrScheduleForCard(cardId = args.cardId).get()
+                    val cardId = it.getLong()
+                    val updatedAt = it.getLong()
                     TranslateCard(
-                        id = args.cardId,
-                        tagIds = selectTagIdsForCard(cardId = args.cardId).get(),
-                        schedule = schedule,
-                        timeSinceLastCheck = Utils.millisToDurationStr(currTime - schedule.updatedAt),
+                        id = cardId,
+                        paused = it.getLong() == 1L,
+                        tagIds = (it.getStringOrNull()?:"").splitToSequence(",").filter { it.isNotBlank() }.map { it.toLong() }.toList(),
+                        schedule = CardSchedule(
+                            cardId = cardId,
+                            updatedAt = updatedAt,
+                            delay = it.getString(),
+                            nextAccessInMillis = it.getLong(),
+                            nextAccessAt = it.getLong(),
+                        ),
+                        timeSinceLastCheck = Utils.millisToDurationStr(currTime - updatedAt),
                         textToTranslate = it.getString(),
                         translation = it.getString(),
                     )
@@ -351,43 +375,6 @@ class DataManager(
         }
     }
 
-    private val selectCurrScheduleForCardQuery =
-        "select ${s.updatedAt}, ${s.delay}, ${s.nextAccessInMillis}, ${s.nextAccessAt} from $s where ${s.cardId} = ?"
-    private val selectCurrScheduleForCardQueryСolumnNames = arrayOf(s.updatedAt, s.delay, s.nextAccessInMillis, s.nextAccessAt)
-    @Synchronized
-    private fun selectCurrScheduleForCard(cardId: Long): Try<CardSchedule> {
-        return getRepo().readableDatabase.doInTransaction {
-            select(
-                query = selectCurrScheduleForCardQuery,
-                args = arrayOf(cardId.toString()),
-                columnNames = selectCurrScheduleForCardQueryСolumnNames,
-                rowMapper = {
-                    CardSchedule(
-                        cardId = cardId,
-                        updatedAt = it.getLong(),
-                        delay = it.getString(),
-                        nextAccessInMillis = it.getLong(),
-                        nextAccessAt = it.getLong()
-                    )
-                }
-            ).rows[0]
-        }
-    }
-
-    private val selectTagIdsForCardQuery = "select ${ctg.tagId} from $ctg where ${ctg.cardId} = ?"
-    @Synchronized
-    private fun selectTagIdsForCard(cardId: Long): Try<List<Long>> {
-        return getRepo().readableDatabase.doInTransaction {
-            select(
-                query = selectTagIdsForCardQuery,
-                args = arrayOf(cardId.toString()),
-                rowMapper = {
-                    it.getLong()
-                }
-            ).rows
-        }
-    }
-
     private val selectMinNextAccessAtQuery = "select count(1) cnt, min(${s.nextAccessAt}) nextAccessAt from $s"
     private val selectMinNextAccessAtQueryColumnNames = arrayOf("cnt", "nextAccessAt")
     @Synchronized
@@ -453,7 +440,6 @@ class DataManager(
         }
     }
 
-    private val selectCardParamsQuery = "select ${c.paused}, ${c.type} from $c where ${c.id} = ?"
     @Synchronized
     private fun updateCard(
         cardId:Long,
@@ -464,12 +450,12 @@ class DataManager(
     ) {
         val repo = getRepo()
         repo.writableDatabase.doInTransaction {
-            selectCurrScheduleForCard(cardId = cardId).map { existingSchedule: CardSchedule ->
-                val newDelay = delay?.trim()?:existingSchedule.delay
+            readCardById(cardId = cardId).map { existingCard: Card ->
+                val newDelay = delay?.trim()?:existingCard.schedule.delay
                 if (newDelay.isEmpty()) {
                     throw MemoryRefreshException(errCode = UPDATE_CARD_DELAY_IS_EMPTY, msg = "Delay should not be empty.")
                 }
-                if (recalculateDelay || newDelay != existingSchedule.delay) {
+                if (recalculateDelay || newDelay != existingCard.schedule.delay) {
                     val randomFactor = 0.85 + Random.nextDouble(from = 0.0, until = 0.30001)
                     val nextAccessInMillis = (Utils.delayStrToMillis(newDelay) * randomFactor).toLong()
                     val timestamp = clock.instant().toEpochMilli()
@@ -483,23 +469,56 @@ class DataManager(
                         nextAccessAt = nextAccessAt
                     )
                 }
-                if (tagIds != null) {
+                if (tagIds != null && tagIds != existingCard.tagIds.toSet()) {
                     repo.cardToTag.delete(cardId = cardId)
                     tagIds.forEach { repo.cardToTag.insert(cardId = cardId, tagId = it) }
                 }
-                if (paused != null) {
-                    val (existingPaused: Boolean, existingType: CardType) = repo.readableDatabase.select(
-                        query = selectCardParamsQuery,
-                        args = arrayOf(cardId.toString())
-                    ) {
-                        (it.getLong() == 1L) to CardType.fromInt(it.getLong())
-                    }.rows[0]
-                    if (existingPaused != paused) {
-                        repo.cards.update(id = cardId, cardType = existingType, paused = paused)
-                    }
+                if (paused != null && paused != existingCard.paused) {
+                    repo.cards.update(id = cardId, cardType = existingCard.type, paused = paused)
                 }
                 Unit
             }
+        }
+    }
+
+    private val readCardByIdQuery = """
+        select
+            c.${c.id},
+            c.${c.type},
+            c.${c.paused},
+            (select group_concat(ctg.${ctg.tagId}) from $ctg ctg where ctg.${ctg.cardId} = c.${c.id}) as tagIds,
+            s.${s.updatedAt},
+            s.${s.delay},
+            s.${s.nextAccessInMillis},
+            s.${s.nextAccessAt}
+        from 
+            $c c
+            left join $s s on c.${c.id} = s.${s.cardId}
+        where c.${c.id} = ?
+    """.trimIndent()
+    @Synchronized
+    private fun readCardById(cardId: Long): Try<Card> {
+        return getRepo().readableDatabase.doInTransaction {
+            select(
+                query = readCardByIdQuery,
+                args = arrayOf(cardId.toString()),
+                rowMapper = {
+                    val cardId = it.getLong()
+                    Card(
+                        id = cardId,
+                        type = CardType.fromInt(it.getLong()),
+                        paused = it.getLong() == 1L,
+                        tagIds = (it.getStringOrNull()?:"").splitToSequence(",").filter { it.isNotBlank() }.map { it.toLong() }.toList(),
+                        schedule = CardSchedule(
+                            cardId = cardId,
+                            updatedAt = it.getLong(),
+                            delay = it.getString(),
+                            nextAccessInMillis = it.getLong(),
+                            nextAccessAt = it.getLong(),
+                        )
+                    )
+                }
+            ).rows[0]
         }
     }
 

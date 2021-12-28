@@ -18,7 +18,7 @@ class CardsTable(private val clock: Clock): TableWithVersioning(name = "CARDS") 
                     $id integer primary key autoincrement,
                     $type integer not null,
                     $createdAt integer not null,
-                    $paused integer not null check ($paused in (0,1))
+                    $paused integer not null check ($paused in (0,1)) default 0
                 )
         """)
         db.execSQL("""
@@ -52,7 +52,7 @@ class CardsTable(private val clock: Clock): TableWithVersioning(name = "CARDS") 
                 val currTime = clock.instant().toEpochMilli()
                 stmt.bindLong(1, cardType.intValue)
                 stmt.bindLong(2, currTime)
-                stmt.bindLong(2, if (paused) 1 else 0)
+                stmt.bindLong(3, if (paused) 1 else 0)
                 return Utils.executeInsert(self, stmt)
             }
         }
