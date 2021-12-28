@@ -644,11 +644,62 @@ class ReadTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
         )
     }
 
+    @Test
+    fun readTranslateCardsByFilter_filters_by_createdFrom() {
+        val card1 = createCard(cardId = 1L, mapper = {it.copy(createdAt = 1L)})
+        val card2 = createCard(cardId = 2L, mapper = {it.copy(createdAt = 2L)})
+        val card3 = createCard(cardId = 3L, mapper = {it.copy(createdAt = 3L)})
+        val card4 = createCard(cardId = 4L, mapper = {it.copy(createdAt = 4L)})
+        val card5 = createCard(cardId = 5L, mapper = {it.copy(createdAt = 5L)})
+
+        assertSearchResult(
+            listOf(card3, card4, card5),
+            dm.readTranslateCardsByFilter(ReadTranslateCardsByFilter(
+                createdFrom = 3
+            ))
+        )
+    }
+
+    @Test
+    fun readTranslateCardsByFilter_filters_by_createdTill() {
+        val card1 = createCard(cardId = 1L, mapper = {it.copy(createdAt = 1L)})
+        val card2 = createCard(cardId = 2L, mapper = {it.copy(createdAt = 2L)})
+        val card3 = createCard(cardId = 3L, mapper = {it.copy(createdAt = 3L)})
+        val card4 = createCard(cardId = 4L, mapper = {it.copy(createdAt = 4L)})
+        val card5 = createCard(cardId = 5L, mapper = {it.copy(createdAt = 5L)})
+
+        assertSearchResult(
+            listOf(card1, card2, card3),
+            dm.readTranslateCardsByFilter(ReadTranslateCardsByFilter(
+                createdTill = 3
+            ))
+        )
+    }
+
+    @Test
+    fun readTranslateCardsByFilter_filters_by_createdFrom_and_createdTill() {
+        val card1 = createCard(cardId = 1L, mapper = {it.copy(createdAt = 1L)})
+        val card2 = createCard(cardId = 2L, mapper = {it.copy(createdAt = 2L)})
+        val card3 = createCard(cardId = 3L, mapper = {it.copy(createdAt = 3L)})
+        val card4 = createCard(cardId = 4L, mapper = {it.copy(createdAt = 4L)})
+        val card5 = createCard(cardId = 5L, mapper = {it.copy(createdAt = 5L)})
+
+        assertSearchResult(
+            listOf(card2, card3, card4),
+            dm.readTranslateCardsByFilter(ReadTranslateCardsByFilter(
+                createdFrom = 2,
+                createdTill = 4
+            ))
+        )
+    }
+
     private fun createCard(cardId: Long, tagIds: List<Long> = emptyList(), mapper: (TranslateCard) -> TranslateCard = {it}): TranslateCard {
-        val updatedAt = 1000 * cardId + 1
+        val createdAt = 1000 * cardId + 1
+        val updatedAt = 10000 * cardId + 1
         val modifiedCard = mapper(
             TranslateCard(
                 id = cardId,
+                createdAt = createdAt,
                 paused = false,
                 tagIds = tagIds,
                 schedule = CardSchedule(

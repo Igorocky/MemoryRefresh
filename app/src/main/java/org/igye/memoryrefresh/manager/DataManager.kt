@@ -185,6 +185,7 @@ class DataManager(
         select
             c.${c.id},
             s.${s.updatedAt},
+            c.${c.createdAt},
             c.${c.paused},
             (select group_concat(ctg.${ctg.tagId}) from $ctg ctg where ctg.${ctg.cardId} = c.${c.id}) as tagIds,
             s.${s.delay},
@@ -203,29 +204,26 @@ class DataManager(
     fun readTranslateCardById(args: ReadTranslateCardByIdArgs): BeRespose<TranslateCard> {
         return getRepo().readableDatabase.doInTransaction {
             val currTime = clock.instant().toEpochMilli()
-            select(
-                query = readTranslateCardByIdQuery,
-                args = arrayOf(args.cardId.toString()),
-                rowMapper = {
-                    val cardId = it.getLong()
-                    val updatedAt = it.getLong()
-                    TranslateCard(
-                        id = cardId,
-                        paused = it.getLong() == 1L,
-                        tagIds = (it.getStringOrNull()?:"").splitToSequence(",").filter { it.isNotBlank() }.map { it.toLong() }.toList(),
-                        schedule = CardSchedule(
-                            cardId = cardId,
-                            updatedAt = updatedAt,
-                            delay = it.getString(),
-                            nextAccessInMillis = it.getLong(),
-                            nextAccessAt = it.getLong(),
-                        ),
-                        timeSinceLastCheck = Utils.millisToDurationStr(currTime - updatedAt),
-                        textToTranslate = it.getString(),
-                        translation = it.getString(),
-                    )
-                }
-            ).rows[0]
+            select(query = readTranslateCardByIdQuery, args = arrayOf(args.cardId.toString())){
+                val cardId = it.getLong()
+                val updatedAt = it.getLong()
+                TranslateCard(
+                    id = cardId,
+                    createdAt = it.getLong(),
+                    paused = it.getLong() == 1L,
+                    tagIds = (it.getStringOrNull()?:"").splitToSequence(",").filter { it.isNotBlank() }.map { it.toLong() }.toList(),
+                    schedule = CardSchedule(
+                        cardId = cardId,
+                        updatedAt = updatedAt,
+                        delay = it.getString(),
+                        nextAccessInMillis = it.getLong(),
+                        nextAccessAt = it.getLong(),
+                    ),
+                    timeSinceLastCheck = Utils.millisToDurationStr(currTime - updatedAt),
+                    textToTranslate = it.getString(),
+                    translation = it.getString(),
+                )
+            }.rows[0]
         }.apply(toBeResponse(READ_TRANSLATE_CARD_BY_ID))
     }
 
@@ -296,11 +294,18 @@ class DataManager(
         if (args.translationLengthGreaterThan != null) {
             whereFilters.add("length(t.${t.translation}) > ${args.translationLengthGreaterThan}")
         }
+        if (args.createdFrom != null) {
+            whereFilters.add("c.${c.createdAt} >= ${args.createdFrom}")
+        }
+        if (args.createdTill != null) {
+            whereFilters.add("c.${c.createdAt} <= ${args.createdTill}")
+        }
 
         var query = """
             select
                 c.${c.id},
                 s.${s.updatedAt},
+                c.${c.createdAt},
                 c.${c.paused},
                 c.tagIds,
                 s.${s.delay},
@@ -312,6 +317,7 @@ class DataManager(
                 (
                     select
                         c.${c.id},
+                        c.${c.createdAt},
                         max(c.${c.paused}) ${c.paused},
                         group_concat(ctg.${ctg.tagId}) as tagIds
                     from $c c left join $ctg ctg on c.${c.id} = ctg.${ctg.cardId}
@@ -331,6 +337,7 @@ class DataManager(
                 val updatedAt = it.getLong()
                 TranslateCard(
                     id = cardId,
+                    createdAt = it.getLong(),
                     paused = it.getLong() == 1L,
                     tagIds = (it.getStringOrNull()?:"").splitToSequence(",").filter { it.isNotBlank() }.map { it.toLong() }.toList(),
                     schedule = CardSchedule(

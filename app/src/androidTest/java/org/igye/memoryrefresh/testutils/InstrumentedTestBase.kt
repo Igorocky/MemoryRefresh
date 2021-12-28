@@ -89,7 +89,7 @@ open class InstrumentedTestBase {
 
     protected fun createTranslateCard(card: TranslateCard): Long {
         insert(repo = repo, table = c, rows = listOf(
-            listOf(c.id to card.id, c.createdAt to 1000, c.type to TR_TP, c.paused to if (card.paused) 1 else 0)
+            listOf(c.id to card.id, c.createdAt to card.createdAt, c.type to TR_TP, c.paused to if (card.paused) 1 else 0)
         ))
         insert(repo = repo, table = s, rows = listOf(
             listOf(
@@ -114,6 +114,7 @@ open class InstrumentedTestBase {
 
     protected fun assertTranslateCardsEqual(expected: TranslateCard, actual: TranslateCard) {
         assertEquals("doesn't match: id", expected.id, actual.id)
+        assertEquals("doesn't match: createdAt", expected.createdAt, actual.createdAt)
         assertEquals("doesn't match: paused", expected.paused, actual.paused)
 
         assertEquals("doesn't match: tagIds", expected.tagIds, actual.tagIds)
