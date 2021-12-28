@@ -32,41 +32,53 @@ interface SelectedRow {
     fun getDoubleOrNull(): Double?
 }
 
+interface SelectedRowInner: SelectedRow {
+    fun reset()
+}
+
 data class SelectedRows<T>(val allRawsRead: Boolean, val rows: List<T>)
 
 fun <T> SQLiteDatabase.select(
     query:String,
     args:Array<String>? = null,
     rowsMax:Int? = null,
-    columnNames:Array<String>,
+    columnNames:Array<String>? = null,
     rowMapper:(SelectedRow) -> T,
 ): SelectedRows<T> {
     return rawQuery(query, args).use { cursor ->
         val result = ArrayList<T>()
         if (cursor.moveToFirst()) {
-            val columnIndexes = columnNames.map { cursor.getColumnIndexOrThrow(it) }
-            while (!cursor.isAfterLast && (rowsMax == null || result.size < rowsMax)) {
-                result.add(rowMapper(object : SelectedRow{
+            val selectedRow = if (columnNames != null) {
+                val columnIndexes = columnNames.map { cursor.getColumnIndexOrThrow(it) }
+                object : SelectedRowInner {
+                    override fun reset() {
+                        curColumn = 0
+                    }
                     private var curColumn = 0
-                    override fun getLong(): Long {
-                        return cursor.getLong(columnIndexes[curColumn++])
+                    override fun getLong(): Long = cursor.getLong(columnIndexes[curColumn++])
+                    override fun getString(): String = cursor.getString(columnIndexes[curColumn++])
+                    override fun getDouble(): Double = cursor.getDouble(columnIndexes[curColumn++])
+                    override fun getLongOrNull(): Long? = cursor.getLongOrNull(columnIndexes[curColumn++])
+                    override fun getStringOrNull(): String? = cursor.getStringOrNull(columnIndexes[curColumn++])
+                    override fun getDoubleOrNull(): Double? = cursor.getDoubleOrNull(columnIndexes[curColumn++])
+                }
+            } else {
+                object : SelectedRowInner {
+                    override fun reset() {
+                        curColumn = 0
                     }
-                    override fun getString():String {
-                        return cursor.getString(columnIndexes[curColumn++])
-                    }
-                    override fun getDouble():Double {
-                        return cursor.getDouble(columnIndexes[curColumn++])
-                    }
-                    override fun getLongOrNull(): Long? {
-                        return cursor.getLongOrNull(columnIndexes[curColumn++])
-                    }
-                    override fun getStringOrNull():String? {
-                        return cursor.getStringOrNull(columnIndexes[curColumn++])
-                    }
-                    override fun getDoubleOrNull():Double? {
-                        return cursor.getDoubleOrNull(columnIndexes[curColumn++])
-                    }
-                }))
+                    private var curColumn = 0
+                    override fun getLong(): Long = cursor.getLong(curColumn++)
+                    override fun getString(): String = cursor.getString(curColumn++)
+                    override fun getDouble(): Double = cursor.getDouble(curColumn++)
+                    override fun getLongOrNull(): Long? = cursor.getLongOrNull(curColumn++)
+                    override fun getStringOrNull(): String? = cursor.getStringOrNull(curColumn++)
+                    override fun getDoubleOrNull(): Double? = cursor.getDoubleOrNull(curColumn++)
+                }
+            }
+            while (!cursor.isAfterLast && (rowsMax == null || result.size < rowsMax)) {
+                selectedRow.reset()
+                result.add(rowMapper(selectedRow))
                 cursor.moveToNext()
             }
         }

@@ -16,6 +16,25 @@ import java.time.temporal.ChronoUnit
 class ReadTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
 
     @Test
+    fun readTranslateCardById_returns_all_tags_of_the_card() {
+        //given
+        val tagId1 = dm.createTag(CreateTagArgs("t1")).data!!
+        val tagId2 = dm.createTag(CreateTagArgs("t2")).data!!
+        val tagId3 = dm.createTag(CreateTagArgs("t3")).data!!
+        val cardId = dm.createTranslateCard(CreateTranslateCardArgs(
+            textToTranslate = "a", translation = "b", tagIds = setOf(tagId1, tagId3)
+        )).data!!
+
+        //when
+        val actualCard = dm.readTranslateCardById(ReadTranslateCardByIdArgs(cardId = cardId)).data!!
+
+        //then
+        assertEquals(2, actualCard.tagIds.size)
+        assertTrue(actualCard.tagIds.contains(tagId1))
+        assertTrue(actualCard.tagIds.contains(tagId3))
+    }
+
+    @Test
     fun selectTopOverdueCards_returns_correct_results_when_only_one_card_is_present_in_the_database() {
         //given
         val expectedCardId = 1L

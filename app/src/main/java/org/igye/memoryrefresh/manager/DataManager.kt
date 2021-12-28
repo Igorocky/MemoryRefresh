@@ -174,10 +174,50 @@ class DataManager(
     }
 
     data class ReadTranslateCardByIdArgs(val cardId: Long)
+    private val selectTranslateCardByIdQuery = "select ${t.textToTranslate}, ${t.translation} from $t where ${t.cardId} = ?"
     @BeMethod
     @Synchronized
     fun readTranslateCardById(args: ReadTranslateCardByIdArgs): BeRespose<TranslateCard> {
-        return readTranslateCardById(cardId = args.cardId).apply(toBeResponse(GET_TRANSLATE_CARD_BY_ID))
+        return getRepo().readableDatabase.doInTransaction {
+            val currTime = clock.instant().toEpochMilli()
+            select(
+                query = selectTranslateCardByIdQuery,
+                args = arrayOf(args.cardId.toString()),
+                rowMapper = {
+                    val schedule = selectCurrScheduleForCard(cardId = args.cardId).get()
+                    TranslateCard(
+                        id = args.cardId,
+                        tagIds = selectTagIdsForCard(cardId = args.cardId).get(),
+                        schedule = schedule,
+                        timeSinceLastCheck = Utils.millisToDurationStr(currTime - schedule.updatedAt),
+                        textToTranslate = it.getString(),
+                        translation = it.getString(),
+                    )
+                }
+            ).rows[0]
+        }.apply(toBeResponse(READ_TRANSLATE_CARD_BY_ID))
+    }
+
+    data class ReadTranslateCardsByFilter(
+        val tagIdsToInclude: Set<Long>? = null,
+        val tagIdsToExclude: Set<Long>? = null,
+        val paused: Boolean? = null,
+        val textToTranslateContains: String? = null,
+        val textToTranslateLengthLessThan: Long? = null,
+        val textToTranslateLengthGreaterThan: Long? = null,
+        val translationContains: String? = null,
+        val translationLengthLessThan: Long? = null,
+        val translationLengthGreaterThan: Long? = null,
+        val createdFrom: Long? = null,
+        val createdTill: Long? = null,
+        val rowsLimit: Long? = null,
+        val sortBy: TranslateCardOrderBy? = null,
+        val sortDir: SortDirection? = null,
+    )
+    @BeMethod
+    @Synchronized
+    fun readTranslateCardsByFilter(args: ReadTranslateCardsByFilter): BeRespose<ReadTranslateCardsByFilterResp> {
+        return BeRespose()
     }
 
     data class ReadTranslateCardHistoryArgs(val cardId:Long)
@@ -326,27 +366,17 @@ class DataManager(
         }
     }
 
-    private val selectTranslateCardByIdQuery = "select ${t.textToTranslate}, ${t.translation} from $t where ${t.cardId} = ?"
-    private val selectTranslateCardByIdQueryColumnNames = arrayOf(t.textToTranslate, t.translation)
+    private val selectTagIdsForCardQuery = "select ${ctg.tagId} from $ctg where ${ctg.cardId} = ?"
     @Synchronized
-    private fun readTranslateCardById(cardId: Long): Try<TranslateCard> {
+    private fun selectTagIdsForCard(cardId: Long): Try<List<Long>> {
         return getRepo().readableDatabase.doInTransaction {
-            val currTime = clock.instant().toEpochMilli()
             select(
-                query = selectTranslateCardByIdQuery,
+                query = selectTagIdsForCardQuery,
                 args = arrayOf(cardId.toString()),
-                columnNames = selectTranslateCardByIdQueryColumnNames,
                 rowMapper = {
-                    val schedule = selectCurrScheduleForCard(cardId = cardId).get()
-                    TranslateCard(
-                        id = cardId,
-                        textToTranslate = it.getString(),
-                        translation = it.getString(),
-                        schedule = schedule,
-                        timeSinceLastCheck = Utils.millisToDurationStr(currTime - schedule.updatedAt),
-                    )
+                    it.getLong()
                 }
-            ).rows[0]
+            ).rows
         }
     }
 

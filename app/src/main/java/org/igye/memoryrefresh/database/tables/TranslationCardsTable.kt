@@ -33,9 +33,9 @@ class TranslationCardsTable(
         """)
     }
 
-    interface InsertStmt {operator fun invoke(cardId: Long, textToTranslate: String, translation: String): Long }lateinit var insert: InsertStmt
-    interface UpdateStmt {operator fun invoke(cardId: Long, textToTranslate: String, translation: String): Int}lateinit var update: UpdateStmt
-    interface DeleteStmt {operator fun invoke(cardId: Long): Int }lateinit var delete: DeleteStmt
+    interface InsertStmt {operator fun invoke(cardId: Long, textToTranslate: String, translation: String): Long } lateinit var insert: InsertStmt
+    interface UpdateStmt {operator fun invoke(cardId: Long, textToTranslate: String, translation: String): Int} lateinit var update: UpdateStmt
+    interface DeleteStmt {operator fun invoke(cardId: Long): Int } lateinit var delete: DeleteStmt
 
     override fun prepareStatements(db: SQLiteDatabase) {
         val self = this

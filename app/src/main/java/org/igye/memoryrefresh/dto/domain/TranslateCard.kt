@@ -4,10 +4,12 @@ import org.igye.memoryrefresh.database.CardType
 
 data class TranslateCard(
     val id: Long,
-    val textToTranslate:String,
-    val translation:String,
+//    val paused: Boolean,
+    val tagIds: List<Long>,
     val schedule: CardSchedule,
     val timeSinceLastCheck: String,
+    val textToTranslate:String,
+    val translation:String
 ) {
     val type = CardType.TRANSLATION
 }
