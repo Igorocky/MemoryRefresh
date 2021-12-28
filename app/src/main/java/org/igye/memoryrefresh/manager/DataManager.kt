@@ -10,7 +10,6 @@ import org.igye.memoryrefresh.dto.common.BeRespose
 import org.igye.memoryrefresh.dto.domain.*
 import java.time.Clock
 import java.util.*
-import kotlin.collections.ArrayList
 import kotlin.random.Random
 
 
@@ -273,6 +272,14 @@ class DataManager(
             ))
         }
         val whereFilters = ArrayList<String>()
+        val queryArgs = ArrayList<String>()
+        if (args.paused != null) {
+            whereFilters.add("c.${c.paused} = ${if(args.paused) 1 else 0}")
+        }
+        if (args.textToTranslateContains != null) {
+            whereFilters.add("lower(t.${t.textToTranslate}) like ?")
+            queryArgs.add("%${args.textToTranslateContains.lowercase()}%")
+        }
 
         var query = """
             select
@@ -298,32 +305,30 @@ class DataManager(
                 ) c
                 left join $s s on c.${c.id} = s.${s.cardId}
                 left join $t t on c.${c.id} = t.${t.cardId}
+            ${if (whereFilters.isEmpty()) "" else whereFilters.joinToString(prefix = "where ", separator = " and ")}
         """.trimIndent()
 
         return getRepo().readableDatabase.doInTransaction {
             val currTime = clock.instant().toEpochMilli()
-            val result = select(
-                query = query,
-                rowMapper = {
-                    val cardId = it.getLong()
-                    val updatedAt = it.getLong()
-                    TranslateCard(
-                        id = cardId,
-                        paused = it.getLong() == 1L,
-                        tagIds = (it.getStringOrNull()?:"").splitToSequence(",").filter { it.isNotBlank() }.map { it.toLong() }.toList(),
-                        schedule = CardSchedule(
-                            cardId = cardId,
-                            updatedAt = updatedAt,
-                            delay = it.getString(),
-                            nextAccessInMillis = it.getLong(),
-                            nextAccessAt = it.getLong(),
-                        ),
-                        timeSinceLastCheck = Utils.millisToDurationStr(currTime - updatedAt),
-                        textToTranslate = it.getString(),
-                        translation = it.getString(),
-                    )
-                }
-            ).rows
+            val result = select(query = query, args = queryArgs.toTypedArray()) {
+                val cardId = it.getLong()
+                val updatedAt = it.getLong()
+                TranslateCard(
+                    id = cardId,
+                    paused = it.getLong() == 1L,
+                    tagIds = (it.getStringOrNull()?:"").splitToSequence(",").filter { it.isNotBlank() }.map { it.toLong() }.toList(),
+                    schedule = CardSchedule(
+                        cardId = cardId,
+                        updatedAt = updatedAt,
+                        delay = it.getString(),
+                        nextAccessInMillis = it.getLong(),
+                        nextAccessAt = it.getLong(),
+                    ),
+                    timeSinceLastCheck = Utils.millisToDurationStr(currTime - updatedAt),
+                    textToTranslate = it.getString(),
+                    translation = it.getString(),
+                )
+            }.rows
             ReadTranslateCardsByFilterResp(cards = result)
         }.apply(toBeResponse(READ_TRANSLATE_CARD_BY_FILTER))
     }

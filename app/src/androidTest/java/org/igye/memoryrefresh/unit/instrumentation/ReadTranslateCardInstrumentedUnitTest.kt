@@ -348,7 +348,6 @@ class ReadTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
 
     @Test
     fun readTranslateCardsByFilter_filters_by_tags_to_include() {
-        //given
         val tagId1 = createTag(tagId = 1, name = "t1")
         val tagId2 = createTag(tagId = 2, name = "t2")
         val tagId3 = createTag(tagId = 3, name = "t3")
@@ -363,47 +362,38 @@ class ReadTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
         //search by one tag
         assertSearchResult(
             listOf(card1, card3),
-            dm.readTranslateCardsByFilter(
-                ReadTranslateCardsByFilter(
-                    tagIdsToInclude = setOf(tagId2)
-                )
-            )
+            dm.readTranslateCardsByFilter(ReadTranslateCardsByFilter(
+                tagIdsToInclude = setOf(tagId2)
+            ))
         )
 
         //search by two tags
         assertSearchResult(
             listOf(card3),
-            dm.readTranslateCardsByFilter(
-                ReadTranslateCardsByFilter(
-                    tagIdsToInclude = setOf(tagId3, tagId2)
-                )
-            )
+            dm.readTranslateCardsByFilter(ReadTranslateCardsByFilter(
+                tagIdsToInclude = setOf(tagId3, tagId2)
+            ))
         )
 
         //search by three tags - empty result
         assertSearchResult(
             listOf(),
-            dm.readTranslateCardsByFilter(
-                ReadTranslateCardsByFilter(
-                    tagIdsToInclude = setOf(tagId1, tagId2, tagId3)
-                )
-            )
+            dm.readTranslateCardsByFilter(ReadTranslateCardsByFilter(
+                tagIdsToInclude = setOf(tagId1, tagId2, tagId3)
+            ))
         )
 
         //search by three tags - non-empty result
         assertSearchResult(
             listOf(card4),
-            dm.readTranslateCardsByFilter(
-                ReadTranslateCardsByFilter(
-                    tagIdsToInclude = setOf(tagId4, tagId5, tagId6)
-                )
-            )
+            dm.readTranslateCardsByFilter(ReadTranslateCardsByFilter(
+                tagIdsToInclude = setOf(tagId4, tagId5, tagId6)
+            ))
         )
     }
 
     @Test
     fun readTranslateCardsByFilter_filters_by_tags_to_exclude() {
-        //given
         val tagId1 = createTag(tagId = 1, name = "t1")
         val tagId2 = createTag(tagId = 2, name = "t2")
         val tagId3 = createTag(tagId = 3, name = "t3")
@@ -418,37 +408,30 @@ class ReadTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
         //search by one tag
         assertSearchResult(
             listOf(card1, card2, card4),
-            dm.readTranslateCardsByFilter(
-                ReadTranslateCardsByFilter(
-                    tagIdsToExclude = setOf(tagId3)
-                )
-            )
+            dm.readTranslateCardsByFilter(ReadTranslateCardsByFilter(
+                tagIdsToExclude = setOf(tagId3)
+            ))
         )
 
         //search by two tags
         assertSearchResult(
             listOf(card2, card4),
-            dm.readTranslateCardsByFilter(
-                ReadTranslateCardsByFilter(
-                    tagIdsToExclude = setOf(tagId3, tagId2)
-                )
-            )
+            dm.readTranslateCardsByFilter(ReadTranslateCardsByFilter(
+                tagIdsToExclude = setOf(tagId3, tagId2)
+            ))
         )
 
         //search by three tags - non-empty result
         assertSearchResult(
             listOf(card2),
-            dm.readTranslateCardsByFilter(
-                ReadTranslateCardsByFilter(
-                    tagIdsToExclude = setOf(tagId1, tagId2, tagId4)
-                )
-            )
+            dm.readTranslateCardsByFilter(ReadTranslateCardsByFilter(
+                tagIdsToExclude = setOf(tagId1, tagId2, tagId4)
+            ))
         )
     }
 
     @Test
     fun readTranslateCardsByFilter_filters_by_few_tags_to_include_and_few_tags_to_exclude() {
-        //given
         val tagId1 = createTag(tagId = 1, name = "t1")
         val tagId2 = createTag(tagId = 2, name = "t2")
         val tagId3 = createTag(tagId = 3, name = "t3")
@@ -462,16 +445,93 @@ class ReadTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
 
         assertSearchResult(
             listOf(card2, card3),
-            dm.readTranslateCardsByFilter(
-                ReadTranslateCardsByFilter(
-                    tagIdsToInclude = setOf(tagId2, tagId3),
-                    tagIdsToExclude = setOf(tagId4, tagId5),
-                )
-            )
+            dm.readTranslateCardsByFilter(ReadTranslateCardsByFilter(
+                tagIdsToInclude = setOf(tagId2, tagId3),
+                tagIdsToExclude = setOf(tagId4, tagId5),
+            ))
         )
     }
 
-    private fun createCard(cardId: Long, tagIds: List<Long>, mapper: (TranslateCard) -> TranslateCard = {it}): TranslateCard {
+    @Test
+    fun readTranslateCardsByFilter_filters_by_paused() {
+        val card1 = createCard(cardId = 1L, mapper = {it.copy(paused = false)})
+        val card2 = createCard(cardId = 2L, mapper = {it.copy(paused = true)})
+        val card3 = createCard(cardId = 3L, mapper = {it.copy(paused = false)})
+        val card4 = createCard(cardId = 4L, mapper = {it.copy(paused = true)})
+
+        assertSearchResult(
+            listOf(card1, card3),
+            dm.readTranslateCardsByFilter(ReadTranslateCardsByFilter(
+                paused = false
+            ))
+        )
+
+        assertSearchResult(
+            listOf(card2, card4),
+            dm.readTranslateCardsByFilter(ReadTranslateCardsByFilter(
+                paused = true
+            ))
+        )
+    }
+
+    @Test
+    fun readTranslateCardsByFilter_filters_by_textToTranslateContains() {
+        val card1 = createCard(cardId = 1L, mapper = {it.copy(textToTranslate = "ubcu")})
+        val card2 = createCard(cardId = 2L, mapper = {it.copy(textToTranslate = "dddd")})
+        val card3 = createCard(cardId = 3L, mapper = {it.copy(textToTranslate = "ffff")})
+        val card4 = createCard(cardId = 4L, mapper = {it.copy(textToTranslate = "aBCd")})
+
+        assertSearchResult(
+            listOf(card1, card4),
+            dm.readTranslateCardsByFilter(ReadTranslateCardsByFilter(
+                textToTranslateContains = "Bc"
+            ))
+        )
+    }
+
+    @Test
+    fun readTranslateCardsByFilter_filters_by_paused_and_textToTranslateContains() {
+        val card1 = createCard(cardId = 1L, mapper = {it.copy(paused = true, textToTranslate = "ubcu")})
+        val card2 = createCard(cardId = 2L, mapper = {it.copy(paused = false, textToTranslate = "dddd")})
+        val card3 = createCard(cardId = 3L, mapper = {it.copy(paused = false, textToTranslate = "ffff")})
+        val card4 = createCard(cardId = 4L, mapper = {it.copy(paused = false, textToTranslate = "aBCd")})
+
+        assertSearchResult(
+            listOf(card4),
+            dm.readTranslateCardsByFilter(ReadTranslateCardsByFilter(
+                paused = false,
+                textToTranslateContains = "Bc"
+            ))
+        )
+    }
+
+    @Test
+    fun readTranslateCardsByFilter_filters_by_tags_and_paused_and_textToTranslateContains() {
+        val tagId1 = createTag(tagId = 1, name = "t1")
+        val tagId2 = createTag(tagId = 2, name = "t2")
+        val tagId3 = createTag(tagId = 3, name = "t3")
+        val tagId4 = createTag(tagId = 4, name = "t4")
+        val tagId5 = createTag(tagId = 5, name = "t5")
+        val tagId6 = createTag(tagId = 6, name = "t6")
+        val card1 = createCard(cardId = 1L, mapper = {it.copy(paused = false, textToTranslate = "ubcu")})
+        val card2 = createCard(cardId = 2L, mapper = {it.copy(paused = true, textToTranslate = "dddd")})
+        val card3 = createCard(cardId = 3L, mapper = {it.copy(paused = true, textToTranslate = "ffff")})
+        val card4 = createCard(cardId = 4L, mapper = {it.copy(paused = true, textToTranslate = "aBCd")}, tagIds = listOf(tagId1))
+        val card5 = createCard(cardId = 5L, mapper = {it.copy(paused = true, textToTranslate = "aBCd")}, tagIds = listOf(tagId1,tagId2,tagId3))
+        val card6 = createCard(cardId = 6L, mapper = {it.copy(paused = true, textToTranslate = "aBCd")}, tagIds = listOf(tagId1,tagId2))
+
+        assertSearchResult(
+            listOf(card6),
+            dm.readTranslateCardsByFilter(ReadTranslateCardsByFilter(
+                paused = true,
+                textToTranslateContains = "Bc",
+                tagIdsToInclude = setOf(tagId1,tagId2),
+                tagIdsToExclude = setOf(tagId3)
+            ))
+        )
+    }
+
+    private fun createCard(cardId: Long, tagIds: List<Long> = emptyList(), mapper: (TranslateCard) -> TranslateCard = {it}): TranslateCard {
         val updatedAt = 1000 * cardId + 1
         val modifiedCard = mapper(
             TranslateCard(
