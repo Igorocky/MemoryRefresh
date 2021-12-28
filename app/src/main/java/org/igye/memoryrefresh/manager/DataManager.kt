@@ -156,30 +156,6 @@ class DataManager(
         }
     }
 
-    @BeMethod
-    @Synchronized
-    fun getNextCardToRepeat(): BeRespose<GetNextCardToRepeatResp> {
-        return selectTopOverdueCards(maxCardsNum = Int.MAX_VALUE).map { cardsToRepeat ->
-            val rows = cardsToRepeat.rows
-            if (rows.isNotEmpty()) {
-                val topCards = rows.asSequence().filter { it.overdue >= rows[0].overdue }.toList()
-                val nextCard = topCards[Random.nextInt(topCards.size)]
-                GetNextCardToRepeatResp(
-                    cardId = nextCard.cardId,
-                    cardType = nextCard.cardType,
-                    cardsRemain = rows.size,
-                    isCardsRemainExact = cardsToRepeat.allRawsRead
-                )
-            } else {
-                val currTime = clock.instant().toEpochMilli()
-                GetNextCardToRepeatResp(
-                    cardsRemain = 0,
-                    nextCardIn = selectMinNextAccessAt().map { Utils.millisToDurationStr(it - currTime) }.orElse("")
-                )
-            }
-        }.apply(toBeResponse(GET_NEXT_CARD_TO_REPEAT))
-    }
-
     data class ReadTranslateCardByIdArgs(val cardId: Long)
     private val readTranslateCardByIdQuery = """
         select
@@ -229,7 +205,272 @@ class DataManager(
         }.apply(toBeResponse(READ_TRANSLATE_CARD_BY_ID))
     }
 
-    data class ReadTranslateCardsByFilter(
+    @BeMethod
+    @Synchronized
+    fun readTranslateCardsByFilter(args: ReadTranslateCardsByFilterArgs): BeRespose<ReadTranslateCardsByFilterResp> {
+        return readTranslateCardsByFilterInner(args).apply(toBeResponse(READ_TRANSLATE_CARD_BY_FILTER))
+    }
+
+    data class ReadTranslateCardHistoryArgs(val cardId:Long)
+    private val getTranslateCardHistoryQuery =
+        "select ${l.recId}, ${l.cardId}, ${l.timestamp}, ${l.translation}, ${l.matched} from $l where ${l.cardId} = ? order by ${l.timestamp} desc"
+    private val getTranslateCardHistoryQueryColumnNames = arrayOf(l.recId, l.cardId, l.timestamp, l.translation, l.matched)
+    @BeMethod
+    @Synchronized
+    fun readTranslateCardHistory(args: ReadTranslateCardHistoryArgs): BeRespose<TranslateCardHistResp> {
+        return getRepo().writableDatabase.doInTransaction {
+            val historyRecords = select(
+                rowsMax = 30,
+                query = getTranslateCardHistoryQuery,
+                args = arrayOf(args.cardId.toString()),
+                columnNames = getTranslateCardHistoryQueryColumnNames,
+                rowMapper = {
+                    TranslateCardHistRecord(
+                        recId = it.getLong(),
+                        cardId = it.getLong(),
+                        timestamp = it.getLong(),
+                        translation = it.getString(),
+                        isCorrect = it.getLong() == 1L,
+                    )
+                }
+            )
+            TranslateCardHistResp(
+                historyRecords = historyRecords.rows,
+                isHistoryFull = historyRecords.allRawsRead
+            )
+        }.apply(toBeResponse(GET_TRANSLATE_CARD_HISTORY))
+    }
+
+    data class SelectTopOverdueTranslateCardsArgs(
+        val tagIdsToInclude: Set<Long>? = null,
+        val tagIdsToExclude: Set<Long>? = null,
+        val translationLengthLessThan: Long? = null,
+        val translationLengthGreaterThan: Long? = null,
+    )
+    @BeMethod
+    @Synchronized
+    fun selectTopOverdueTranslateCards(args: SelectTopOverdueTranslateCardsArgs = SelectTopOverdueTranslateCardsArgs()): BeRespose<ReadTopOverdueTranslateCardsResp> {
+        val filterArgs = ReadTranslateCardsByFilterArgs(
+            paused = false,
+            overdueGreaterEq = 0.0,
+            tagIdsToInclude = args.tagIdsToInclude,
+            tagIdsToExclude = args.tagIdsToExclude,
+            translationLengthLessThan = args.translationLengthLessThan,
+            translationLengthGreaterThan = args.translationLengthGreaterThan,
+            sortBy = TranslateCardSortBy.OVERDUE,
+            sortDir = SortDirection.DESC,
+            rowsLimit = 20
+        )
+        return readTranslateCardsByFilterInner(filterArgs).map { it.cards }.map { overdueCards ->
+            if (overdueCards.isEmpty()) {
+                val waitingCards = readTranslateCardsByFilterInner(
+                    filterArgs.copy(overdueGreaterEq = null, rowsLimit = 10)
+                ).get().cards
+                if (waitingCards.isEmpty()) {
+                    ReadTopOverdueTranslateCardsResp()
+                } else {
+                    ReadTopOverdueTranslateCardsResp(
+                        nextCardIn = Utils.millisToDurationStr(waitingCards[0].schedule.nextAccessAt - clock.instant().toEpochMilli())
+                    )
+                }
+            } else {
+                ReadTopOverdueTranslateCardsResp(cards = overdueCards)
+            }
+        }.apply(toBeResponse(READ_TOP_OVERDUE_TRANSLATE_CARDS))
+    }
+
+    data class UpdateTranslateCardArgs(
+        val cardId:Long,
+        val paused: Boolean? = null,
+        val delay: String? = null,
+        val recalculateDelay: Boolean = false,
+        val tagIds: Set<Long>? = null,
+        val textToTranslate:String? = null,
+        val translation:String? = null
+    )
+    private val updateTranslateCardQuery = "select ${t.textToTranslate}, ${t.translation} from $t where ${t.cardId} = ?"
+    private val updateTranslateCardQueryColumnNames = arrayOf(t.textToTranslate, t.translation)
+    @BeMethod
+    @Synchronized
+    fun updateTranslateCard(args: UpdateTranslateCardArgs): BeRespose<Unit> {
+        val repo = getRepo()
+        return repo.writableDatabase.doInTransaction {
+            updateCard(cardId = args.cardId, delay = args.delay, recalculateDelay = args.recalculateDelay, tagIds = args.tagIds, paused = args.paused)
+            val (existingTextToTranslate: String, existingTranslation: String) = select(
+                query = updateTranslateCardQuery,
+                args = arrayOf(args.cardId.toString()),
+                columnNames = updateTranslateCardQueryColumnNames,
+            ) {
+                listOf(it.getString(), it.getString())
+            }.rows[0]
+            val newTextToTranslate = args.textToTranslate?.trim()?:existingTextToTranslate
+            val newTranslation = args.translation?.trim()?:existingTranslation
+            if (newTextToTranslate.isEmpty()) {
+                throw MemoryRefreshException(errCode = UPDATE_TRANSLATE_CARD_TEXT_TO_TRANSLATE_IS_EMPTY, msg = "Text to translate should not be empty.")
+            } else if (newTranslation.isEmpty()) {
+                throw MemoryRefreshException(errCode = UPDATE_TRANSLATE_CARD_TRANSLATION_IS_EMPTY, msg = "Translation should not be empty.")
+            }
+            if (newTextToTranslate != existingTextToTranslate || newTranslation != existingTranslation) {
+                repo.translationCards.update(cardId = args.cardId, textToTranslate = newTextToTranslate, translation = newTranslation)
+            }
+
+            Unit
+        }.apply(toBeResponse(UPDATE_TRANSLATE_CARD_EXCEPTION))
+    }
+
+    data class ValidateTranslateCardArgs(val cardId:Long, val userProvidedTranslation:String)
+    private val validateTranslateCardQuery = "select ${t.translation} expectedTranslation from $t where ${t.cardId} = ?"
+    private val validateTranslateCardQueryColumnNames = arrayOf("expectedTranslation")
+    @BeMethod
+    @Synchronized
+    fun validateTranslateCard(args: ValidateTranslateCardArgs): BeRespose<ValidateTranslateCardAnswerResp> {
+        val userProvidedTranslation = args.userProvidedTranslation.trim()
+        return if (userProvidedTranslation.isBlank()) {
+            BeRespose(err = BeErr(code = VALIDATE_TRANSLATE_CARD_TRANSLATION_IS_EMPTY.code, msg = "Translation should not be empty."))
+        } else {
+            val repo = getRepo()
+            repo.writableDatabase.doInTransaction {
+                val expectedTranslation = select(
+                    query = validateTranslateCardQuery,
+                    args = arrayOf(args.cardId.toString()),
+                    columnNames = validateTranslateCardQueryColumnNames,
+                    rowMapper = {it.getString()}
+                ).rows[0].trim()
+                val translationIsCorrect = userProvidedTranslation == expectedTranslation
+                repo.translationCardsLog.insert(
+                    cardId = args.cardId,
+                    translation = userProvidedTranslation,
+                    matched = translationIsCorrect
+                )
+                ValidateTranslateCardAnswerResp(
+                    isCorrect = translationIsCorrect,
+                    answer = expectedTranslation
+                )
+            }.apply(toBeResponse(VALIDATE_TRANSLATE_CARD_EXCEPTION))
+        }
+    }
+
+    data class DeleteTranslateCardArgs(val cardId:Long)
+    @BeMethod
+    @Synchronized
+    fun deleteTranslateCard(args: DeleteTranslateCardArgs): BeRespose<Boolean> {
+        val repo = getRepo()
+        return repo.writableDatabase.doInTransaction {
+            repo.translationCards.delete(cardId = args.cardId)
+            deleteCard(cardId = args.cardId)
+            true
+        }.apply(toBeResponse(DELETE_TRANSLATE_CARD_EXCEPTION))
+    }
+
+    //------------------------------------------------------------------------------------------------------------------
+
+    @Synchronized
+    private fun deleteCard(cardId: Long) {
+        val repo = getRepo()
+        repo.writableDatabase.doInTransaction {
+            repo.cardToTag.delete(cardId = cardId)
+            tagsStat.tagsCouldChange()
+            repo.cardsSchedule.delete(cardId = cardId)
+            repo.cards.delete(id = cardId)
+        }
+    }
+
+    @Synchronized
+    private fun createCard(cardType: CardType, paused: Boolean, tagIds: Set<Long>): Try<Long> {
+        tagsStat.tagsCouldChange()
+        val repo = getRepo()
+        return repo.writableDatabase.doInTransaction {
+            val currTime = clock.instant().toEpochMilli()
+            val cardId = repo.cards.insert(cardType = cardType, paused = paused)
+            repo.cardsSchedule.insert(cardId = cardId, timestamp = currTime, delay = "0s", randomFactor = 1.0, nextAccessInMillis = 0, nextAccessAt = currTime)
+            tagIds.forEach { repo.cardToTag.insert(cardId = cardId, tagId = it) }
+            cardId
+        }
+    }
+
+    @Synchronized
+    private fun updateCard(
+        cardId:Long,
+        tagIds: Set<Long>?,
+        paused: Boolean?,
+        delay: String?,
+        recalculateDelay: Boolean
+    ) {
+        val repo = getRepo()
+        repo.writableDatabase.doInTransaction {
+            readCardById(cardId = cardId).map { existingCard: Card ->
+                val newDelay = delay?.trim()?:existingCard.schedule.delay
+                if (newDelay.isEmpty()) {
+                    throw MemoryRefreshException(errCode = UPDATE_CARD_DELAY_IS_EMPTY, msg = "Delay should not be empty.")
+                }
+                if (recalculateDelay || newDelay != existingCard.schedule.delay) {
+                    val randomFactor = 0.85 + Random.nextDouble(from = 0.0, until = 0.30001)
+                    val nextAccessInMillis = (Utils.delayStrToMillis(newDelay) * randomFactor).toLong()
+                    val timestamp = clock.instant().toEpochMilli()
+                    val nextAccessAt = timestamp + nextAccessInMillis
+                    repo.cardsSchedule.update(
+                        timestamp = timestamp,
+                        cardId = cardId,
+                        delay = newDelay,
+                        randomFactor = randomFactor,
+                        nextAccessInMillis = nextAccessInMillis,
+                        nextAccessAt = nextAccessAt
+                    )
+                }
+                if (tagIds != null && tagIds != existingCard.tagIds.toSet()) {
+                    repo.cardToTag.delete(cardId = cardId)
+                    tagIds.forEach { repo.cardToTag.insert(cardId = cardId, tagId = it) }
+                }
+                if (paused != null && paused != existingCard.paused) {
+                    repo.cards.update(id = cardId, cardType = existingCard.type, paused = paused)
+                }
+                Unit
+            }
+        }
+    }
+
+    private val readCardByIdQuery = """
+        select
+            c.${c.id},
+            c.${c.type},
+            c.${c.paused},
+            (select group_concat(ctg.${ctg.tagId}) from $ctg ctg where ctg.${ctg.cardId} = c.${c.id}) as tagIds,
+            s.${s.updatedAt},
+            s.${s.delay},
+            s.${s.nextAccessInMillis},
+            s.${s.nextAccessAt}
+        from 
+            $c c
+            left join $s s on c.${c.id} = s.${s.cardId}
+        where c.${c.id} = ?
+    """.trimIndent()
+    @Synchronized
+    private fun readCardById(cardId: Long): Try<Card> {
+        return getRepo().readableDatabase.doInTransaction {
+            select(
+                query = readCardByIdQuery,
+                args = arrayOf(cardId.toString()),
+                rowMapper = {
+                    val cardId = it.getLong()
+                    Card(
+                        id = cardId,
+                        type = CardType.fromInt(it.getLong()),
+                        paused = it.getLong() == 1L,
+                        tagIds = (it.getStringOrNull()?:"").splitToSequence(",").filter { it.isNotBlank() }.map { it.toLong() }.toList(),
+                        schedule = CardSchedule(
+                            cardId = cardId,
+                            updatedAt = it.getLong(),
+                            delay = it.getString(),
+                            nextAccessInMillis = it.getLong(),
+                            nextAccessAt = it.getLong(),
+                        )
+                    )
+                }
+            ).rows[0]
+        }
+    }
+
+    data class ReadTranslateCardsByFilterArgs(
         val tagIdsToInclude: Set<Long>? = null,
         val tagIdsToExclude: Set<Long>? = null,
         val paused: Boolean? = null,
@@ -246,9 +487,8 @@ class DataManager(
         val sortBy: TranslateCardSortBy? = null,
         val sortDir: SortDirection? = null,
     )
-    @BeMethod
     @Synchronized
-    fun readTranslateCardsByFilter(args: ReadTranslateCardsByFilter): BeRespose<ReadTranslateCardsByFilterResp> {
+    private fun readTranslateCardsByFilterInner(args: ReadTranslateCardsByFilterArgs): Try<ReadTranslateCardsByFilterResp> {
         val tagIdsToInclude: List<Long>? = args.tagIdsToInclude?.toList()
         val leastUsedTagId: Long? = if (tagIdsToInclude == null || tagIdsToInclude.isEmpty()) {
             null
@@ -373,279 +613,6 @@ class DataManager(
                 )
             }.rows
             ReadTranslateCardsByFilterResp(cards = result)
-        }.apply(toBeResponse(READ_TRANSLATE_CARD_BY_FILTER))
-    }
-
-    data class ReadTranslateCardHistoryArgs(val cardId:Long)
-    private val getTranslateCardHistoryQuery =
-        "select ${l.recId}, ${l.cardId}, ${l.timestamp}, ${l.translation}, ${l.matched} from $l where ${l.cardId} = ? order by ${l.timestamp} desc"
-    private val getTranslateCardHistoryQueryColumnNames = arrayOf(l.recId, l.cardId, l.timestamp, l.translation, l.matched)
-    @BeMethod
-    @Synchronized
-    fun readTranslateCardHistory(args: ReadTranslateCardHistoryArgs): BeRespose<TranslateCardHistResp> {
-        return getRepo().writableDatabase.doInTransaction {
-            val historyRecords = select(
-                rowsMax = 30,
-                query = getTranslateCardHistoryQuery,
-                args = arrayOf(args.cardId.toString()),
-                columnNames = getTranslateCardHistoryQueryColumnNames,
-                rowMapper = {
-                    TranslateCardHistRecord(
-                        recId = it.getLong(),
-                        cardId = it.getLong(),
-                        timestamp = it.getLong(),
-                        translation = it.getString(),
-                        isCorrect = it.getLong() == 1L,
-                    )
-                }
-            )
-            TranslateCardHistResp(
-                historyRecords = historyRecords.rows,
-                isHistoryFull = historyRecords.allRawsRead
-            )
-        }.apply(toBeResponse(GET_TRANSLATE_CARD_HISTORY))
-    }
-
-    data class UpdateTranslateCardArgs(
-        val cardId:Long,
-        val paused: Boolean? = null,
-        val delay: String? = null,
-        val recalculateDelay: Boolean = false,
-        val tagIds: Set<Long>? = null,
-        val textToTranslate:String? = null,
-        val translation:String? = null
-    )
-    private val updateTranslateCardQuery = "select ${t.textToTranslate}, ${t.translation} from $t where ${t.cardId} = ?"
-    private val updateTranslateCardQueryColumnNames = arrayOf(t.textToTranslate, t.translation)
-    @BeMethod
-    @Synchronized
-    fun updateTranslateCard(args: UpdateTranslateCardArgs): BeRespose<Unit> {
-        val repo = getRepo()
-        return repo.writableDatabase.doInTransaction {
-            updateCard(cardId = args.cardId, delay = args.delay, recalculateDelay = args.recalculateDelay, tagIds = args.tagIds, paused = args.paused)
-            val (existingTextToTranslate: String, existingTranslation: String) = select(
-                query = updateTranslateCardQuery,
-                args = arrayOf(args.cardId.toString()),
-                columnNames = updateTranslateCardQueryColumnNames,
-            ) {
-                listOf(it.getString(), it.getString())
-            }.rows[0]
-            val newTextToTranslate = args.textToTranslate?.trim()?:existingTextToTranslate
-            val newTranslation = args.translation?.trim()?:existingTranslation
-            if (newTextToTranslate.isEmpty()) {
-                throw MemoryRefreshException(errCode = UPDATE_TRANSLATE_CARD_TEXT_TO_TRANSLATE_IS_EMPTY, msg = "Text to translate should not be empty.")
-            } else if (newTranslation.isEmpty()) {
-                throw MemoryRefreshException(errCode = UPDATE_TRANSLATE_CARD_TRANSLATION_IS_EMPTY, msg = "Translation should not be empty.")
-            }
-            if (newTextToTranslate != existingTextToTranslate || newTranslation != existingTranslation) {
-                repo.translationCards.update(cardId = args.cardId, textToTranslate = newTextToTranslate, translation = newTranslation)
-            }
-
-            Unit
-        }.apply(toBeResponse(UPDATE_TRANSLATE_CARD_EXCEPTION))
-    }
-
-    data class ValidateTranslateCardArgs(val cardId:Long, val userProvidedTranslation:String)
-    private val validateTranslateCardQuery = "select ${t.translation} expectedTranslation from $t where ${t.cardId} = ?"
-    private val validateTranslateCardQueryColumnNames = arrayOf("expectedTranslation")
-    @BeMethod
-    @Synchronized
-    fun validateTranslateCard(args: ValidateTranslateCardArgs): BeRespose<ValidateTranslateCardAnswerResp> {
-        val userProvidedTranslation = args.userProvidedTranslation.trim()
-        return if (userProvidedTranslation.isBlank()) {
-            BeRespose(err = BeErr(code = VALIDATE_TRANSLATE_CARD_TRANSLATION_IS_EMPTY.code, msg = "Translation should not be empty."))
-        } else {
-            val repo = getRepo()
-            repo.writableDatabase.doInTransaction {
-                val expectedTranslation = select(
-                    query = validateTranslateCardQuery,
-                    args = arrayOf(args.cardId.toString()),
-                    columnNames = validateTranslateCardQueryColumnNames,
-                    rowMapper = {it.getString()}
-                ).rows[0].trim()
-                val translationIsCorrect = userProvidedTranslation == expectedTranslation
-                repo.translationCardsLog.insert(
-                    cardId = args.cardId,
-                    translation = userProvidedTranslation,
-                    matched = translationIsCorrect
-                )
-                ValidateTranslateCardAnswerResp(
-                    isCorrect = translationIsCorrect,
-                    answer = expectedTranslation
-                )
-            }.apply(toBeResponse(VALIDATE_TRANSLATE_CARD_EXCEPTION))
-        }
-    }
-
-    data class DeleteTranslateCardArgs(val cardId:Long)
-    @BeMethod
-    @Synchronized
-    fun deleteTranslateCard(args: DeleteTranslateCardArgs): BeRespose<Boolean> {
-        val repo = getRepo()
-        return repo.writableDatabase.doInTransaction {
-            repo.translationCards.delete(cardId = args.cardId)
-            deleteCard(cardId = args.cardId)
-            true
-        }.apply(toBeResponse(DELETE_TRANSLATE_CARD_EXCEPTION))
-    }
-
-    //------------------------------------------------------------------------------------------------------------------
-
-    @Synchronized
-    private fun deleteCard(cardId: Long) {
-        val repo = getRepo()
-        repo.writableDatabase.doInTransaction {
-            repo.cardToTag.delete(cardId = cardId)
-            tagsStat.tagsCouldChange()
-            repo.cardsSchedule.delete(cardId = cardId)
-            repo.cards.delete(id = cardId)
-        }
-    }
-
-    private val selectMinNextAccessAtQuery = "select count(1) cnt, min(${s.nextAccessAt}) nextAccessAt from $s"
-    private val selectMinNextAccessAtQueryColumnNames = arrayOf("cnt", "nextAccessAt")
-    @Synchronized
-    private fun selectMinNextAccessAt(): Optional<Long> {
-        return getRepo().readableDatabase.doInTransaction {
-            select(
-                query = selectMinNextAccessAtQuery,
-                columnNames = selectMinNextAccessAtQueryColumnNames,
-                rowMapper = { Pair(it.getLong(), it.getLong()) }
-            )
-        }
-            .map { if (it.rows[0].first == 0L) Optional.empty() else Optional.of(it.rows[0].second) }
-            .get()
-    }
-
-    @Synchronized
-    private fun createCard(cardType: CardType, paused: Boolean, tagIds: Set<Long>): Try<Long> {
-        tagsStat.tagsCouldChange()
-        val repo = getRepo()
-        return repo.writableDatabase.doInTransaction {
-            val currTime = clock.instant().toEpochMilli()
-            val cardId = repo.cards.insert(cardType = cardType, paused = paused)
-            repo.cardsSchedule.insert(cardId = cardId, timestamp = currTime, delay = "0s", randomFactor = 1.0, nextAccessInMillis = 0, nextAccessAt = currTime)
-            tagIds.forEach { repo.cardToTag.insert(cardId = cardId, tagId = it) }
-            cardId
-        }
-    }
-
-    private val selectTopOverdueCardsQuery = """
-        select * from ( 
-            select
-                ${c.id} cardId,
-                ${c.type} cardType,
-                case 
-                    when ? /*1 currTime*/ < ${s.nextAccessAt} 
-                        then -1.0 
-                    else 
-                        (? /*2 currTime*/ - ${s.nextAccessAt} ) * 1.0 / (case when ${s.nextAccessInMillis} = 0 then 1 else ${s.nextAccessInMillis} end) 
-                end overdue
-            from $c left join $s on ${c.id} = ${s.cardId}
-        )
-        where overdue >= 0
-        order by overdue desc
-    """.trimIndent()
-    private val selectTopOverdueCardsQueryColumnNames = arrayOf("cardId", "cardType", "overdue")
-    @Synchronized
-    fun selectTopOverdueCards(maxCardsNum: Int): Try<SelectedRows<CardOverdue>> {
-        return getRepo().readableDatabase.doInTransaction {
-            val currTimeStr = clock.instant().toEpochMilli().toString()
-            select(
-                query = selectTopOverdueCardsQuery,
-                args = arrayOf(currTimeStr, currTimeStr),
-                columnNames = selectTopOverdueCardsQueryColumnNames,
-                rowMapper = {
-                    CardOverdue(
-                        cardId = it.getLong(),
-                        cardType = CardType.fromInt(it.getLong()),
-                        overdue = it.getDouble()
-                    )
-                },
-                rowsMax = maxCardsNum
-            )
-        }
-    }
-
-    @Synchronized
-    private fun updateCard(
-        cardId:Long,
-        tagIds: Set<Long>?,
-        paused: Boolean?,
-        delay: String?,
-        recalculateDelay: Boolean
-    ) {
-        val repo = getRepo()
-        repo.writableDatabase.doInTransaction {
-            readCardById(cardId = cardId).map { existingCard: Card ->
-                val newDelay = delay?.trim()?:existingCard.schedule.delay
-                if (newDelay.isEmpty()) {
-                    throw MemoryRefreshException(errCode = UPDATE_CARD_DELAY_IS_EMPTY, msg = "Delay should not be empty.")
-                }
-                if (recalculateDelay || newDelay != existingCard.schedule.delay) {
-                    val randomFactor = 0.85 + Random.nextDouble(from = 0.0, until = 0.30001)
-                    val nextAccessInMillis = (Utils.delayStrToMillis(newDelay) * randomFactor).toLong()
-                    val timestamp = clock.instant().toEpochMilli()
-                    val nextAccessAt = timestamp + nextAccessInMillis
-                    repo.cardsSchedule.update(
-                        timestamp = timestamp,
-                        cardId = cardId,
-                        delay = newDelay,
-                        randomFactor = randomFactor,
-                        nextAccessInMillis = nextAccessInMillis,
-                        nextAccessAt = nextAccessAt
-                    )
-                }
-                if (tagIds != null && tagIds != existingCard.tagIds.toSet()) {
-                    repo.cardToTag.delete(cardId = cardId)
-                    tagIds.forEach { repo.cardToTag.insert(cardId = cardId, tagId = it) }
-                }
-                if (paused != null && paused != existingCard.paused) {
-                    repo.cards.update(id = cardId, cardType = existingCard.type, paused = paused)
-                }
-                Unit
-            }
-        }
-    }
-
-    private val readCardByIdQuery = """
-        select
-            c.${c.id},
-            c.${c.type},
-            c.${c.paused},
-            (select group_concat(ctg.${ctg.tagId}) from $ctg ctg where ctg.${ctg.cardId} = c.${c.id}) as tagIds,
-            s.${s.updatedAt},
-            s.${s.delay},
-            s.${s.nextAccessInMillis},
-            s.${s.nextAccessAt}
-        from 
-            $c c
-            left join $s s on c.${c.id} = s.${s.cardId}
-        where c.${c.id} = ?
-    """.trimIndent()
-    @Synchronized
-    private fun readCardById(cardId: Long): Try<Card> {
-        return getRepo().readableDatabase.doInTransaction {
-            select(
-                query = readCardByIdQuery,
-                args = arrayOf(cardId.toString()),
-                rowMapper = {
-                    val cardId = it.getLong()
-                    Card(
-                        id = cardId,
-                        type = CardType.fromInt(it.getLong()),
-                        paused = it.getLong() == 1L,
-                        tagIds = (it.getStringOrNull()?:"").splitToSequence(",").filter { it.isNotBlank() }.map { it.toLong() }.toList(),
-                        schedule = CardSchedule(
-                            cardId = cardId,
-                            updatedAt = it.getLong(),
-                            delay = it.getString(),
-                            nextAccessInMillis = it.getLong(),
-                            nextAccessAt = it.getLong(),
-                        )
-                    )
-                }
-            ).rows[0]
         }
     }
 

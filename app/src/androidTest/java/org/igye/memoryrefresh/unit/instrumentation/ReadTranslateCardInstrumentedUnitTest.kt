@@ -5,7 +5,6 @@ import org.igye.memoryrefresh.common.Utils
 import org.igye.memoryrefresh.common.Utils.MILLIS_IN_HOUR
 import org.igye.memoryrefresh.common.Utils.MILLIS_IN_MINUTE
 import org.igye.memoryrefresh.common.Utils.MILLIS_IN_SECOND
-import org.igye.memoryrefresh.database.CardType
 import org.igye.memoryrefresh.dto.common.BeRespose
 import org.igye.memoryrefresh.dto.domain.*
 import org.igye.memoryrefresh.manager.DataManager.*
@@ -52,7 +51,6 @@ class ReadTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
     fun selectTopOverdueCards_returns_correct_results_when_only_one_card_is_present_in_the_database() {
         //given
         val expectedCardId = 1L
-        val expectedCardType = CardType.TRANSLATION
         val baseTime = 27000
         insert(repo = repo, table = c, rows = listOf(
             listOf(c.id to expectedCardId, c.type to TR_TP, c.createdAt to 0)
@@ -60,16 +58,18 @@ class ReadTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
         insert(repo = repo, table = s, rows = listOf(
             listOf(s.cardId to expectedCardId, s.updatedAt to 0, s.delay to "1m", s.randomFactor to 1.0, s.nextAccessInMillis to 100, s.nextAccessAt to baseTime + 100)
         ))
+        insert(repo = repo, table = t, rows = listOf(
+            listOf(t.cardId to expectedCardId, t.textToTranslate to "0", t.translation to "0")
+        ))
 
         //when
         testClock.setFixedTime(baseTime + 145)
-        val actualTopOverdueCards = dm.selectTopOverdueCards(30)
+        val actualTopOverdueCards = dm.selectTopOverdueTranslateCards().data!!
 
         //then
-        val actualOverdue = actualTopOverdueCards.get().rows
+        val actualOverdue = actualTopOverdueCards.cards
         assertEquals(1, actualOverdue.size)
-        assertEquals(expectedCardId, actualOverdue[0].cardId)
-        assertEquals(expectedCardType, actualOverdue[0].cardType)
+        assertEquals(expectedCardId, actualOverdue[0].id)
         assertEquals(0.45, actualOverdue[0].overdue, 0.000001)
     }
 
@@ -84,13 +84,16 @@ class ReadTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
         insert(repo = repo, table = s, rows = listOf(
             listOf(s.cardId to expectedCardId, s.updatedAt to 0, s.delay to "1m", s.randomFactor to 1.0, s.nextAccessInMillis to 100, s.nextAccessAt to baseTime + 100)
         ))
+        insert(repo = repo, table = t, rows = listOf(
+            listOf(t.cardId to expectedCardId, t.textToTranslate to "0", t.translation to "0")
+        ))
 
         //when
         testClock.setFixedTime(baseTime + 99)
-        val actualTopOverdueCards = dm.selectTopOverdueCards(30)
+        val actualTopOverdueCards = dm.selectTopOverdueTranslateCards().data!!
 
         //then
-        val actualOverdue = actualTopOverdueCards.get().rows
+        val actualOverdue = actualTopOverdueCards.cards
         assertEquals(0, actualOverdue.size)
     }
 
@@ -130,31 +133,43 @@ class ReadTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
             createScheduleRecord(cardId = cardIdWithSmallOverdue, nextAccessIn = timeElapsed-1_000),
             createScheduleRecord(cardId = cardIdWithoutOverdue4, nextAccessIn = timeElapsed+2_000),
         ))
+        fun createTranslationRecord(cardId: Long) =
+            listOf(t.cardId to cardId, t.textToTranslate to "0", t.translation to "0")
+        insert(repo = repo, table = t, rows = listOf(
+            createTranslationRecord(cardId = cardIdWithoutOverdue1),
+            createTranslationRecord(cardId = cardIdWithLargeOverdue),
+            createTranslationRecord(cardId = cardIdWithoutOverdue2),
+            createTranslationRecord(cardId = cardIdWithZeroOverdue),
+            createTranslationRecord(cardId = cardIdWithBigOverdue),
+            createTranslationRecord(cardId = cardIdWithoutOverdue3),
+            createTranslationRecord(cardId = cardIdWithSmallOverdue),
+            createTranslationRecord(cardId = cardIdWithoutOverdue4),
+        ))
 
         //when
         testClock.setFixedTime(baseTime + timeElapsed)
-        val actualTopOverdueCards = dm.selectTopOverdueCards(30)
+        val actualTopOverdueCards = dm.selectTopOverdueTranslateCards().data!!
 
         //then
-        val actualOverdue = actualTopOverdueCards.get().rows
+        val actualOverdue = actualTopOverdueCards.cards
         assertEquals(4, actualOverdue.size)
 
-        val actualIds = actualOverdue.map { it.cardId }.toSet()
+        val actualIds = actualOverdue.map { it.id }.toSet()
         assertFalse(actualIds.contains(cardIdWithoutOverdue1))
         assertFalse(actualIds.contains(cardIdWithoutOverdue2))
         assertFalse(actualIds.contains(cardIdWithoutOverdue3))
         assertFalse(actualIds.contains(cardIdWithoutOverdue4))
 
-        assertEquals(cardIdWithLargeOverdue, actualOverdue[0].cardId)
+        assertEquals(cardIdWithLargeOverdue, actualOverdue[0].id)
         assertEquals(26.0, actualOverdue[0].overdue, 0.0001)
 
-        assertEquals(cardIdWithBigOverdue, actualOverdue[1].cardId)
+        assertEquals(cardIdWithBigOverdue, actualOverdue[1].id)
         assertEquals(0.5882, actualOverdue[1].overdue, 0.0001)
 
-        assertEquals(cardIdWithSmallOverdue, actualOverdue[2].cardId)
+        assertEquals(cardIdWithSmallOverdue, actualOverdue[2].id)
         assertEquals(0.0385, actualOverdue[2].overdue, 0.0001)
 
-        assertEquals(cardIdWithZeroOverdue, actualOverdue[3].cardId)
+        assertEquals(cardIdWithZeroOverdue, actualOverdue[3].id)
         assertEquals(0.0, actualOverdue[3].overdue, 0.000001)
 
     }
@@ -179,17 +194,21 @@ class ReadTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
         insert(repo = repo, table = s, rows = listOf(
             createScheduleRecord(cardId = expectedCardId, nextAccessIn = timeElapsed-1_000),
         ))
+        fun createTranslationRecord(cardId: Long) =
+            listOf(t.cardId to cardId, t.textToTranslate to "0", t.translation to "0")
+        insert(repo = repo, table = t, rows = listOf(
+            createTranslationRecord(cardId = expectedCardId),
+        ))
 
         //when
         testClock.setFixedTime(baseTime + timeElapsed)
-        val cardToRepeatResp = dm.getNextCardToRepeat()
+        val cardToRepeatResp = dm.selectTopOverdueTranslateCards()
 
         //then
-        val nextCard = cardToRepeatResp.data!!
-        assertEquals(expectedCardId, nextCard.cardId)
-        assertEquals(CardType.TRANSLATION, nextCard.cardType)
-        assertEquals(1, nextCard.cardsRemain)
-        assertTrue(nextCard.isCardsRemainExact)
+        val nextCards = cardToRepeatResp.data!!.cards
+        val nextCard = nextCards[0]
+        assertEquals(expectedCardId, nextCard.id)
+        assertEquals(1, nextCards.size)
     }
 
     @Test
@@ -207,15 +226,19 @@ class ReadTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
         insert(repo = repo, table = s, rows = listOf(
             createScheduleRecord(cardId = expectedCardId, nextAccessIn = (timeElapsed + 2*MILLIS_IN_HOUR + 3*MILLIS_IN_MINUTE + 39*MILLIS_IN_SECOND).toInt()),
         ))
+        fun createTranslationRecord(cardId: Long) =
+            listOf(t.cardId to cardId, t.textToTranslate to "0", t.translation to "0")
+        insert(repo = repo, table = t, rows = listOf(
+            createTranslationRecord(cardId = expectedCardId),
+        ))
 
         //when
         testClock.setFixedTime(baseTime + timeElapsed)
-        val cardToRepeatResp = dm.getNextCardToRepeat()
+        val cardToRepeatResp = dm.selectTopOverdueTranslateCards().data!!
 
         //then
-        val nextCard = cardToRepeatResp.data!!
-        assertEquals(0, nextCard.cardsRemain)
-        assertEquals("2h 3m", nextCard.nextCardIn)
+        assertEquals(0, cardToRepeatResp.cards.size)
+        assertEquals("2h 3m", cardToRepeatResp.nextCardIn)
     }
 
     @Test
@@ -226,12 +249,11 @@ class ReadTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
 
         //when
         testClock.setFixedTime(baseTime + timeElapsed)
-        val cardToRepeatResp = dm.getNextCardToRepeat()
+        val cardToRepeatResp = dm.selectTopOverdueTranslateCards().data!!
 
         //then
-        val nextCard = cardToRepeatResp.data!!
-        assertEquals(0, nextCard.cardsRemain)
-        assertEquals("", nextCard.nextCardIn)
+        assertEquals(0, cardToRepeatResp.cards.size)
+        assertEquals("", cardToRepeatResp.nextCardIn)
     }
 
     @Test
@@ -270,17 +292,27 @@ class ReadTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
             createScheduleRecord(cardId = cardIdWithSmallOverdue, nextAccessIn = timeElapsed-1_000),
             createScheduleRecord(cardId = cardIdWithoutOverdue4, nextAccessIn = timeElapsed+2_000),
         ))
+        fun createTranslationRecord(cardId: Long) =
+            listOf(t.cardId to cardId, t.textToTranslate to "0", t.translation to "0")
+        insert(repo = repo, table = t, rows = listOf(
+            createTranslationRecord(cardId = cardIdWithoutOverdue1),
+            createTranslationRecord(cardId = cardIdWithLargeOverdue),
+            createTranslationRecord(cardId = cardIdWithoutOverdue2),
+            createTranslationRecord(cardId = cardIdWithZeroOverdue),
+            createTranslationRecord(cardId = cardIdWithBigOverdue),
+            createTranslationRecord(cardId = cardIdWithoutOverdue3),
+            createTranslationRecord(cardId = cardIdWithSmallOverdue),
+            createTranslationRecord(cardId = cardIdWithoutOverdue4),
+        ))
 
         //when
         testClock.setFixedTime(baseTime + timeElapsed)
-        val cardToRepeatResp = dm.getNextCardToRepeat()
+        val cardToRepeatResp = dm.selectTopOverdueTranslateCards().data!!
 
         //then
-        val nextCard = cardToRepeatResp.data!!
-        assertEquals(cardIdWithLargeOverdue, nextCard.cardId)
-        assertEquals(CardType.TRANSLATION, nextCard.cardType)
-        assertEquals(4, nextCard.cardsRemain)
-        assertTrue(nextCard.isCardsRemainExact)
+        val nextCard = cardToRepeatResp.cards[0]
+        assertEquals(cardIdWithLargeOverdue, nextCard.id)
+        assertEquals(4, cardToRepeatResp.cards.size)
     }
 
     @Test
@@ -338,7 +370,7 @@ class ReadTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
         val card3 = createCard(cardId = 3L, tagIds = listOf(tagId2, tagId3))
 
         //when
-        val foundCards = dm.readTranslateCardsByFilter(ReadTranslateCardsByFilter())
+        val foundCards = dm.readTranslateCardsByFilter(ReadTranslateCardsByFilterArgs())
 
         //then
         assertSearchResult(listOf(card1, card2, card3), foundCards)
@@ -360,7 +392,7 @@ class ReadTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
         //search by one tag
         assertSearchResult(
             listOf(card1, card3),
-            dm.readTranslateCardsByFilter(ReadTranslateCardsByFilter(
+            dm.readTranslateCardsByFilter(ReadTranslateCardsByFilterArgs(
                 tagIdsToInclude = setOf(tagId2)
             ))
         )
@@ -368,7 +400,7 @@ class ReadTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
         //search by two tags
         assertSearchResult(
             listOf(card3),
-            dm.readTranslateCardsByFilter(ReadTranslateCardsByFilter(
+            dm.readTranslateCardsByFilter(ReadTranslateCardsByFilterArgs(
                 tagIdsToInclude = setOf(tagId3, tagId2)
             ))
         )
@@ -376,7 +408,7 @@ class ReadTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
         //search by three tags - empty result
         assertSearchResult(
             listOf(),
-            dm.readTranslateCardsByFilter(ReadTranslateCardsByFilter(
+            dm.readTranslateCardsByFilter(ReadTranslateCardsByFilterArgs(
                 tagIdsToInclude = setOf(tagId1, tagId2, tagId3)
             ))
         )
@@ -384,7 +416,7 @@ class ReadTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
         //search by three tags - non-empty result
         assertSearchResult(
             listOf(card4),
-            dm.readTranslateCardsByFilter(ReadTranslateCardsByFilter(
+            dm.readTranslateCardsByFilter(ReadTranslateCardsByFilterArgs(
                 tagIdsToInclude = setOf(tagId4, tagId5, tagId6)
             ))
         )
@@ -406,7 +438,7 @@ class ReadTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
         //search by one tag
         assertSearchResult(
             listOf(card1, card2, card4),
-            dm.readTranslateCardsByFilter(ReadTranslateCardsByFilter(
+            dm.readTranslateCardsByFilter(ReadTranslateCardsByFilterArgs(
                 tagIdsToExclude = setOf(tagId3)
             ))
         )
@@ -414,7 +446,7 @@ class ReadTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
         //search by two tags
         assertSearchResult(
             listOf(card2, card4),
-            dm.readTranslateCardsByFilter(ReadTranslateCardsByFilter(
+            dm.readTranslateCardsByFilter(ReadTranslateCardsByFilterArgs(
                 tagIdsToExclude = setOf(tagId3, tagId2)
             ))
         )
@@ -422,7 +454,7 @@ class ReadTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
         //search by three tags - non-empty result
         assertSearchResult(
             listOf(card2),
-            dm.readTranslateCardsByFilter(ReadTranslateCardsByFilter(
+            dm.readTranslateCardsByFilter(ReadTranslateCardsByFilterArgs(
                 tagIdsToExclude = setOf(tagId1, tagId2, tagId4)
             ))
         )
@@ -443,7 +475,7 @@ class ReadTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
 
         assertSearchResult(
             listOf(card2, card3),
-            dm.readTranslateCardsByFilter(ReadTranslateCardsByFilter(
+            dm.readTranslateCardsByFilter(ReadTranslateCardsByFilterArgs(
                 tagIdsToInclude = setOf(tagId2, tagId3),
                 tagIdsToExclude = setOf(tagId4, tagId5),
             ))
@@ -459,14 +491,14 @@ class ReadTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
 
         assertSearchResult(
             listOf(card1, card3),
-            dm.readTranslateCardsByFilter(ReadTranslateCardsByFilter(
+            dm.readTranslateCardsByFilter(ReadTranslateCardsByFilterArgs(
                 paused = false
             ))
         )
 
         assertSearchResult(
             listOf(card2, card4),
-            dm.readTranslateCardsByFilter(ReadTranslateCardsByFilter(
+            dm.readTranslateCardsByFilter(ReadTranslateCardsByFilterArgs(
                 paused = true
             ))
         )
@@ -481,7 +513,7 @@ class ReadTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
 
         assertSearchResult(
             listOf(card1, card4),
-            dm.readTranslateCardsByFilter(ReadTranslateCardsByFilter(
+            dm.readTranslateCardsByFilter(ReadTranslateCardsByFilterArgs(
                 textToTranslateContains = "Bc"
             ))
         )
@@ -496,7 +528,7 @@ class ReadTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
 
         assertSearchResult(
             listOf(card4),
-            dm.readTranslateCardsByFilter(ReadTranslateCardsByFilter(
+            dm.readTranslateCardsByFilter(ReadTranslateCardsByFilterArgs(
                 paused = false,
                 textToTranslateContains = "Bc"
             ))
@@ -520,7 +552,7 @@ class ReadTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
 
         assertSearchResult(
             listOf(card6),
-            dm.readTranslateCardsByFilter(ReadTranslateCardsByFilter(
+            dm.readTranslateCardsByFilter(ReadTranslateCardsByFilterArgs(
                 paused = true,
                 textToTranslateContains = "Bc",
                 tagIdsToInclude = setOf(tagId1,tagId2),
@@ -539,7 +571,7 @@ class ReadTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
 
         assertSearchResult(
             listOf(card1, card2, card3),
-            dm.readTranslateCardsByFilter(ReadTranslateCardsByFilter(
+            dm.readTranslateCardsByFilter(ReadTranslateCardsByFilterArgs(
                 textToTranslateLengthLessThan = 4
             ))
         )
@@ -555,7 +587,7 @@ class ReadTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
 
         assertSearchResult(
             listOf(card5),
-            dm.readTranslateCardsByFilter(ReadTranslateCardsByFilter(
+            dm.readTranslateCardsByFilter(ReadTranslateCardsByFilterArgs(
                 textToTranslateLengthGreaterThan = 4
             ))
         )
@@ -571,7 +603,7 @@ class ReadTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
 
         assertSearchResult(
             listOf(card4),
-            dm.readTranslateCardsByFilter(ReadTranslateCardsByFilter(
+            dm.readTranslateCardsByFilter(ReadTranslateCardsByFilterArgs(
                 textToTranslateLengthGreaterThan = 3,
                 textToTranslateLengthLessThan = 5,
             ))
@@ -587,7 +619,7 @@ class ReadTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
 
         assertSearchResult(
             listOf(card1, card4),
-            dm.readTranslateCardsByFilter(ReadTranslateCardsByFilter(
+            dm.readTranslateCardsByFilter(ReadTranslateCardsByFilterArgs(
                 translationContains = "Bc"
             ))
         )
@@ -603,7 +635,7 @@ class ReadTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
 
         assertSearchResult(
             listOf(card1, card2, card3),
-            dm.readTranslateCardsByFilter(ReadTranslateCardsByFilter(
+            dm.readTranslateCardsByFilter(ReadTranslateCardsByFilterArgs(
                 translationLengthLessThan = 4
             ))
         )
@@ -619,7 +651,7 @@ class ReadTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
 
         assertSearchResult(
             listOf(card5),
-            dm.readTranslateCardsByFilter(ReadTranslateCardsByFilter(
+            dm.readTranslateCardsByFilter(ReadTranslateCardsByFilterArgs(
                 translationLengthGreaterThan = 4
             ))
         )
@@ -635,7 +667,7 @@ class ReadTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
 
         assertSearchResult(
             listOf(card4),
-            dm.readTranslateCardsByFilter(ReadTranslateCardsByFilter(
+            dm.readTranslateCardsByFilter(ReadTranslateCardsByFilterArgs(
                 translationLengthGreaterThan = 3,
                 translationLengthLessThan = 5,
             ))
@@ -652,7 +684,7 @@ class ReadTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
 
         assertSearchResult(
             listOf(card3, card4, card5),
-            dm.readTranslateCardsByFilter(ReadTranslateCardsByFilter(
+            dm.readTranslateCardsByFilter(ReadTranslateCardsByFilterArgs(
                 createdFrom = 3
             ))
         )
@@ -668,7 +700,7 @@ class ReadTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
 
         assertSearchResult(
             listOf(card1, card2, card3),
-            dm.readTranslateCardsByFilter(ReadTranslateCardsByFilter(
+            dm.readTranslateCardsByFilter(ReadTranslateCardsByFilterArgs(
                 createdTill = 3
             ))
         )
@@ -684,7 +716,7 @@ class ReadTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
 
         assertSearchResult(
             listOf(card2, card3, card4),
-            dm.readTranslateCardsByFilter(ReadTranslateCardsByFilter(
+            dm.readTranslateCardsByFilter(ReadTranslateCardsByFilterArgs(
                 createdFrom = 2,
                 createdTill = 4
             ))
@@ -701,7 +733,7 @@ class ReadTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
 
         assertSearchResult(
             listOf(card3,card4,card5),
-            dm.readTranslateCardsByFilter(ReadTranslateCardsByFilter(
+            dm.readTranslateCardsByFilter(ReadTranslateCardsByFilterArgs(
                 overdueGreaterEq = 0.0
             ))
         )
@@ -717,7 +749,7 @@ class ReadTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
 
         assertSearchResult(
             listOf(card1,card2,card3,card4,card5),
-            dm.readTranslateCardsByFilter(ReadTranslateCardsByFilter(
+            dm.readTranslateCardsByFilter(ReadTranslateCardsByFilterArgs(
                 sortBy = TranslateCardSortBy.OVERDUE
             )),
             matchOrder = true
@@ -725,7 +757,7 @@ class ReadTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
 
         assertSearchResult(
             listOf(card1,card2,card3,card4,card5),
-            dm.readTranslateCardsByFilter(ReadTranslateCardsByFilter(
+            dm.readTranslateCardsByFilter(ReadTranslateCardsByFilterArgs(
                 sortBy = TranslateCardSortBy.OVERDUE,
                 sortDir = SortDirection.ASC
             )),
@@ -734,7 +766,7 @@ class ReadTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
 
         assertSearchResult(
             listOf(card5,card4,card3,card2,card1),
-            dm.readTranslateCardsByFilter(ReadTranslateCardsByFilter(
+            dm.readTranslateCardsByFilter(ReadTranslateCardsByFilterArgs(
                 sortBy = TranslateCardSortBy.OVERDUE,
                 sortDir = SortDirection.DESC
             )),
@@ -743,7 +775,7 @@ class ReadTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
 
         assertSearchResult(
             listOf(card2,card5,card4,card1,card3),
-            dm.readTranslateCardsByFilter(ReadTranslateCardsByFilter(
+            dm.readTranslateCardsByFilter(ReadTranslateCardsByFilterArgs(
                 sortBy = TranslateCardSortBy.TIME_CREATED
             )),
             matchOrder = true
@@ -751,7 +783,7 @@ class ReadTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
 
         assertSearchResult(
             listOf(card2,card5,card4,card1,card3),
-            dm.readTranslateCardsByFilter(ReadTranslateCardsByFilter(
+            dm.readTranslateCardsByFilter(ReadTranslateCardsByFilterArgs(
                 sortBy = TranslateCardSortBy.TIME_CREATED,
                 sortDir = SortDirection.ASC
             )),
@@ -760,7 +792,7 @@ class ReadTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
 
         assertSearchResult(
             listOf(card3,card1,card4,card5,card2),
-            dm.readTranslateCardsByFilter(ReadTranslateCardsByFilter(
+            dm.readTranslateCardsByFilter(ReadTranslateCardsByFilterArgs(
                 sortBy = TranslateCardSortBy.TIME_CREATED,
                 sortDir = SortDirection.DESC
             )),
@@ -778,7 +810,7 @@ class ReadTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
 
         assertSearchResult(
             listOf(card1,card2,card3,card4,card5),
-            dm.readTranslateCardsByFilter(ReadTranslateCardsByFilter(
+            dm.readTranslateCardsByFilter(ReadTranslateCardsByFilterArgs(
                 sortBy = TranslateCardSortBy.OVERDUE
             )),
             matchOrder = true
@@ -786,7 +818,7 @@ class ReadTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
 
         assertSearchResult(
             listOf(card1,card2,card3,card4,card5),
-            dm.readTranslateCardsByFilter(ReadTranslateCardsByFilter(
+            dm.readTranslateCardsByFilter(ReadTranslateCardsByFilterArgs(
                 sortBy = TranslateCardSortBy.OVERDUE,
                 rowsLimit = 100
             )),
@@ -795,7 +827,7 @@ class ReadTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
 
         assertSearchResult(
             listOf(card1,card2,card3,card4,card5),
-            dm.readTranslateCardsByFilter(ReadTranslateCardsByFilter(
+            dm.readTranslateCardsByFilter(ReadTranslateCardsByFilterArgs(
                 sortBy = TranslateCardSortBy.OVERDUE,
                 rowsLimit = 5
             )),
@@ -804,7 +836,7 @@ class ReadTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
 
         assertSearchResult(
             listOf(card1,card2,card3,card4),
-            dm.readTranslateCardsByFilter(ReadTranslateCardsByFilter(
+            dm.readTranslateCardsByFilter(ReadTranslateCardsByFilterArgs(
                 sortBy = TranslateCardSortBy.OVERDUE,
                 rowsLimit = 4
             )),
@@ -813,7 +845,7 @@ class ReadTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
 
         assertSearchResult(
             listOf(card1,card2),
-            dm.readTranslateCardsByFilter(ReadTranslateCardsByFilter(
+            dm.readTranslateCardsByFilter(ReadTranslateCardsByFilterArgs(
                 sortBy = TranslateCardSortBy.OVERDUE,
                 rowsLimit = 2
             )),
@@ -822,7 +854,7 @@ class ReadTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
 
         assertSearchResult(
             listOf(card1),
-            dm.readTranslateCardsByFilter(ReadTranslateCardsByFilter(
+            dm.readTranslateCardsByFilter(ReadTranslateCardsByFilterArgs(
                 sortBy = TranslateCardSortBy.OVERDUE,
                 rowsLimit = 1
             )),

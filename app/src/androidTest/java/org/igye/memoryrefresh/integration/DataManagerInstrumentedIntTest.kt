@@ -133,6 +133,44 @@ class DataManagerInstrumentedIntTest: InstrumentedTestBase() {
 
     @Test
     fun test_scenario_2() {
+        /*
+        1. get next card when there are no cards at all
+
+        2. create a new card1
+        3. get next card (card1)
+        4. get translate card by card1 id
+        5. validate answer for card1 (a user provided correct answer)
+        6. set delay for card1
+
+        7. update translation for card1
+
+        8. create a new card2
+        9. get next card (card2)
+        10. get translate card by card2 id
+        11. validate answer for card2  (a user provided incorrect answer)
+        12. set delay for card2
+
+        13. get next card after small amount of time (no cards returned)
+
+        14. update textToTranslate for card2
+
+        15. get next card (card2)
+        16. get translate card by card2 id
+        17. validate answer for card2 (a user provided correct answer)
+        18. set delay for card2
+
+        19. get next card after small amount of time (no cards returned)
+        20. get next card (card2)
+        21. correct schedule for card1 (provide the same value, no change expected)
+        22. get next card (card2)
+        23. correct schedule for card1 (provide new value)
+        24. get next card (card1)
+
+        25. delete card1
+
+        26. request history for card2
+        * */
+
         //given
         assertTableContent(repo = repo, table = c, expectedRows = listOf())
         assertTableContent(repo = repo, table = c.ver, expectedRows = listOf())
@@ -146,10 +184,10 @@ class DataManagerInstrumentedIntTest: InstrumentedTestBase() {
         assertTableContent(repo = repo, table = l, expectedRows = listOf())
 
         //when: 1. get next card when there are no cards at all
-        val resp1 = dm.getNextCardToRepeat().data!!
+        val resp1 = dm.selectTopOverdueTranslateCards().data!!
 
         //then: response contains empty "wait" time
-        assertEquals(0, resp1.cardsRemain)
+        assertEquals(0, resp1.cards.size)
         assertTrue(resp1.nextCardIn.isEmpty())
 
         //when: 2. create a new card1
@@ -185,13 +223,11 @@ class DataManagerInstrumentedIntTest: InstrumentedTestBase() {
 
         //when: 3. get next card
         testClock.plus(1, ChronoUnit.MINUTES)
-        val nextCardResp1 = dm.getNextCardToRepeat().data!!
+        val nextCardResp1 = dm.selectTopOverdueTranslateCards().data!!
 
         //then
-        assertEquals(card1Id, nextCardResp1.cardId)
-        assertEquals(CardType.TRANSLATION, nextCardResp1.cardType)
-        assertEquals(1, nextCardResp1.cardsRemain)
-        assertEquals(true, nextCardResp1.isCardsRemainExact)
+        assertEquals(card1Id, nextCardResp1.cards[0].id)
+        assertEquals(1, nextCardResp1.cards.size)
 
         //when: 4. get translate card by card1 id
         testClock.plus(1, ChronoUnit.SECONDS)
@@ -337,13 +373,11 @@ class DataManagerInstrumentedIntTest: InstrumentedTestBase() {
 
         //when: 9. get next card (card2)
         testClock.plus(1, ChronoUnit.MINUTES)
-        val nextCardResp2 = dm.getNextCardToRepeat().data!!
+        val nextCardResp2 = dm.selectTopOverdueTranslateCards().data!!
 
         //then
-        assertEquals(card2Id, nextCardResp2.cardId)
-        assertEquals(CardType.TRANSLATION, nextCardResp2.cardType)
-        assertEquals(1, nextCardResp2.cardsRemain)
-        assertEquals(true, nextCardResp2.isCardsRemainExact)
+        assertEquals(card2Id, nextCardResp2.cards[0].id)
+        assertEquals(1, nextCardResp2.cards.size)
 
         //when: 10. get translate card by card2 id
         testClock.plus(1, ChronoUnit.SECONDS)
@@ -430,10 +464,10 @@ class DataManagerInstrumentedIntTest: InstrumentedTestBase() {
 
         //when: 13. get next card after small amount of time (no cards returned)
         testClock.plus(1, ChronoUnit.MINUTES)
-        val nextCardResp3 = dm.getNextCardToRepeat().data!!
+        val nextCardResp3 = dm.selectTopOverdueTranslateCards().data!!
 
         //then
-        assertEquals(0, nextCardResp3.cardsRemain)
+        assertEquals(0, nextCardResp3.cards.size)
         assertTrue(setOf("3m","4m","5m",).contains(nextCardResp3.nextCardIn.split(" ")[0]))
 
         //when: 14. update textToTranslate for card2
@@ -478,13 +512,11 @@ class DataManagerInstrumentedIntTest: InstrumentedTestBase() {
 
         //when: 15. get next card (card2)
         testClock.plus(5, ChronoUnit.MINUTES)
-        val nextCardResp4 = dm.getNextCardToRepeat().data!!
+        val nextCardResp4 = dm.selectTopOverdueTranslateCards().data!!
 
         //then
-        assertEquals(card2Id, nextCardResp4.cardId)
-        assertEquals(CardType.TRANSLATION, nextCardResp4.cardType)
-        assertEquals(1, nextCardResp4.cardsRemain)
-        assertEquals(true, nextCardResp4.isCardsRemainExact)
+        assertEquals(card2Id, nextCardResp4.cards[0].id)
+        assertEquals(1, nextCardResp4.cards.size)
 
         //when: 16. get translate card by card2 id
         testClock.plus(1, ChronoUnit.SECONDS)
@@ -577,21 +609,19 @@ class DataManagerInstrumentedIntTest: InstrumentedTestBase() {
 
         //when: 19. get next card after small amount of time (no cards returned)
         testClock.plus(1, ChronoUnit.SECONDS)
-        val nextCardResp5 = dm.getNextCardToRepeat().data!!
+        val nextCardResp5 = dm.selectTopOverdueTranslateCards().data!!
 
         //then
-        assertEquals(0, nextCardResp5.cardsRemain)
+        assertEquals(0, nextCardResp5.cards.size)
         assertTrue(setOf("3m","4m","5m",).contains(nextCardResp5.nextCardIn.split(" ")[0]))
 
         //when: 20. get next card (card2)
         testClock.plus(10, ChronoUnit.MINUTES)
-        val nextCardResp6 = dm.getNextCardToRepeat().data!!
+        val nextCardResp6 = dm.selectTopOverdueTranslateCards().data!!
 
         //then
-        assertEquals(card2Id, nextCardResp6.cardId)
-        assertEquals(CardType.TRANSLATION, nextCardResp6.cardType)
-        assertEquals(1, nextCardResp6.cardsRemain)
-        assertEquals(true, nextCardResp6.isCardsRemainExact)
+        assertEquals(card2Id, nextCardResp6.cards[0].id)
+        assertEquals(1, nextCardResp6.cards.size)
 
         //when: 21. correct schedule for card1 (provide the same value, no change expected)
         val time21 = testClock.plus(10, ChronoUnit.SECONDS)
@@ -635,13 +665,11 @@ class DataManagerInstrumentedIntTest: InstrumentedTestBase() {
 
         //when: 22. get next card (card2)
         testClock.plus(10, ChronoUnit.SECONDS)
-        val nextCardResp7 = dm.getNextCardToRepeat().data!!
+        val nextCardResp7 = dm.selectTopOverdueTranslateCards().data!!
 
         //then
-        assertEquals(card2Id, nextCardResp7.cardId)
-        assertEquals(CardType.TRANSLATION, nextCardResp7.cardType)
-        assertEquals(1, nextCardResp7.cardsRemain)
-        assertEquals(true, nextCardResp7.isCardsRemainExact)
+        assertEquals(card2Id, nextCardResp7.cards[0].id)
+        assertEquals(1, nextCardResp7.cards.size)
 
         //when: 23. correct schedule for card1 (provide new value)
         val time23 = testClock.plus(10, ChronoUnit.SECONDS)
@@ -686,13 +714,11 @@ class DataManagerInstrumentedIntTest: InstrumentedTestBase() {
 
         //when: 24. get next card (card1)
         testClock.plus(10, ChronoUnit.SECONDS)
-        val nextCardResp8 = dm.getNextCardToRepeat().data!!
+        val nextCardResp8 = dm.selectTopOverdueTranslateCards().data!!
 
         //then
-        assertEquals(card1Id, nextCardResp8.cardId)
-        assertEquals(CardType.TRANSLATION, nextCardResp8.cardType)
-        assertEquals(2, nextCardResp8.cardsRemain)
-        assertEquals(true, nextCardResp8.isCardsRemainExact)
+        assertEquals(card1Id, nextCardResp8.cards[0].id)
+        assertEquals(2, nextCardResp8.cards.size)
 
         //when: 25. delete card1
         val time25 = testClock.plus(10, ChronoUnit.MINUTES)
@@ -769,40 +795,6 @@ class DataManagerInstrumentedIntTest: InstrumentedTestBase() {
             baseDurationMillis = 60 * Utils.MILLIS_IN_MONTH,
             bucketWidthMillis = 2 * Utils.MILLIS_IN_MONTH
         )
-    }
-
-    @Test
-    fun getNextCardToRepeat_returns_random_card_if_there_few_cards_with_same_overdue() {
-        //given
-        val expectedCardId1 = 1236L
-        val expectedCardId2 = 1244L
-        val baseTime = 1_000
-        val timeElapsed = 27_000
-        fun createCardRecord(cardId: Long) = listOf(c.id to cardId, c.type to TR_TP, c.createdAt to 0)
-        insert(repo = repo, table = c, rows = listOf(
-            createCardRecord(cardId = expectedCardId1),
-            createCardRecord(cardId = expectedCardId2),
-        ))
-        fun createScheduleRecord(cardId: Long, nextAccessIn: Int) =
-            listOf(s.cardId to cardId, s.updatedAt to 0, s.delay to "1m", s.randomFactor to 1.0, s.nextAccessInMillis to nextAccessIn, s.nextAccessAt to baseTime + nextAccessIn)
-        insert(repo = repo, table = s, rows = listOf(
-            createScheduleRecord(cardId = expectedCardId1, nextAccessIn = timeElapsed-1_000),
-            createScheduleRecord(cardId = expectedCardId2, nextAccessIn = timeElapsed-1_000),
-        ))
-        val counts = HashMap<Long,Int>()
-        counts[expectedCardId1] = 0
-        counts[expectedCardId2] = 0
-
-        //when
-        testClock.setFixedTime(baseTime + timeElapsed)
-        for (i in 1..1000) {
-            val cnt = counts[dm.getNextCardToRepeat().data!!.cardId]!!
-            counts[dm.getNextCardToRepeat().data!!.cardId] = cnt + 1
-        }
-
-        //then
-        assertTrue(counts[expectedCardId1]!! > 400)
-        assertTrue(counts[expectedCardId2]!! > 400)
     }
 
     private fun recalculationOfDelayShuoldBeEvenlyDistributedInsideOfPlusMinusRange(
