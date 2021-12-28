@@ -402,42 +402,73 @@ class ReadTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
     }
 
     @Test
-    fun readTranslateCardsByFilter_filters_by_two_tags_to_include() {
-        TODO()
-    }
+    fun readTranslateCardsByFilter_filters_by_tags_to_exclude() {
+        //given
+        val tagId1 = createTag(tagId = 1, name = "t1")
+        val tagId2 = createTag(tagId = 2, name = "t2")
+        val tagId3 = createTag(tagId = 3, name = "t3")
+        val tagId4 = createTag(tagId = 4, name = "t4")
+        val tagId5 = createTag(tagId = 5, name = "t5")
+        val tagId6 = createTag(tagId = 6, name = "t6")
+        val card1 = createCard(cardId = 1L, tagIds = listOf(tagId1, tagId2))
+        val card2 = createCard(cardId = 2L, tagIds = listOf())
+        val card3 = createCard(cardId = 3L, tagIds = listOf(tagId2, tagId3), mapper = {it.copy(paused = !it.paused)})
+        val card4 = createCard(cardId = 4L, tagIds = listOf(tagId4, tagId5, tagId6))
 
-    @Test
-    fun readTranslateCardsByFilter_filters_by_more_than_two_tags_to_include() {
-        TODO()
-    }
+        //search by one tag
+        assertSearchResult(
+            listOf(card1, card2, card4),
+            dm.readTranslateCardsByFilter(
+                ReadTranslateCardsByFilter(
+                    tagIdsToExclude = setOf(tagId3)
+                )
+            )
+        )
 
-    @Test
-    fun readTranslateCardsByFilter_filters_by_one_tag_to_exclude() {
-        TODO()
-    }
+        //search by two tags
+        assertSearchResult(
+            listOf(card2, card4),
+            dm.readTranslateCardsByFilter(
+                ReadTranslateCardsByFilter(
+                    tagIdsToExclude = setOf(tagId3, tagId2)
+                )
+            )
+        )
 
-    @Test
-    fun readTranslateCardsByFilter_filters_by_two_tags_to_exclude() {
-        TODO()
-    }
-
-    @Test
-    fun readTranslateCardsByFilter_filters_by_more_then_two_tags_to_exclude() {
-        TODO()
+        //search by three tags - non-empty result
+        assertSearchResult(
+            listOf(card2),
+            dm.readTranslateCardsByFilter(
+                ReadTranslateCardsByFilter(
+                    tagIdsToExclude = setOf(tagId1, tagId2, tagId4)
+                )
+            )
+        )
     }
 
     @Test
     fun readTranslateCardsByFilter_filters_by_few_tags_to_include_and_few_tags_to_exclude() {
-        TODO()
         //given
-        val tagId1 = dm.createTag(CreateTagArgs(name = "t1"))
-        val tagId2 = dm.createTag(CreateTagArgs(name = "t2"))
-        val tagId3 = dm.createTag(CreateTagArgs(name = "t3"))
-        val tagId4 = dm.createTag(CreateTagArgs(name = "t4"))
-        val tagId5 = dm.createTag(CreateTagArgs(name = "t5"))
-        val tagId6 = dm.createTag(CreateTagArgs(name = "t6"))
+        val tagId1 = createTag(tagId = 1, name = "t1")
+        val tagId2 = createTag(tagId = 2, name = "t2")
+        val tagId3 = createTag(tagId = 3, name = "t3")
+        val tagId4 = createTag(tagId = 4, name = "t4")
+        val tagId5 = createTag(tagId = 5, name = "t5")
+        val tagId6 = createTag(tagId = 6, name = "t6")
+        val card1 = createCard(cardId = 1L, tagIds = listOf(tagId4, tagId2))
+        val card2 = createCard(cardId = 2L, tagIds = listOf(tagId2, tagId3))
+        val card3 = createCard(cardId = 3L, tagIds = listOf(tagId2, tagId3, tagId6), mapper = {it.copy(paused = !it.paused)})
+        val card4 = createCard(cardId = 4L, tagIds = listOf(tagId5, tagId6))
 
-
+        assertSearchResult(
+            listOf(card2, card3),
+            dm.readTranslateCardsByFilter(
+                ReadTranslateCardsByFilter(
+                    tagIdsToInclude = setOf(tagId2, tagId3),
+                    tagIdsToExclude = setOf(tagId4, tagId5),
+                )
+            )
+        )
     }
 
     private fun createCard(cardId: Long, tagIds: List<Long>, mapper: (TranslateCard) -> TranslateCard = {it}): TranslateCard {
