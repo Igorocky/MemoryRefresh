@@ -17,7 +17,7 @@ class TranslationCardsLogTable(
     override fun create(db: SQLiteDatabase) {
         db.execSQL("""
                 CREATE TABLE $this (
-                    $recId integer primary key,
+                    $recId integer primary key autoincrement,
                     $timestamp integer not null,
                     $cardId integer not null,
                     $translation text not null,

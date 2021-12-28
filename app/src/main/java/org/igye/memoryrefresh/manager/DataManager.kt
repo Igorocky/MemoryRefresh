@@ -111,7 +111,20 @@ class DataManager(
         return repo.writableDatabase.doInTransaction {
             repo.tags.delete(id = args.tagId)
             true
-        }.apply(toBeResponse(DELETE_TAG))
+        }
+            .ifErrorThen { throwable ->
+                Failure(
+                    if (throwable is SQLiteConstraintException && (throwable.message?:"").contains("FOREIGN KEY constraint failed")) {
+                        MemoryRefreshException(
+                            errCode = DELETE_TAG_TAG_IS_USED,
+                            msg = "Cannot delete tag because it is referenced by at least one card."
+                        )
+                    } else {
+                        throwable
+                    }
+                )
+            }
+            .apply(toBeResponse(DELETE_TAG))
     }
 
     data class CreateTranslateCardArgs(val textToTranslate:String, val translation:String, val tagIds: Set<Long> = emptySet())

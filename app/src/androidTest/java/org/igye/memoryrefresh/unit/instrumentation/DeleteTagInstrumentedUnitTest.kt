@@ -4,6 +4,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import org.igye.memoryrefresh.manager.DataManager.CreateTagArgs
 import org.igye.memoryrefresh.manager.DataManager.DeleteTagArgs
 import org.igye.memoryrefresh.testutils.InstrumentedTestBase
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -46,7 +47,23 @@ class DeleteTagInstrumentedUnitTest: InstrumentedTestBase() {
 
     @Test
     fun deleteTag_doesnt_delete_tag_if_there_is_at_least_one_card_using_this_tag() {
-        TODO()
+        //given
+        insert(repo = repo, table = tg, rows = listOf(
+            listOf(tg.id to 1, tg.createdAt to 1000, tg.name to "fff")
+        ))
+        insert(repo = repo, table = c, rows = listOf(
+            listOf(c.id to 1, c.createdAt to 1000, c.type to TR_TP)
+        ))
+        insert(repo = repo, table = ctg, rows = listOf(
+            listOf(ctg.cardId to 1, ctg.tagId to 1)
+        ))
+
+        //when
+        val err = dm.deleteTag(DeleteTagArgs(tagId = 1)).err!!
+
+        //then
+        assertEquals("Cannot delete tag because it is referenced by at least one card.", err.msg)
+
     }
 
 }

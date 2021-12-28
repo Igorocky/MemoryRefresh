@@ -21,7 +21,7 @@ class CardsTable(private val clock: Clock): TableWithVersioning(name = "CARDS") 
         """)
         db.execSQL("""
                 CREATE TABLE $ver (
-                    ${ver.verId} integer primary key,
+                    ${ver.verId} integer primary key autoincrement,
                     ${ver.timestamp} integer not null,
                     
                     $id integer not null,

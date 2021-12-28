@@ -23,7 +23,7 @@ class TranslationCardsTable(
         """)
         db.execSQL("""
                 CREATE TABLE $ver (
-                    ${ver.verId} integer primary key,
+                    ${ver.verId} integer primary key autoincrement,
                     ${ver.timestamp} integer not null,
                     
                     $cardId integer not null,

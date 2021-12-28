@@ -26,7 +26,7 @@ class CardsScheduleTable(private val clock: Clock, private val cards: CardsTable
         """)
         db.execSQL("""
                 CREATE TABLE $ver (
-                    ${ver.verId} integer primary key,
+                    ${ver.verId} integer primary key autoincrement,
                     ${ver.timestamp} integer not null,
                     
                     $cardId integer not null,

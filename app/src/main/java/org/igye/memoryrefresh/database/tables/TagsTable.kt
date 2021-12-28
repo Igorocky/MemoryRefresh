@@ -13,7 +13,7 @@ class TagsTable(private val clock: Clock): Table(tableName = "TAGS") {
     override fun create(db: SQLiteDatabase) {
         db.execSQL("""
                 CREATE TABLE $this (
-                    $id integer primary key,
+                    $id integer primary key autoincrement,
                     $createdAt integer not null,
                     $name text not null unique
                 )
