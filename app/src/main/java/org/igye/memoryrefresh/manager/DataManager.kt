@@ -286,6 +286,16 @@ class DataManager(
         if (args.textToTranslateLengthGreaterThan != null) {
             whereFilters.add("length(t.${t.textToTranslate}) > ${args.textToTranslateLengthGreaterThan}")
         }
+        if (args.translationContains != null) {
+            whereFilters.add("lower(t.${t.translation}) like ?")
+            queryArgs.add("%${args.translationContains.lowercase()}%")
+        }
+        if (args.translationLengthLessThan != null) {
+            whereFilters.add("length(t.${t.translation}) < ${args.translationLengthLessThan}")
+        }
+        if (args.translationLengthGreaterThan != null) {
+            whereFilters.add("length(t.${t.translation}) > ${args.translationLengthGreaterThan}")
+        }
 
         var query = """
             select
