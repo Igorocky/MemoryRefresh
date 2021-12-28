@@ -280,6 +280,12 @@ class DataManager(
             whereFilters.add("lower(t.${t.textToTranslate}) like ?")
             queryArgs.add("%${args.textToTranslateContains.lowercase()}%")
         }
+        if (args.textToTranslateLengthLessThan != null) {
+            whereFilters.add("length(t.${t.textToTranslate}) < ${args.textToTranslateLengthLessThan}")
+        }
+        if (args.textToTranslateLengthGreaterThan != null) {
+            whereFilters.add("length(t.${t.textToTranslate}) > ${args.textToTranslateLengthGreaterThan}")
+        }
 
         var query = """
             select

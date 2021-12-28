@@ -531,6 +531,55 @@ class ReadTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
         )
     }
 
+    @Test
+    fun readTranslateCardsByFilter_filters_by_textToTranslateLengthLessThan() {
+        val card1 = createCard(cardId = 1L, mapper = {it.copy(textToTranslate = "1")})
+        val card2 = createCard(cardId = 2L, mapper = {it.copy(textToTranslate = "12")})
+        val card3 = createCard(cardId = 3L, mapper = {it.copy(textToTranslate = "123")})
+        val card4 = createCard(cardId = 4L, mapper = {it.copy(textToTranslate = "1234")})
+        val card5 = createCard(cardId = 5L, mapper = {it.copy(textToTranslate = "12345")})
+
+        assertSearchResult(
+            listOf(card1, card2, card3),
+            dm.readTranslateCardsByFilter(ReadTranslateCardsByFilter(
+                textToTranslateLengthLessThan = 4
+            ))
+        )
+    }
+
+    @Test
+    fun readTranslateCardsByFilter_filters_by_textToTranslateLengthGreaterThan() {
+        val card1 = createCard(cardId = 1L, mapper = {it.copy(textToTranslate = "1")})
+        val card2 = createCard(cardId = 2L, mapper = {it.copy(textToTranslate = "12")})
+        val card3 = createCard(cardId = 3L, mapper = {it.copy(textToTranslate = "123")})
+        val card4 = createCard(cardId = 4L, mapper = {it.copy(textToTranslate = "1234")})
+        val card5 = createCard(cardId = 5L, mapper = {it.copy(textToTranslate = "12345")})
+
+        assertSearchResult(
+            listOf(card5),
+            dm.readTranslateCardsByFilter(ReadTranslateCardsByFilter(
+                textToTranslateLengthGreaterThan = 4
+            ))
+        )
+    }
+
+    @Test
+    fun readTranslateCardsByFilter_filters_by_textToTranslateLengthGreaterThan_and_textToTranslateLengthLessThan() {
+        val card1 = createCard(cardId = 1L, mapper = {it.copy(textToTranslate = "1")})
+        val card2 = createCard(cardId = 2L, mapper = {it.copy(textToTranslate = "12")})
+        val card3 = createCard(cardId = 3L, mapper = {it.copy(textToTranslate = "123")})
+        val card4 = createCard(cardId = 4L, mapper = {it.copy(textToTranslate = "1234")})
+        val card5 = createCard(cardId = 5L, mapper = {it.copy(textToTranslate = "12345")})
+
+        assertSearchResult(
+            listOf(card4),
+            dm.readTranslateCardsByFilter(ReadTranslateCardsByFilter(
+                textToTranslateLengthGreaterThan = 3,
+                textToTranslateLengthLessThan = 5,
+            ))
+        )
+    }
+
     private fun createCard(cardId: Long, tagIds: List<Long> = emptyList(), mapper: (TranslateCard) -> TranslateCard = {it}): TranslateCard {
         val updatedAt = 1000 * cardId + 1
         val modifiedCard = mapper(
