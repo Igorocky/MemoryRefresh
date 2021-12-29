@@ -264,7 +264,12 @@ class DataManager(
         return readTranslateCardsByFilterInner(filterArgs).map { it.cards }.map { overdueCards ->
             if (overdueCards.isEmpty()) {
                 val waitingCards = readTranslateCardsByFilterInner(
-                    filterArgs.copy(overdueGreaterEq = null, rowsLimit = 10)
+                    filterArgs.copy(
+                        overdueGreaterEq = null,
+                        rowsLimit = 1,
+                        sortBy = TranslateCardSortBy.NEXT_ACCESS_AT,
+                        sortDir = SortDirection.ASC
+                    )
                 ).get().cards
                 if (waitingCards.isEmpty()) {
                     ReadTopOverdueTranslateCardsResp()
@@ -553,6 +558,7 @@ class DataManager(
             orderBy = "order by " + when (args.sortBy) {
                 TranslateCardSortBy.TIME_CREATED -> "c.${c.createdAt}"
                 TranslateCardSortBy.OVERDUE -> overdueFormula
+                TranslateCardSortBy.NEXT_ACCESS_AT -> "s.${s.nextAccessAt}"
             } + " " + (args.sortDir?:SortDirection.ASC)
         }
         val rowNumLimit = if (args.rowsLimit == null) "" else "limit ${args.rowsLimit}"

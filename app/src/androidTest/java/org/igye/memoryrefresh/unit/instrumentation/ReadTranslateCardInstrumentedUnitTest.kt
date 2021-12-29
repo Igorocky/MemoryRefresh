@@ -798,6 +798,38 @@ class ReadTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
             )),
             matchOrder = true
         )
+
+        val cardsSortedByNextAccessAtAsc = listOf(card1,card2,card3,card4,card5).sortedBy { it.schedule.nextAccessAt }
+        assertEquals(
+            cardsSortedByNextAccessAtAsc.size,
+            cardsSortedByNextAccessAtAsc.map { it.schedule.nextAccessAt }.toSet().size
+        )
+
+        assertSearchResult(
+            cardsSortedByNextAccessAtAsc,
+            dm.readTranslateCardsByFilter(ReadTranslateCardsByFilterArgs(
+                sortBy = TranslateCardSortBy.NEXT_ACCESS_AT
+            )),
+            matchOrder = true
+        )
+
+        assertSearchResult(
+            cardsSortedByNextAccessAtAsc,
+            dm.readTranslateCardsByFilter(ReadTranslateCardsByFilterArgs(
+                sortBy = TranslateCardSortBy.NEXT_ACCESS_AT,
+                sortDir = SortDirection.ASC
+            )),
+            matchOrder = true
+        )
+
+        assertSearchResult(
+            cardsSortedByNextAccessAtAsc.reversed(),
+            dm.readTranslateCardsByFilter(ReadTranslateCardsByFilterArgs(
+                sortBy = TranslateCardSortBy.NEXT_ACCESS_AT,
+                sortDir = SortDirection.DESC
+            )),
+            matchOrder = true
+        )
     }
 
     @Test
