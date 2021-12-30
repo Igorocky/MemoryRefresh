@@ -20,8 +20,52 @@ function createFeBeBridgeForUiTestMode() {
     }
 
     const CARDS = []
+    const TAGS = []
+    const CARDS_TO_TAGS = []
 
-    mockedBeFunctions.saveNewTranslateCard = ({textToTranslate, translation}) => {
+    mockedBeFunctions.createTag = ({name}) => {
+        if (TAGS.find(t=>t.name==name)) {
+            return errResponse(36,`'${name}' tag already exists.`)
+        } else {
+            const id = (TAGS.map(t=>t.id).max()??0)+1
+            const newTag = {id,name,createdAt:new Date().getTime()}
+            TAGS.push(newTag)
+            return okResponse(id)
+        }
+    }
+
+    mockedBeFunctions.readAllTags = () => {
+        return okResponse(TAGS.map(t => ({...t})))
+    }
+
+    mockedBeFunctions.updateTag = ({tagId,name}) => {
+        const tagsToUpdate = TAGS.filter(t=>t.id === tagId)
+        let updatedTag = null
+        for (const tag of tagsToUpdate) {
+            if (TAGS.find(t=> t.name === name && t.id !== tagId)) {
+                return errResponse(1, `'${name}' tag already exists.`)
+            } else {
+                tag.name = name
+                updatedTag = tag
+            }
+        }
+        if (updatedTag == null) {
+            return errResponse(1, `updatedTag == null`)
+        }
+        return okResponse(updatedTag)
+    }
+
+    mockedBeFunctions.deleteTag = ({tagId}) => {
+        // return errResponse(2,'Error while deleting a tag.')
+        if (CARDS_TO_TAGS.find(({cardId,tagId}) => tagId===tagId)) {
+            return errResponse(222,'This tag is used by a card.')
+        } else {
+            removeIf(TAGS,t => t.id===tagId)
+            return okResponse()
+        }
+    }
+
+    mockedBeFunctions.createTranslateCard = ({textToTranslate, translation}) => {
         textToTranslate = textToTranslate?.trim()??''
         translation = translation?.trim()??''
         if (textToTranslate == '') {
@@ -47,7 +91,7 @@ function createFeBeBridgeForUiTestMode() {
         }
     }
 
-    mockedBeFunctions.getTranslateCardById = ({cardId}) => {
+    mockedBeFunctions.readTranslateCardById = ({cardId}) => {
         const card = CARDS.find(c=>c.id==cardId)
         if (hasNoValue(card)) {
             return errResponse(9, 'Error getting translate card by id.')
@@ -200,9 +244,15 @@ function createFeBeBridgeForUiTestMode() {
     }
 
     function fillDbWithMockData() {
-        mockedBeFunctions.saveNewTranslateCard({textToTranslate:'A', translation:'a'})
-        mockedBeFunctions.saveNewTranslateCard({textToTranslate:'B', translation:'b'})
-        mockedBeFunctions.saveNewTranslateCard({textToTranslate:'C', translation:'c'})
+        const numOfTags = 4
+        const tags = ints(1,numOfTags)
+            .map(i=>randomAlphaNumString({minLength:3,maxLength:5}))
+            .map(s=>mockedBeFunctions.createTag({name:s}))
+            .map(({data:tag}) => tag)
+
+        mockedBeFunctions.createTranslateCard({textToTranslate:'A', translation:'a'})
+        mockedBeFunctions.createTranslateCard({textToTranslate:'B', translation:'b'})
+        mockedBeFunctions.createTranslateCard({textToTranslate:'C', translation:'c'})
     }
     fillDbWithMockData()
 

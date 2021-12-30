@@ -57,7 +57,7 @@ class DataManager(
         }
     }
 
-    private val readAllTagsQuery = "select ${tg.id}, ${tg.name} from $tg"
+    private val readAllTagsQuery = "select ${tg.id}, ${tg.name} from $tg order by ${tg.name}"
     private val readAllTagsColumnNames = arrayOf(tg.id, tg.name)
     @BeMethod
     @Synchronized
@@ -108,11 +108,11 @@ class DataManager(
 
     data class DeleteTagArgs(val tagId:Long)
     @BeMethod
-    fun deleteTag(args:DeleteTagArgs): BeRespose<Boolean> {
+    fun deleteTag(args:DeleteTagArgs): BeRespose<Unit> {
         val repo = getRepo()
         return repo.writableDatabase.doInTransaction {
             repo.tags.delete(id = args.tagId)
-            true
+            Unit
         }
             .ifErrorThen { throwable ->
                 Failure(

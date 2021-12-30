@@ -55,7 +55,7 @@ const EditTranslateCardCmp = ({card,translationEnabled,onCancelled,onSaved,onDel
     }
 
     return RE.Fragment({},
-        re(UpdateTranslateCardCmp,{
+        re(EditTranslateCardForm,{
             textToTranslate,
             textToTranslateOnChange: newValue => setTextToTranslate(newValue),
             textToTranslateBgColor: getBgColor(textToTranslateIsModified),

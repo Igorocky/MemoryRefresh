@@ -8,6 +8,7 @@ function createQueryObjectForView(viewName, params) {
 const BACKUPS_VIEW = 'BACKUPS_VIEW'
 const HTTP_SERVER_VIEW = 'HTTP_SERVER_VIEW'
 
+const TAGS_VIEW = 'TAGS_VIEW'
 const CREATE_CARD_VIEW = 'CREATE_CARD_VIEW'
 const REPEAT_CARDS_VIEW = 'REPEAT_CARDS_VIEW'
 
@@ -23,6 +24,7 @@ function addView({name, component}) {
 addView({name: BACKUPS_VIEW, component: BackupsView})
 addView({name: HTTP_SERVER_VIEW, component: HttpServerView})
 
+addView({name: TAGS_VIEW, component: TagsView})
 addView({name: CREATE_CARD_VIEW, component: CreateCardView})
 addView({name: REPEAT_CARDS_VIEW, component: RepeatCardsView})
 
@@ -40,7 +42,7 @@ const ViewSelector = ({}) => {
     }, [pageTitle])
 
     useEffect(() => {
-        openView(REPEAT_CARDS_VIEW)
+        openView(TAGS_VIEW)
     }, [])
 
     function updatePageTitle() {
@@ -72,8 +74,9 @@ const ViewSelector = ({}) => {
         const bgColor = viewName => viewName == selectedViewName ? '#00d0ff' : undefined
         const additionalButtons = [
             [
-                {key:BACKUPS_VIEW, viewName:BACKUPS_VIEW, iconName:"archive"},
-                {key:HTTP_SERVER_VIEW, viewName:HTTP_SERVER_VIEW, iconName:"reset_tv"},
+                {key:TAGS_VIEW, viewName:TAGS_VIEW, iconName:'sell'},
+                {key:BACKUPS_VIEW, viewName:BACKUPS_VIEW, iconName:'archive'},
+                {key:HTTP_SERVER_VIEW, viewName:HTTP_SERVER_VIEW, iconName:'reset_tv'},
             ]
         ]
         const buttons = [[

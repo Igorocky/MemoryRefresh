@@ -36,7 +36,7 @@ const RepeatTranslateCardCmp = ({cardId,cardsRemain,onDone,controlsContainer}) =
 
     async function loadCard() {
         setCard(null)
-        const resp = await be.getTranslateCardById({cardId})
+        const resp = await be.readTranslateCardById({cardId})
         if (resp.err) {
             await showError(resp.err)
             setErrorLoadingCard(resp.err)

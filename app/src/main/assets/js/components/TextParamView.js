@@ -55,7 +55,7 @@ const TextParamView = ({paramName,paramValue,editable = true,onSave,validator,is
         if (isFocused) {
             if (isEditMode()) {
                 return RE.Fragment({},
-                    RE.IconButton({onClick:cancel}, RE.Icon({style:{color:'black'}}, 'highlight_off')),
+                    RE.IconButton({onClick:cancel}, RE.Icon({style:{color:'black'}}, 'close')),
                     RE.If(isPassword, () => renderShowPasswordButton()),
                     RE.IconButton({onClick: save}, RE.Icon({style:{color:'black'}}, 'save'))
                 )

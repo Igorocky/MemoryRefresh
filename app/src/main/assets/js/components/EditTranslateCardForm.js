@@ -1,6 +1,6 @@
 "use strict";
 
-const UpdateTranslateCardCmp = ({
+const EditTranslateCardForm = ({
                                     textToTranslate,textToTranslateOnChange,textToTranslateBgColor,
                                     translation,translationOnChange,translationBgColor,
                                     delay,delayOnChange,delayBgColor,
