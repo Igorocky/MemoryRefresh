@@ -9,6 +9,7 @@ const BACKUPS_VIEW = 'BACKUPS_VIEW'
 const HTTP_SERVER_VIEW = 'HTTP_SERVER_VIEW'
 
 const TAGS_VIEW = 'TAGS_VIEW'
+const CARDS_SEARCH_VIEW = 'CARDS_SEARCH_VIEW'
 const CREATE_CARD_VIEW = 'CREATE_CARD_VIEW'
 const REPEAT_CARDS_VIEW = 'REPEAT_CARDS_VIEW'
 
@@ -25,6 +26,7 @@ addView({name: BACKUPS_VIEW, component: BackupsView})
 addView({name: HTTP_SERVER_VIEW, component: HttpServerView})
 
 addView({name: TAGS_VIEW, component: TagsView})
+addView({name: CARDS_SEARCH_VIEW, component: CardsSearchView})
 addView({name: CREATE_CARD_VIEW, component: CreateCardView})
 addView({name: REPEAT_CARDS_VIEW, component: RepeatCardsView})
 
@@ -42,7 +44,7 @@ const ViewSelector = ({}) => {
     }, [pageTitle])
 
     useEffect(() => {
-        openView(TAGS_VIEW)
+        openView(CARDS_SEARCH_VIEW)
     }, [])
 
     function updatePageTitle() {
@@ -75,6 +77,7 @@ const ViewSelector = ({}) => {
         const additionalButtons = [
             [
                 {key:TAGS_VIEW, viewName:TAGS_VIEW, iconName:'sell'},
+                {key:CARDS_SEARCH_VIEW, viewName:CARDS_SEARCH_VIEW, iconName:'search'},
                 {key:BACKUPS_VIEW, viewName:BACKUPS_VIEW, iconName:'archive'},
                 {key:HTTP_SERVER_VIEW, viewName:HTTP_SERVER_VIEW, iconName:'reset_tv'},
             ]

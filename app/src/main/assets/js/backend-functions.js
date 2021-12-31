@@ -18,10 +18,12 @@ const be = {
 
     createTag: createBeFunction('createTag'),
     readAllTags: createBeFunction('readAllTags'),
+    getCardToTagMapping: createBeFunction('getCardToTagMapping'),
     updateTag: createBeFunction('updateTag'),
     deleteTag: createBeFunction('deleteTag'),
     createTranslateCard: createBeFunction('createTranslateCard'),
     readTranslateCardById: createBeFunction('readTranslateCardById'),
+    readTranslateCardsByFilter: createBeFunction('readTranslateCardsByFilter'),
     validateTranslateCard: createBeFunction('validateTranslateCard'),
     updateTranslateCard: createBeFunction('updateTranslateCard'),
     getNextCardToRepeat: createBeFunction('getNextCardToRepeat'),

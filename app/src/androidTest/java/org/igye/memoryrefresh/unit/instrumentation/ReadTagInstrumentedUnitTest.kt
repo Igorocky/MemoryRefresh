@@ -32,4 +32,9 @@ class ReadTagInstrumentedUnitTest: InstrumentedTestBase() {
     fun TODO_readAllTags_returns_tags_ordered_by_name() {
         TODO()
     }
+
+    @Test
+    fun TODO_getCardToTagMapping_returns_result_as_expected() {
+        TODO()
+    }
 }

@@ -38,6 +38,17 @@ function createFeBeBridgeForUiTestMode() {
         return okResponse(TAGS.map(t => ({...t})))
     }
 
+    mockedBeFunctions.getCardToTagMapping = () => {
+        const res = {}
+        CARDS_TO_TAGS.forEach(({cardId,tagId}) => {
+            if (res[cardId] === undefined) {
+                res[cardId] = []
+            }
+            res[cardId].push(tagId)
+        })
+        return okResponse(res)
+    }
+
     mockedBeFunctions.updateTag = ({tagId,name}) => {
         const tagsToUpdate = TAGS.filter(t=>t.id === tagId)
         let updatedTag = null
@@ -65,7 +76,7 @@ function createFeBeBridgeForUiTestMode() {
         }
     }
 
-    mockedBeFunctions.createTranslateCard = ({textToTranslate, translation}) => {
+    mockedBeFunctions.createTranslateCard = ({textToTranslate, translation, tagIds}) => {
         textToTranslate = textToTranslate?.trim()??''
         translation = translation?.trim()??''
         if (textToTranslate == '') {
@@ -87,7 +98,10 @@ function createFeBeBridgeForUiTestMode() {
                 }
             }
             CARDS.push(newCard)
-            return okResponse(newCard)
+            for (let tagId of tagIds) {
+                CARDS_TO_TAGS.push({cardId:id,tagId})
+            }
+            return okResponse(id)
         }
     }
 
@@ -109,6 +123,11 @@ function createFeBeBridgeForUiTestMode() {
                 }
             })
         }
+    }
+
+    mockedBeFunctions.readTranslateCardsByFilter = (filter) => {
+        console.log('filter', filter)
+        return okResponse([])
     }
 
     mockedBeFunctions.validateTranslateCard = ({cardId, userProvidedTranslation}) => {
@@ -244,15 +263,31 @@ function createFeBeBridgeForUiTestMode() {
     }
 
     function fillDbWithMockData() {
-        const numOfTags = 4
-        const tags = ints(1,numOfTags)
+        const numOfTags = 50
+        ints(1,numOfTags)
             .map(i=>randomAlphaNumString({minLength:3,maxLength:5}))
-            .map(s=>mockedBeFunctions.createTag({name:s}))
-            .map(({data:tag}) => tag)
+            .forEach(s=>mockedBeFunctions.createTag({name:s}))
 
-        mockedBeFunctions.createTranslateCard({textToTranslate:'A', translation:'a'})
-        mockedBeFunctions.createTranslateCard({textToTranslate:'B', translation:'b'})
-        mockedBeFunctions.createTranslateCard({textToTranslate:'C', translation:'c'})
+        function getRandomTagIds() {
+            let numOfTags = randomInt(1,5)
+            let result = []
+            while (result.length < numOfTags) {
+                let newId = TAGS[randomInt(0,TAGS.length-1)].id
+                if (!result.includes(newId)) {
+                    result.push(newId)
+                }
+            }
+            return result
+        }
+
+        const numOfCards = 1_000
+        ints(1,numOfCards)
+            .map(i=>randomSentence({minLength: 1, maxLength: 3}))
+            .forEach(s=>mockedBeFunctions.createTranslateCard({
+                textToTranslate:s.toUpperCase(),
+                translation:s.toLowerCase(),
+                tagIds:getRandomTagIds()
+            }))
     }
     fillDbWithMockData()
 

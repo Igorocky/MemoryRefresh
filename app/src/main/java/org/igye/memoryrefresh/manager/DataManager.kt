@@ -9,7 +9,8 @@ import org.igye.memoryrefresh.dto.common.BeErr
 import org.igye.memoryrefresh.dto.common.BeRespose
 import org.igye.memoryrefresh.dto.domain.*
 import java.time.Clock
-import java.util.*
+import kotlin.collections.ArrayList
+import kotlin.collections.HashMap
 import kotlin.random.Random
 
 
@@ -73,6 +74,32 @@ class DataManager(
         }
             .map { it.rows }
             .apply(toBeResponse(READ_ALL_TAGS))
+    }
+
+    private val getCardToTagMappingQuery = "select ${ctg.cardId}, ${ctg.tagId} from $ctg order by ${ctg.cardId}"
+    @BeMethod
+    @Synchronized
+    fun getCardToTagMapping(): BeRespose<Map<Long,List<Long>>> {
+        var cardId: Long? = null
+        val tagIds = ArrayList<Long>(10)
+        val result = HashMap<Long,List<Long>>()
+        return Try {
+            getRepo().readableDatabase.select(
+                query = getCardToTagMappingQuery,
+            ) {
+                val cid = it.getLong()
+                if (cardId != null && cardId != cid) {
+                    result[cardId!!] = ArrayList(tagIds)
+                    cardId = cid
+                    tagIds.clear()
+                }
+                tagIds.add(it.getLong())
+            }
+            if (cardId != null) {
+                result[cardId!!] = ArrayList(tagIds)
+            }
+            result
+        }.apply(toBeResponse(GET_CARD_TO_TAG_MAPPING))
     }
 
     data class UpdateTagArgs(val tagId:Long, val name:String)
