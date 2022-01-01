@@ -46,6 +46,14 @@ function xor(a,b) {
     }
 }
 
+function startOfDay(date) {
+    return new Date(date.getFullYear(), date.getMonth(), date.getDate(), 0, 0, 0, 0)
+}
+
+function addDays(date, daysToAdd) {
+    return new Date(date.getFullYear(), date.getMonth(), date.getDate() + daysToAdd, date.getHours(), date.getMinutes(), date.getSeconds(), date.getMilliseconds())
+}
+
 function randomInt(min, max) {
     return min + Math.floor(Math.random()*((max-min)+1))
 }

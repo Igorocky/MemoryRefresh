@@ -74,7 +74,7 @@ const CardsSearchView = ({query,openView,setPageTitle}) => {
 
     function renderFilter() {
         return re(TranslateCardFilterCmp, {
-
+            onSubmit: filter => console.log('filter', filter)
         })
     }
 

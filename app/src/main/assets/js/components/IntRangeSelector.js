@@ -52,8 +52,6 @@ const IntRangeSelector = ({selectedMin = null, selectedMax = null, onMinSelected
                 inputProps: {size:4},
                 onChange: event => {
                     const newText = event.nativeEvent.target.value
-                    console.log('typeof newText', typeof newText)
-                    console.log('newText', newText)
                     if (newText !== selectedMax && (/^\d*$/g).test(newText)) {
                         maxSelected(newText)
                     }

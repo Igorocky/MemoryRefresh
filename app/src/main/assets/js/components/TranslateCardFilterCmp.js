@@ -128,290 +128,356 @@ const TranslateCardFilterCmp = ({onSubmit}) => {
         setFiltersSelected(prev => prev.filter(n => n !== name))
     }
 
-    function renderSearchInActive() {
+    function createSearchInActiveFilterObject() {
         const filterName = af.SEARCH_IN_ACTIVE
         const minimized = filterName !== focusedFilter
-        return RE.Container.col.top.left({},{},
-            RE.Container.row.left.center({},{},
-                iconButton({
-                    iconName:'cancel',
-                    onClick: () => {
-                        removeFilter(filterName)
-                        setSearchInActive(true)
-                    }}
+        return {
+            [filterName]: {
+                render: () => RE.Container.col.top.left({},{},
+                    RE.Container.row.left.center({},{},
+                        iconButton({
+                            iconName:'cancel',
+                            onClick: () => {
+                                removeFilter(filterName)
+                                setSearchInActive(true)
+                            }}
+                        ),
+                        RE.span({style:{paddingRight:'10px'}, onClick: () => setFocusedFilter(null)}, 'Active or paused:')
+                    ),
+                    RE.If(minimized, () => RE.span({style:{padding:'5px', color:'blue'}}, searchInActive ? 'Active' : 'Paused')),
+                    RE.IfNot(minimized, () => RE.FormControl({component:'fieldset', style:{marginLeft:'10px'}},
+                        RE.RadioGroup({row:true, value: searchInActive, onChange: event => setSearchInActive(event.target.value === 'true')},
+                            RE.FormControlLabel({value:true, control:RE.Radio({}), label: 'Active'}),
+                            RE.FormControlLabel({value:false, control:RE.Radio({}), label: 'Paused', style:{marginLeft:'10px'}}),
+                        )
+                    ))
                 ),
-                RE.span({style:{paddingRight:'10px'}, onClick: () => setFocusedFilter(null)}, 'Active or paused:')
-            ),
-            RE.If(minimized, () => RE.span({style:{padding:'5px', color:'blue'}}, searchInActive ? 'Active' : 'Paused')),
-            RE.IfNot(minimized, () => RE.FormControl({component:'fieldset', style:{marginLeft:'10px'}},
-                RE.RadioGroup({row:true, value: searchInActive, onChange: event => setSearchInActive(event.target.value === 'true')},
-                    RE.FormControlLabel({value:true, control:RE.Radio({}), label: 'Active'}),
-                    RE.FormControlLabel({value:false, control:RE.Radio({}), label: 'Paused', style:{marginLeft:'10px'}}),
-                )
-            ))
-        )
+                getFilterValues: () => ({paused: !searchInActive})
+            }
+        }
     }
 
-    function renderTagsToInclude() {
+    function createTagsToIncludeFilterObject() {
         const filterName = af.INCLUDE_TAGS
-        return RE.Container.col.top.left({},{},
-            RE.Container.row.left.center({},{},
-                iconButton({
-                    iconName:'cancel',
-                    onClick: () => {
-                        removeFilter(filterName)
-                        setTagsToInclude([])
-                    }}
+        const minimized = filterName !== focusedFilter
+        return {
+            [filterName]: {
+                render: () => RE.Container.col.top.left({},{},
+                    RE.Container.row.left.center({},{},
+                        iconButton({
+                            iconName:'cancel',
+                            onClick: () => {
+                                removeFilter(filterName)
+                                setTagsToInclude([])
+                            }}
+                        ),
+                        RE.span({style:{paddingRight:'10px'}, onClick: () => setFocusedFilter(null)}, 'Tags to include:')
+                    ),
+                    re(TagSelector,{
+                        allTags: remainingTags,
+                        selectedTags: tagsToInclude,
+                        onTagRemoved:tag=>{
+                            setTagsToInclude(prev=>prev.filter(t=>t.id!=tag.id))
+                        },
+                        onTagSelected:tag=>{
+                            setTagsToInclude(prev=>[...prev,tag])
+                        },
+                        label: 'Include',
+                        color:'primary',
+                        minimized,
+                    })
                 ),
-                RE.span({style:{paddingRight:'10px'}, onClick: () => setFocusedFilter(null)}, 'Tags to include:')
-            ),
-            re(TagSelector,{
-                allTags: remainingTags,
-                selectedTags: tagsToInclude,
-                onTagRemoved:tag=>{
-                    setTagsToInclude(prev=>prev.filter(t=>t.id!=tag.id))
-                },
-                onTagSelected:tag=>{
-                    setTagsToInclude(prev=>[...prev,tag])
-                },
-                label: 'Include',
-                color:'primary',
-                minimized: filterName !== focusedFilter,
-            })
-        )
+                getFilterValues: () => ({tagIdsToInclude: tagsToInclude.map(t=>t.id)})
+            }
+        }
     }
 
-    function renderTagsToExclude() {
+    function createTagsToExcludeFilterObject() {
         const filterName = af.EXCLUDE_TAGS
-        return RE.Container.col.top.left({},{},
-            RE.Container.row.left.center({},{},
-                iconButton({
-                    iconName:'cancel',
-                    onClick: () => {
-                        removeFilter(filterName)
-                        setTagsToExclude([])
-                    }
-                }),
-                RE.span({style:{paddingRight:'10px'}, onClick: () => setFocusedFilter(null)}, 'Tags to exclude:')
-            ),
-            re(TagSelector,{
-                allTags: remainingTags,
-                selectedTags: tagsToExclude,
-                onTagRemoved:tag=>{
-                    setTagsToExclude(prev=>prev.filter(t=>t.id!=tag.id))
-                },
-                onTagSelected:tag=>{
-                    setTagsToExclude(prev=>[...prev,tag])
-                },
-                label: 'Exclude',
-                color:'secondary',
-                minimized: filterName !== focusedFilter,
-            })
-        )
+        const minimized = filterName !== focusedFilter
+        return {
+            [filterName]: {
+                render: () => RE.Container.col.top.left({},{},
+                    RE.Container.row.left.center({},{},
+                        iconButton({
+                            iconName:'cancel',
+                            onClick: () => {
+                                removeFilter(filterName)
+                                setTagsToExclude([])
+                            }
+                        }),
+                        RE.span({style:{paddingRight:'10px'}, onClick: () => setFocusedFilter(null)}, 'Tags to exclude:')
+                    ),
+                    re(TagSelector,{
+                        allTags: remainingTags,
+                        selectedTags: tagsToExclude,
+                        onTagRemoved:tag=>{
+                            setTagsToExclude(prev=>prev.filter(t=>t.id!=tag.id))
+                        },
+                        onTagSelected:tag=>{
+                            setTagsToExclude(prev=>[...prev,tag])
+                        },
+                        label: 'Exclude',
+                        color:'secondary',
+                        minimized,
+                    })
+                ),
+                getFilterValues: () => ({tagIdsToExclude: tagsToExclude.map(t=>t.id)})
+            }
+        }
     }
 
-    function renderCreatedOnOrAfter() {
+    function createCreatedOnOrAfterFilterObject() {
         const filterName = af.CREATED_ON_OR_AFTER
-        return RE.Container.col.top.left({},{},
-            RE.Container.row.left.center({},{},
-                iconButton({
-                    iconName:'cancel',
-                    onClick: () => {
-                        removeFilter(filterName)
-                        setCreatedOnOrAfter(new Date())
-                    }
-                }),
-                RE.span({style:{paddingRight:'10px'}, onClick: () => setFocusedFilter(null)}, 'Created on or after:')
-            ),
-            re(DateSelector,{
-                selectedDate: createdOnOrAfter,
-                onDateSelected: newDate => setCreatedOnOrAfter(newDate),
-                minimized: filterName !== focusedFilter,
-            })
-        )
+        const minimized = filterName !== focusedFilter
+        return {
+            [filterName]: {
+                render: () => RE.Container.col.top.left({},{},
+                    RE.Container.row.left.center({},{},
+                        iconButton({
+                            iconName:'cancel',
+                            onClick: () => {
+                                removeFilter(filterName)
+                                setCreatedOnOrAfter(new Date())
+                            }
+                        }),
+                        RE.span({style:{paddingRight:'10px'}, onClick: () => setFocusedFilter(null)}, 'Created on or after:')
+                    ),
+                    re(DateSelector,{
+                        selectedDate: createdOnOrAfter,
+                        onDateSelected: newDate => setCreatedOnOrAfter(newDate),
+                        minimized,
+                    })
+                ),
+                getFilterValues: () => ({createdFrom: startOfDay(createdOnOrAfter).getTime()})
+            }
+        }
     }
 
-    function renderCreatedOnOrBefore() {
+    function createCreatedOnOrBeforeFilterObject() {
         const filterName = af.CREATED_ON_OR_BEFORE
-        return RE.Container.col.top.left({},{},
-            RE.Container.row.left.center({},{},
-                iconButton({
-                    iconName:'cancel',
-                    onClick: () => {
-                        removeFilter(filterName)
-                        setCreatedOnOrBefore(new Date())
-                    }
-                }),
-                RE.span({style:{paddingRight:'10px'}, onClick: () => setFocusedFilter(null)}, 'Created on or before:')
-            ),
-            re(DateSelector,{
-                selectedDate: createdOnOrBefore,
-                onDateSelected: newDate => setCreatedOnOrBefore(newDate),
-                minimized: filterName !== focusedFilter,
-            })
-        )
+        const minimized = filterName !== focusedFilter
+        return {
+            [filterName]: {
+                render: () => RE.Container.col.top.left({},{},
+                    RE.Container.row.left.center({},{},
+                        iconButton({
+                            iconName:'cancel',
+                            onClick: () => {
+                                removeFilter(filterName)
+                                setCreatedOnOrBefore(new Date())
+                            }
+                        }),
+                        RE.span({style:{paddingRight:'10px'}, onClick: () => setFocusedFilter(null)}, 'Created on or before:')
+                    ),
+                    re(DateSelector,{
+                        selectedDate: createdOnOrBefore,
+                        onDateSelected: newDate => setCreatedOnOrBefore(newDate),
+                        minimized,
+                    })
+                ),
+                getFilterValues: () => ({createdTill: addDays(startOfDay(createdOnOrBefore),1).getTime()})
+            }
+        }
     }
 
-    function renderNativeTextLength() {
+    function createNativeTextLengthFilterObject() {
         const filterName = af.NATIVE_TEXT_LENGTH
-        return RE.Container.col.top.left({},{},
-            RE.Container.row.left.center({},{},
-                iconButton({
-                    iconName:'cancel',
-                    onClick: () => {
-                        removeFilter(filterName)
-                        setNativeTextMinLength(null)
-                        setNativeTextMaxLength(null)
-                    }
-                }),
-                RE.span({style:{paddingRight:'10px'}, onClick: () => setFocusedFilter(null)}, 'Native text length:')
-            ),
-            re(IntRangeSelector,{
-                selectedMin: nativeTextMinLength,
-                selectedMax: nativeTextMaxLength,
-                onMinSelected: newValue => setNativeTextMinLength(newValue),
-                onMaxSelected: newValue => setNativeTextMaxLength(newValue),
-                parameterName: '(native text length)',
-                minimized: filterName !== focusedFilter,
-            })
-        )
+        const minimized = filterName !== focusedFilter
+        return {
+            [filterName]: {
+                render: () => RE.Container.col.top.left({},{},
+                    RE.Container.row.left.center({},{},
+                        iconButton({
+                            iconName:'cancel',
+                            onClick: () => {
+                                removeFilter(filterName)
+                                setNativeTextMinLength(null)
+                                setNativeTextMaxLength(null)
+                            }
+                        }),
+                        RE.span({style:{paddingRight:'10px'}, onClick: () => setFocusedFilter(null)}, 'Native text length:')
+                    ),
+                    re(IntRangeSelector,{
+                        selectedMin: nativeTextMinLength,
+                        selectedMax: nativeTextMaxLength,
+                        onMinSelected: newValue => setNativeTextMinLength(newValue),
+                        onMaxSelected: newValue => setNativeTextMaxLength(newValue),
+                        parameterName: '(native text length)',
+                        minimized,
+                    })
+                ),
+                getFilterValues: () => ({
+                    textToTranslateLengthGreaterThan: hasValue(nativeTextMinLength) ? nativeTextMinLength - 1 : null,
+                    textToTranslateLengthLessThan: hasValue(nativeTextMaxLength) ? (nativeTextMaxLength-0) + 1 : null,
+                })
+            }
+        }
     }
 
-    function renderNativeTextContains() {
+    function createNativeTextContainsFilterObject() {
         const filterName = af.NATIVE_TEXT_CONTAINS
         const minimized = filterName !== focusedFilter
-        return RE.Container.col.top.left({},{},
-            RE.Container.row.left.center({},{},
-                iconButton({
-                    iconName:'cancel',
-                    onClick: () => {
-                        removeFilter(filterName)
-                        setNativeTextContains('')
-                    }
-                }),
-                RE.span({style:{paddingRight:'10px'}, onClick: () => setFocusedFilter(null)}, 'Native text contains:')
-            ),
-            RE.If(minimized, () => RE.span({style:{padding:'5px', color:'blue'}}, `"${nativeTextContains}"`)),
-            RE.IfNot(minimized, () => RE.TextField({
-                autoCorrect: 'off', autoCapitalize: 'off', spellCheck: 'false',
-                value: nativeTextContains,
-                label: 'Native text contains',
-                variant: 'outlined',
-                multiline: false,
-                maxRows: 1,
-                size: 'small',
-                inputProps: {size:24},
-                style: {margin:'5px'},
-                onChange: event => {
-                    const newText = event.nativeEvent.target.value
-                    if (newText != nativeTextContains) {
-                        setNativeTextContains(newText)
-                    }
-                },
-            }))
-        )
+        return {
+            [filterName]: {
+                render: () => RE.Container.col.top.left({},{},
+                    RE.Container.row.left.center({},{},
+                        iconButton({
+                            iconName:'cancel',
+                            onClick: () => {
+                                removeFilter(filterName)
+                                setNativeTextContains('')
+                            }
+                        }),
+                        RE.span({style:{paddingRight:'10px'}, onClick: () => setFocusedFilter(null)}, 'Native text contains:')
+                    ),
+                    RE.If(minimized, () => RE.span({style:{padding:'5px', color:'blue'}}, `"${nativeTextContains}"`)),
+                    RE.IfNot(minimized, () => RE.TextField({
+                        autoCorrect: 'off', autoCapitalize: 'off', spellCheck: 'false',
+                        value: nativeTextContains,
+                        label: 'Native text contains',
+                        variant: 'outlined',
+                        multiline: false,
+                        maxRows: 1,
+                        size: 'small',
+                        inputProps: {size:24},
+                        style: {margin:'5px'},
+                        onChange: event => {
+                            const newText = event.nativeEvent.target.value
+                            if (newText != nativeTextContains) {
+                                setNativeTextContains(newText)
+                            }
+                        },
+                    }))
+                ),
+                getFilterValues: () => ({textToTranslateContains: nativeTextContains})
+            }
+        }
     }
 
-    function renderForeignTextLength() {
+    function createForeignTextLengthFilterObject() {
         const filterName = af.FOREIGN_TEXT_LENGTH
-        return RE.Container.col.top.left({},{},
-            RE.Container.row.left.center({},{},
-                iconButton({
-                    iconName:'cancel',
-                    onClick: () => {
-                        removeFilter(filterName)
-                        setForeignTextMinLength(null)
-                        setForeignTextMaxLength(null)
-                    }
-                }),
-                RE.span({style:{paddingRight:'10px'}, onClick: () => setFocusedFilter(null)}, 'Foreign text length:')
-            ),
-            re(IntRangeSelector,{
-                selectedMin: foreignTextMinLength,
-                selectedMax: foreignTextMaxLength,
-                onMinSelected: newValue => setForeignTextMinLength(newValue),
-                onMaxSelected: newValue => setForeignTextMaxLength(newValue),
-                parameterName: '(foreign text length)',
-                minimized: filterName !== focusedFilter,
-            })
-        )
+        const minimized = filterName !== focusedFilter
+        return {
+            [filterName]: {
+                render: () => RE.Container.col.top.left({},{},
+                    RE.Container.row.left.center({},{},
+                        iconButton({
+                            iconName:'cancel',
+                            onClick: () => {
+                                removeFilter(filterName)
+                                setForeignTextMinLength(null)
+                                setForeignTextMaxLength(null)
+                            }
+                        }),
+                        RE.span({style:{paddingRight:'10px'}, onClick: () => setFocusedFilter(null)}, 'Foreign text length:')
+                    ),
+                    re(IntRangeSelector,{
+                        selectedMin: foreignTextMinLength,
+                        selectedMax: foreignTextMaxLength,
+                        onMinSelected: newValue => setForeignTextMinLength(newValue),
+                        onMaxSelected: newValue => setForeignTextMaxLength(newValue),
+                        parameterName: '(foreign text length)',
+                        minimized,
+                    })
+                ),
+                getFilterValues: () => ({
+                    translationLengthGreaterThan: hasValue(foreignTextMinLength) ? foreignTextMinLength - 1 : null,
+                    translationLengthLessThan: hasValue(foreignTextMaxLength) ? (foreignTextMaxLength-0) + 1 : null,
+                })
+            }
+        }
     }
 
-    function renderForeignTextContains() {
+    function createForeignTextContainsFilterObject() {
         const filterName = af.FOREIGN_TEXT_CONTAINS
         const minimized = filterName !== focusedFilter
-        return RE.Container.col.top.left({},{},
-            RE.Container.row.left.center({},{},
-                iconButton({
-                    iconName:'cancel',
-                    onClick: () => {
-                        removeFilter(filterName)
-                        setForeignTextContains('')
-                    }
-                }),
-                RE.span({style:{paddingRight:'10px'}, onClick: () => setFocusedFilter(null)}, 'Foreign text contains:')
-            ),
-            RE.If(minimized, () => RE.span({style:{padding:'5px', color:'blue'}}, `"${foreignTextContains}"`)),
-            RE.IfNot(minimized, () => RE.TextField({
-                autoCorrect: 'off', autoCapitalize: 'off', spellCheck: 'false',
-                value: foreignTextContains,
-                label: 'Foreign text contains',
-                variant: 'outlined',
-                multiline: false,
-                maxRows: 1,
-                size: 'small',
-                inputProps: {size:24},
-                style: {margin:'5px'},
-                onChange: event => {
-                    const newText = event.nativeEvent.target.value
-                    if (newText != foreignTextContains) {
-                        setForeignTextContains(newText)
-                    }
-                },
-            }))
-        )
+        return {
+            [filterName]: {
+                render: () => RE.Container.col.top.left({},{},
+                    RE.Container.row.left.center({},{},
+                        iconButton({
+                            iconName:'cancel',
+                            onClick: () => {
+                                removeFilter(filterName)
+                                setForeignTextContains('')
+                            }
+                        }),
+                        RE.span({style:{paddingRight:'10px'}, onClick: () => setFocusedFilter(null)}, 'Foreign text contains:')
+                    ),
+                    RE.If(minimized, () => RE.span({style:{padding:'5px', color:'blue'}}, `"${foreignTextContains}"`)),
+                    RE.IfNot(minimized, () => RE.TextField({
+                        autoCorrect: 'off', autoCapitalize: 'off', spellCheck: 'false',
+                        value: foreignTextContains,
+                        label: 'Foreign text contains',
+                        variant: 'outlined',
+                        multiline: false,
+                        maxRows: 1,
+                        size: 'small',
+                        inputProps: {size:24},
+                        style: {margin:'5px'},
+                        onChange: event => {
+                            const newText = event.nativeEvent.target.value
+                            if (newText != foreignTextContains) {
+                                setForeignTextContains(newText)
+                            }
+                        },
+                    }))
+                ),
+                getFilterValues: () => ({translationContains: foreignTextContains})
+            }
+        }
     }
 
-    function renderSortBy() {
+    function createSortByFilterObject() {
         const filterName = af.SORT_BY
-        return RE.Container.col.top.left({},{},
-            RE.Container.row.left.center({},{},
-                iconButton({
-                    iconName:'cancel',
-                    onClick: () => {
-                        removeFilter(filterName)
-                        setSortBy(sb.TIME_CREATED)
-                        setSortDir(sd.ASC)
-                    }
-                }),
-                RE.span({style:{paddingRight:'10px'}, onClick: () => setFocusedFilter(null)}, 'Sort by:')
-            ),
-            re(SortBySelector,{
-                possibleParams: {[sb.TIME_CREATED]:{displayName:'Date created'}},
-                selectedParam: sortBy,
-                onParamSelected: newSortBy => setSortBy(newSortBy),
-                possibleDirs: {[sd.ASC]:{displayName:'A-Z'}, [sd.DESC]:{displayName:'Z-A'}},
-                selectedDir: sortDir,
-                onDirSelected: newSortDir => setSortDir(newSortDir),
-                minimized: filterName !== focusedFilter,
-            })
-        )
+        const minimized = filterName !== focusedFilter
+        return {
+            [filterName]: {
+                render: () => RE.Container.col.top.left({},{},
+                    RE.Container.row.left.center({},{},
+                        iconButton({
+                            iconName:'cancel',
+                            onClick: () => {
+                                removeFilter(filterName)
+                                setSortBy(sb.TIME_CREATED)
+                                setSortDir(sd.ASC)
+                            }
+                        }),
+                        RE.span({style:{paddingRight:'10px'}, onClick: () => setFocusedFilter(null)}, 'Sort by:')
+                    ),
+                    re(SortBySelector,{
+                        possibleParams: {[sb.TIME_CREATED]:{displayName:'Date created'}},
+                        selectedParam: sortBy,
+                        onParamSelected: newSortBy => setSortBy(newSortBy),
+                        possibleDirs: {[sd.ASC]:{displayName:'A-Z'}, [sd.DESC]:{displayName:'Z-A'}},
+                        selectedDir: sortDir,
+                        onDirSelected: newSortDir => setSortDir(newSortDir),
+                        minimized,
+                    })
+                ),
+                getFilterValues: () => ({sortBy, sortDir})
+            }
+        }
+    }
+
+    const allFilterObjects = {
+        ...createSearchInActiveFilterObject(),
+        ...createTagsToIncludeFilterObject(),
+        ...createTagsToExcludeFilterObject(),
+        ...createCreatedOnOrAfterFilterObject(),
+        ...createCreatedOnOrBeforeFilterObject(),
+        ...createNativeTextLengthFilterObject(),
+        ...createNativeTextContainsFilterObject(),
+        ...createForeignTextLengthFilterObject(),
+        ...createForeignTextContainsFilterObject(),
+        ...createSortByFilterObject(),
     }
 
     function renderSelectedFilters() {
         return RE.Container.col.top.left({style:{marginTop:'5px'}},{style:{marginTop:'5px'}},
             filtersSelected.map(filterName => RE.Paper({onClick: () => focusedFilter !== filterName ? setFocusedFilter(filterName) : null},
-                (filterName === af.INCLUDE_TAGS) ? renderTagsToInclude()
-                : (filterName === af.EXCLUDE_TAGS) ? renderTagsToExclude()
-                : (filterName === af.CREATED_ON_OR_AFTER) ? renderCreatedOnOrAfter()
-                : (filterName === af.CREATED_ON_OR_BEFORE) ? renderCreatedOnOrBefore()
-                : (filterName === af.NATIVE_TEXT_LENGTH) ? renderNativeTextLength()
-                : (filterName === af.NATIVE_TEXT_CONTAINS) ? renderNativeTextContains()
-                : (filterName === af.FOREIGN_TEXT_LENGTH) ? renderForeignTextLength()
-                : (filterName === af.FOREIGN_TEXT_CONTAINS) ? renderForeignTextContains()
-                : (filterName === af.SEARCH_IN_ACTIVE) ? renderSearchInActive()
-                : (filterName === af.SORT_BY) ? renderSortBy()
-                : `unexpected filter - ${filterName}`
+                allFilterObjects[filterName].render()
             ))
         )
     }
@@ -459,6 +525,12 @@ const TranslateCardFilterCmp = ({onSubmit}) => {
         })
     }
 
+    function getSelectedFilter() {
+        return filtersSelected
+            .map(filterName => allFilterObjects[filterName])
+            .reduce((acc,elem) => ({...acc,...elem.getFilterValues()}), {})
+    }
+
     function renderComponentContent() {
         if (errorLoadingTags) {
             return RE.Fragment({},
@@ -472,7 +544,10 @@ const TranslateCardFilterCmp = ({onSubmit}) => {
             return 'Loading tags...'
         } else {
             return RE.Container.col.top.left({style:{marginTop:'5px'}},{style:{marginTop:'5px'}},
-                renderAddFilterButton(),
+                RE.Container.row.left.center({},{},
+                    renderAddFilterButton(),
+                    iconButton({iconName:'search', onClick: () => onSubmit(getSelectedFilter())})
+                ),
                 renderSelectedFilters(),
             )
         }
