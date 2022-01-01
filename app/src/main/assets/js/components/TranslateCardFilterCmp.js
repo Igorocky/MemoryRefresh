@@ -3,7 +3,8 @@
 const AVAILABLE_TRANSLATE_CARD_FILTERS = {
     INCLUDE_TAGS:'INCLUDE_TAGS',
     EXCLUDE_TAGS:'EXCLUDE_TAGS',
-    CREATED_WHEN:'CREATED_WHEN',
+    CREATED_ON_OR_AFTER:'CREATED_ON_OR_AFTER',
+    CREATED_ON_OR_BEFORE:'CREATED_ON_OR_BEFORE',
 }
 
 const TranslateCardFilterCmp = ({onSubmit}) => {
@@ -17,13 +18,15 @@ const TranslateCardFilterCmp = ({onSubmit}) => {
     const [cardToTagsMap, setCardToTagsMap] = useState(null)
     const [errorLoadingCardToTagsMap, setErrorLoadingCardToTagsMap] = useState(null)
 
+    const [filtersSelected, setFiltersSelected] = useState([af.CREATED_ON_OR_AFTER])
+    const [focusedFilter, setFocusedFilter] = useState(filtersSelected[1])
+
     const [tagsToInclude, setTagsToInclude] = useState([])
     const [tagsToExclude, setTagsToExclude] = useState([])
     const [remainingTags, setRemainingTags] = useState([])
 
-    // const [filtersSelected, setFiltersSelected] = useState([af.INCLUDE_TAGS, af.EXCLUDE_TAGS])
-    const [filtersSelected, setFiltersSelected] = useState([])
-    const [focusedFilter, setFocusedFilter] = useState(null)
+    const [createdOnOrAfter, setCreatedOnOrAfter] = useState(new Date())
+    const [createdOnOrBefore, setCreatedOnOrBefore] = useState(new Date())
 
     useEffect(async () => {
         const res = await be.readAllTags()
@@ -97,16 +100,17 @@ const TranslateCardFilterCmp = ({onSubmit}) => {
     }
 
     function renderTagsToInclude() {
+        const filterName = af.INCLUDE_TAGS
         return RE.Container.col.top.left({},{},
             RE.Container.row.left.center({},{},
                 iconButton({
                     iconName:'cancel',
                     onClick: () => {
-                        removeFilter(af.INCLUDE_TAGS)
+                        removeFilter(filterName)
                         setTagsToInclude([])
                     }}
                 ),
-                RE.span({style:{paddingRight:'10px'}}, 'Tags to include:')
+                RE.span({style:{paddingRight:'10px'}, onClick: () => setFocusedFilter(null)}, 'Tags to include:')
             ),
             re(TagSelector,{
                 allTags: remainingTags,
@@ -119,22 +123,23 @@ const TranslateCardFilterCmp = ({onSubmit}) => {
                 },
                 label: 'Include',
                 color:'primary',
-                minimized: af.INCLUDE_TAGS !== focusedFilter,
+                minimized: filterName !== focusedFilter,
             })
         )
     }
 
     function renderTagsToExclude() {
+        const filterName = af.EXCLUDE_TAGS
         return RE.Container.col.top.left({},{},
             RE.Container.row.left.center({},{},
                 iconButton({
                     iconName:'cancel',
                     onClick: () => {
-                        removeFilter(af.EXCLUDE_TAGS)
+                        removeFilter(filterName)
                         setTagsToExclude([])
                     }
                 }),
-                RE.span({style:{paddingRight:'10px'}}, 'Tags to exclude:')
+                RE.span({style:{paddingRight:'10px'}, onClick: () => setFocusedFilter(null)}, 'Tags to exclude:')
             ),
             re(TagSelector,{
                 allTags: remainingTags,
@@ -147,7 +152,49 @@ const TranslateCardFilterCmp = ({onSubmit}) => {
                 },
                 label: 'Exclude',
                 color:'secondary',
-                minimized: af.EXCLUDE_TAGS !== focusedFilter,
+                minimized: filterName !== focusedFilter,
+            })
+        )
+    }
+
+    function renderCreatedOnOrAfter() {
+        const filterName = af.CREATED_ON_OR_AFTER
+        return RE.Container.col.top.left({},{},
+            RE.Container.row.left.center({},{},
+                iconButton({
+                    iconName:'cancel',
+                    onClick: () => {
+                        removeFilter(filterName)
+                        setCreatedOnOrAfter(new Date())
+                    }
+                }),
+                RE.span({style:{paddingRight:'10px'}, onClick: () => setFocusedFilter(null)}, 'Created on or after:')
+            ),
+            re(DateSelector,{
+                selectedDate: createdOnOrAfter,
+                onDateSelected: newDate => setCreatedOnOrAfter(newDate),
+                minimized: filterName !== focusedFilter,
+            })
+        )
+    }
+
+    function renderCreatedOnOrBefore() {
+        const filterName = af.CREATED_ON_OR_BEFORE
+        return RE.Container.col.top.left({},{},
+            RE.Container.row.left.center({},{},
+                iconButton({
+                    iconName:'cancel',
+                    onClick: () => {
+                        removeFilter(filterName)
+                        setCreatedOnOrBefore(new Date())
+                    }
+                }),
+                RE.span({style:{paddingRight:'10px'}, onClick: () => setFocusedFilter(null)}, 'Created on or before:')
+            ),
+            re(DateSelector,{
+                selectedDate: createdOnOrBefore,
+                onDateSelected: newDate => setCreatedOnOrBefore(newDate),
+                minimized: filterName !== focusedFilter,
             })
         )
     }
@@ -157,6 +204,8 @@ const TranslateCardFilterCmp = ({onSubmit}) => {
             filtersSelected.map(filterName => RE.Paper({onClick: () => focusedFilter !== filterName ? setFocusedFilter(filterName) : null},
                 (filterName === af.INCLUDE_TAGS) ? renderTagsToInclude()
                 : (filterName === af.EXCLUDE_TAGS) ? renderTagsToExclude()
+                : (filterName === af.CREATED_ON_OR_AFTER) ? renderCreatedOnOrAfter()
+                : (filterName === af.CREATED_ON_OR_BEFORE) ? renderCreatedOnOrBefore()
                 : `unexpected filter - ${filterName}`
             ))
         )
@@ -173,6 +222,8 @@ const TranslateCardFilterCmp = ({onSubmit}) => {
         return RE.List({},
             renderAvailableFilterListItem({filterName: af.INCLUDE_TAGS, filterDisplayName: 'Tags to include', resolve}),
             renderAvailableFilterListItem({filterName: af.EXCLUDE_TAGS, filterDisplayName: 'Tags to exclude', resolve}),
+            renderAvailableFilterListItem({filterName: af.CREATED_ON_OR_AFTER, filterDisplayName: 'Created on or after', resolve}),
+            renderAvailableFilterListItem({filterName: af.CREATED_ON_OR_BEFORE, filterDisplayName: 'Created on or before', resolve}),
         )
     }
 

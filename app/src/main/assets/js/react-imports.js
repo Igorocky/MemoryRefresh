@@ -36,6 +36,7 @@ const RE = {
     tbody: reFactory('tbody'),
     tr: reFactory('tr'),
     td: reFactory('td'),
+    option: reFactory('option'),
     AppBar: reFactory(MaterialUI.AppBar),
     Button: reFactory(MaterialUI.Button),
     ButtonGroup: reFactory(MaterialUI.ButtonGroup),
