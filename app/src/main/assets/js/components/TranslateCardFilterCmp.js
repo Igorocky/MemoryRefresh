@@ -5,6 +5,8 @@ const AVAILABLE_TRANSLATE_CARD_FILTERS = {
     EXCLUDE_TAGS:'EXCLUDE_TAGS',
     CREATED_ON_OR_AFTER:'CREATED_ON_OR_AFTER',
     CREATED_ON_OR_BEFORE:'CREATED_ON_OR_BEFORE',
+    NATIVE_TEXT_LENGTH:'NATIVE_TEXT_LENGTH',
+    FOREIGN_TEXT_LENGTH:'FOREIGN_TEXT_LENGTH',
 }
 
 const TranslateCardFilterCmp = ({onSubmit}) => {
@@ -18,8 +20,8 @@ const TranslateCardFilterCmp = ({onSubmit}) => {
     const [cardToTagsMap, setCardToTagsMap] = useState(null)
     const [errorLoadingCardToTagsMap, setErrorLoadingCardToTagsMap] = useState(null)
 
-    const [filtersSelected, setFiltersSelected] = useState([af.CREATED_ON_OR_AFTER])
-    const [focusedFilter, setFocusedFilter] = useState(filtersSelected[1])
+    const [filtersSelected, setFiltersSelected] = useState([af.NATIVE_TEXT_LENGTH])
+    const [focusedFilter, setFocusedFilter] = useState(filtersSelected[0])
 
     const [tagsToInclude, setTagsToInclude] = useState([])
     const [tagsToExclude, setTagsToExclude] = useState([])
@@ -27,6 +29,11 @@ const TranslateCardFilterCmp = ({onSubmit}) => {
 
     const [createdOnOrAfter, setCreatedOnOrAfter] = useState(new Date())
     const [createdOnOrBefore, setCreatedOnOrBefore] = useState(new Date())
+
+    const [nativeTextMinLength, setNativeTextMinLength] = useState(null)
+    const [nativeTextMaxLength, setNativeTextMaxLength] = useState(null)
+    const [foreignTextMinLength, setForeignTextMinLength] = useState(null)
+    const [foreignTextMaxLength, setForeignTextMaxLength] = useState(null)
 
     useEffect(async () => {
         const res = await be.readAllTags()
@@ -199,6 +206,56 @@ const TranslateCardFilterCmp = ({onSubmit}) => {
         )
     }
 
+    function renderNativeTextLength() {
+        const filterName = af.NATIVE_TEXT_LENGTH
+        return RE.Container.col.top.left({},{},
+            RE.Container.row.left.center({},{},
+                iconButton({
+                    iconName:'cancel',
+                    onClick: () => {
+                        removeFilter(filterName)
+                        setNativeTextMinLength(null)
+                        setNativeTextMaxLength(null)
+                    }
+                }),
+                RE.span({style:{paddingRight:'10px'}, onClick: () => setFocusedFilter(null)}, 'Native text length:')
+            ),
+            re(IntRangeSelector,{
+                selectedMin: nativeTextMinLength,
+                selectedMax: nativeTextMaxLength,
+                onMinSelected: newValue => setNativeTextMinLength(newValue),
+                onMaxSelected: newValue => setNativeTextMaxLength(newValue),
+                parameterName: '(native text length)',
+                minimized: filterName !== focusedFilter,
+            })
+        )
+    }
+
+    function renderForeignTextLength() {
+        const filterName = af.FOREIGN_TEXT_LENGTH
+        return RE.Container.col.top.left({},{},
+            RE.Container.row.left.center({},{},
+                iconButton({
+                    iconName:'cancel',
+                    onClick: () => {
+                        removeFilter(filterName)
+                        setForeignTextMinLength(null)
+                        setForeignTextMaxLength(null)
+                    }
+                }),
+                RE.span({style:{paddingRight:'10px'}, onClick: () => setFocusedFilter(null)}, 'Foreign text length:')
+            ),
+            re(IntRangeSelector,{
+                selectedMin: foreignTextMinLength,
+                selectedMax: foreignTextMaxLength,
+                onMinSelected: newValue => setForeignTextMinLength(newValue),
+                onMaxSelected: newValue => setForeignTextMaxLength(newValue),
+                parameterName: '(foreign text length)',
+                minimized: filterName !== focusedFilter,
+            })
+        )
+    }
+
     function renderSelectedFilters() {
         return RE.Container.col.top.left({style:{marginTop:'5px'}},{style:{marginTop:'5px'}},
             filtersSelected.map(filterName => RE.Paper({onClick: () => focusedFilter !== filterName ? setFocusedFilter(filterName) : null},
@@ -206,6 +263,8 @@ const TranslateCardFilterCmp = ({onSubmit}) => {
                 : (filterName === af.EXCLUDE_TAGS) ? renderTagsToExclude()
                 : (filterName === af.CREATED_ON_OR_AFTER) ? renderCreatedOnOrAfter()
                 : (filterName === af.CREATED_ON_OR_BEFORE) ? renderCreatedOnOrBefore()
+                : (filterName === af.NATIVE_TEXT_LENGTH) ? renderNativeTextLength()
+                : (filterName === af.FOREIGN_TEXT_LENGTH) ? renderForeignTextLength()
                 : `unexpected filter - ${filterName}`
             ))
         )
@@ -224,6 +283,8 @@ const TranslateCardFilterCmp = ({onSubmit}) => {
             renderAvailableFilterListItem({filterName: af.EXCLUDE_TAGS, filterDisplayName: 'Tags to exclude', resolve}),
             renderAvailableFilterListItem({filterName: af.CREATED_ON_OR_AFTER, filterDisplayName: 'Created on or after', resolve}),
             renderAvailableFilterListItem({filterName: af.CREATED_ON_OR_BEFORE, filterDisplayName: 'Created on or before', resolve}),
+            renderAvailableFilterListItem({filterName: af.NATIVE_TEXT_LENGTH, filterDisplayName: 'Native text length', resolve}),
+            renderAvailableFilterListItem({filterName: af.FOREIGN_TEXT_LENGTH, filterDisplayName: 'Foreign text length', resolve}),
         )
     }
 

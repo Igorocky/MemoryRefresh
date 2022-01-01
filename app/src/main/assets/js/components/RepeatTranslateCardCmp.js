@@ -152,7 +152,7 @@ const RepeatTranslateCardCmp = ({cardId,cardsRemain,onDone,controlsContainer}) =
             inputProps: {size:8, tabIndex:2},
             onChange: event => {
                 const newText = event.nativeEvent.target.value
-                if (newText != delay) {
+                if (newText !== delay) {
                     setDelay(newText)
                 }
             },
