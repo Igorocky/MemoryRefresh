@@ -1,6 +1,6 @@
 'use strict';
 
-const TagSelector = ({allTags, selectedTags, onTagSelected, onTagRemoved, label, color}) => {
+const TagSelector = ({allTags, selectedTags, onTagSelected, onTagRemoved, label, color, minimized = false}) => {
 
     const [filterText, setFilterText] = useState('')
     let selectedTagIds = selectedTags.map(t=>t.id)
@@ -68,7 +68,7 @@ const TagSelector = ({allTags, selectedTags, onTagSelected, onTagRemoved, label,
 
     return RE.Container.col.top.left({},{style:{margin:'3px'}},
         renderSelectedTags(),
-        renderTagFilter(),
-        renderFilteredTags()
+        RE.IfNot(minimized, () => renderTagFilter()),
+        RE.IfNot(minimized, () => renderFilteredTags())
     )
 }

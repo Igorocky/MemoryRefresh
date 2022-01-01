@@ -23,6 +23,7 @@ const TranslateCardFilterCmp = ({onSubmit}) => {
 
     // const [filtersSelected, setFiltersSelected] = useState([af.INCLUDE_TAGS, af.EXCLUDE_TAGS])
     const [filtersSelected, setFiltersSelected] = useState([])
+    const [focusedFilter, setFocusedFilter] = useState(null)
 
     useEffect(async () => {
         const res = await be.readAllTags()
@@ -88,6 +89,7 @@ const TranslateCardFilterCmp = ({onSubmit}) => {
 
     function addFilter(name) {
         setFiltersSelected(prev => [name, ...prev])
+        setFocusedFilter(name)
     }
 
     function removeFilter(name) {
@@ -104,7 +106,7 @@ const TranslateCardFilterCmp = ({onSubmit}) => {
                         setTagsToInclude([])
                     }}
                 ),
-                'Tags to include:'
+                RE.span({style:{paddingRight:'10px'}}, 'Tags to include:')
             ),
             re(TagSelector,{
                 allTags: remainingTags,
@@ -117,6 +119,7 @@ const TranslateCardFilterCmp = ({onSubmit}) => {
                 },
                 label: 'Include',
                 color:'primary',
+                minimized: af.INCLUDE_TAGS !== focusedFilter,
             })
         )
     }
@@ -131,7 +134,7 @@ const TranslateCardFilterCmp = ({onSubmit}) => {
                         setTagsToExclude([])
                     }
                 }),
-                'Tags to exclude:'
+                RE.span({style:{paddingRight:'10px'}}, 'Tags to exclude:')
             ),
             re(TagSelector,{
                 allTags: remainingTags,
@@ -144,13 +147,14 @@ const TranslateCardFilterCmp = ({onSubmit}) => {
                 },
                 label: 'Exclude',
                 color:'secondary',
+                minimized: af.EXCLUDE_TAGS !== focusedFilter,
             })
         )
     }
 
     function renderSelectedFilters() {
         return RE.Container.col.top.left({style:{marginTop:'5px'}},{style:{marginTop:'5px'}},
-            filtersSelected.map(filterName => RE.Paper({},
+            filtersSelected.map(filterName => RE.Paper({onClick: () => focusedFilter !== filterName ? setFocusedFilter(filterName) : null},
                 (filterName === af.INCLUDE_TAGS) ? renderTagsToInclude()
                 : (filterName === af.EXCLUDE_TAGS) ? renderTagsToExclude()
                 : `unexpected filter - ${filterName}`
