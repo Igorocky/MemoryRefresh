@@ -65,7 +65,7 @@ function randomChar() {
 
 const RND_ALPH_NUM_CHARS = 'QWERTYUIOPLKJHGFDSAZXCVBNM1234567890qwertyuioplkjhgfdsazxcvbnm'
 function randomAlphaNumChar() {
-    return RND_ALPH_NUM_CHARS.charAt(randomInt(0,RND_ALPH_NUM_CHARS.length))
+    return RND_ALPH_NUM_CHARS.charAt(randomInt(0,RND_ALPH_NUM_CHARS.length-1))
 }
 
 function randomAlphaNumString({minLength = 0, maxLength = 100}) {

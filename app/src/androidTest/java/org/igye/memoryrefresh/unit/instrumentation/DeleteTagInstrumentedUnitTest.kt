@@ -4,8 +4,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import org.igye.memoryrefresh.manager.DataManager.CreateTagArgs
 import org.igye.memoryrefresh.manager.DataManager.DeleteTagArgs
 import org.igye.memoryrefresh.testutils.InstrumentedTestBase
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
+import org.junit.Assert.*
 import org.junit.Test
 import org.junit.runner.RunWith
 
@@ -37,7 +36,7 @@ class DeleteTagInstrumentedUnitTest: InstrumentedTestBase() {
         val tagDeletionResult = dm.deleteTag(DeleteTagArgs(tagId = tagId2)).data!!
 
         //then
-        assertTrue(tagDeletionResult)
+        assertNotNull(tagDeletionResult)
 
         assertTableContent(repo = repo, table = tg, matchColumn = tg.id, expectedRows = listOf(
             listOf(tg.id to tagId1, tg.createdAt to time1, tg.name to expectedTag1Name),

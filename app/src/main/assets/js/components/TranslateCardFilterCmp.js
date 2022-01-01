@@ -22,15 +22,11 @@ const AVAILABLE_TRANSLATE_CARD_SORT_DIR = {
     DESC:'DESC',
 }
 
-const TranslateCardFilterCmp = ({onSubmit, minimized}) => {
+const TranslateCardFilterCmp = ({allTags, allTagsMap, onSubmit, minimized}) => {
     const {renderMessagePopup, showMessage, confirmAction, showError, showDialog} = useMessagePopup()
     const af = AVAILABLE_TRANSLATE_CARD_FILTERS
     const sb = AVAILABLE_TRANSLATE_CARD_SORT_BY
     const sd = AVAILABLE_TRANSLATE_CARD_SORT_DIR
-
-    const [allTags, setAllTags] = useState(null)
-    const [allTagsMap, setAllTagsMap] = useState(null)
-    const [errorLoadingTags, setErrorLoadingTags] = useState(null)
 
     const [cardToTagsMap, setCardToTagsMap] = useState(null)
     const [errorLoadingCardToTagsMap, setErrorLoadingCardToTagsMap] = useState(null)
@@ -58,26 +54,12 @@ const TranslateCardFilterCmp = ({onSubmit, minimized}) => {
     const [sortDir, setSortDir] = useState(sd.ASC)
 
     useEffect(async () => {
-        const res = await be.readAllTags()
+        const res = await be.getCardToTagMapping()
         if (res.err) {
-            setErrorLoadingTags(res.err)
+            setErrorLoadingCardToTagsMap(res.err)
             showError(res.err)
         } else {
-            const allTags = res.data
-            setAllTags(allTags)
-            const allTagsMap = {}
-            for (const tag of allTags) {
-                allTagsMap[tag.id] = tag
-            }
-            setAllTagsMap(allTagsMap)
-
-            const res2 = await be.getCardToTagMapping()
-            if (res2.err) {
-                setErrorLoadingCardToTagsMap(res2.err)
-                showError(res2.err)
-            } else {
-                setCardToTagsMap(res2.data)
-            }
+            setCardToTagsMap(res.data)
         }
     }, [])
 
@@ -514,9 +496,9 @@ const TranslateCardFilterCmp = ({onSubmit, minimized}) => {
 
     function renderListOfAvailableFilters(resolve) {
         return RE.List({},
-            renderAvailableFilterListItem({filterName: af.SEARCH_IN_ACTIVE, filterDisplayName: 'Active or Paused', resolve}),
             renderAvailableFilterListItem({filterName: af.INCLUDE_TAGS, filterDisplayName: 'Tags to include', resolve}),
             renderAvailableFilterListItem({filterName: af.EXCLUDE_TAGS, filterDisplayName: 'Tags to exclude', resolve}),
+            renderAvailableFilterListItem({filterName: af.SEARCH_IN_ACTIVE, filterDisplayName: 'Active or Paused', resolve}),
             renderAvailableFilterListItem({filterName: af.CREATED_ON_OR_AFTER, filterDisplayName: 'Created on or after', resolve}),
             renderAvailableFilterListItem({filterName: af.CREATED_ON_OR_BEFORE, filterDisplayName: 'Created on or before', resolve}),
             renderAvailableFilterListItem({filterName: af.NATIVE_TEXT_LENGTH, filterDisplayName: 'Native text length', resolve}),
@@ -545,18 +527,19 @@ const TranslateCardFilterCmp = ({onSubmit, minimized}) => {
         })
     }
 
-    function getSelectedFilter() {
+    function getEffectiveSelectedFilterNames() {
         return filtersSelected
+            .filter(filterName => (filterName !== af.INCLUDE_TAGS || tagsToInclude.length) && (filterName !== af.EXCLUDE_TAGS || tagsToExclude.length))
+    }
+
+    function getSelectedFilter() {
+        return getEffectiveSelectedFilterNames()
             .map(filterName => allFilterObjects[filterName])
             .reduce((acc,elem) => ({...acc,...elem.getFilterValues()}), {})
     }
 
     function renderComponentContent() {
-        if (errorLoadingTags) {
-            return RE.Fragment({},
-                `An error occurred during loading of tags: [${errorLoadingTags.code}] - ${errorLoadingTags.msg}`,
-            )
-        } else if (errorLoadingCardToTagsMap) {
+        if (errorLoadingCardToTagsMap) {
             return RE.Fragment({},
                 `An error occurred during loading of card to tags mapping: [${errorLoadingCardToTagsMap.code}] - ${errorLoadingCardToTagsMap.msg}`,
             )
@@ -574,10 +557,11 @@ const TranslateCardFilterCmp = ({onSubmit, minimized}) => {
     }
 
     if (minimized) {
+        const filtersToRender = getEffectiveSelectedFilterNames()
         return RE.Paper({style:{padding:'5px'}},
-            RE.Container.col.top.left({},{},
+            filtersToRender.length ? RE.Container.col.top.left({},{},
                 filtersSelected.map(filterName => allFilterObjects[filterName].renderMinimized())
-            )
+            ) : 'Select all cards'
         )
     } else {
         return RE.Fragment({},

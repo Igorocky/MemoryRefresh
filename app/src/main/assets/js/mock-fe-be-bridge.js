@@ -76,7 +76,7 @@ function createFeBeBridgeForUiTestMode() {
         }
     }
 
-    mockedBeFunctions.createTranslateCard = ({textToTranslate, translation, tagIds}) => {
+    mockedBeFunctions.createTranslateCard = ({textToTranslate, translation, tagIds, paused}) => {
         textToTranslate = textToTranslate?.trim()??''
         translation = translation?.trim()??''
         if (textToTranslate == '') {
@@ -87,15 +87,19 @@ function createFeBeBridgeForUiTestMode() {
             const id = (CARDS.map(c=>c.id).max()??0)+1
             const newCard = {
                 id,
-                textToTranslate,
-                translation,
-                timeSinceLastCheck: '1d 3h',
+                createdAt: new Date().getTime(),
+                paused,
                 schedule: {
                     cardId: id,
+                    updatedAt: new Date().getTime(),
                     delay: '0m',
                     nextAccessInMillis: 0,
                     nextAccessAt: new Date().getTime()
-                }
+                },
+                timeSinceLastCheck: '1d 3h',
+                overdue: 1.03,
+                textToTranslate,
+                translation
             }
             CARDS.push(newCard)
             for (let tagId of tagIds) {
@@ -112,22 +116,28 @@ function createFeBeBridgeForUiTestMode() {
         } else {
             return okResponse({
                 id: card.id,
-                textToTranslate: card.textToTranslate,
-                translation: card.translation,
-                timeSinceLastCheck: card.timeSinceLastCheck,
+                createdAt: card.createdAt,
+                paused: card.paused,
+                tagIds: CARDS_TO_TAGS.filter(p => p.cardId === cardId).map(p=>p.tagId),
                 schedule: {
                     cardId: card.schedule.cardId,
+                    updatedAt: card.schedule.updatedAt,
                     delay: card.schedule.delay,
                     nextAccessInMillis: card.schedule.nextAccessInMillis,
                     nextAccessAt: card.schedule.nextAccessAt,
-                }
+                },
+                timeSinceLastCheck: card.timeSinceLastCheck,
+                overdue: card.overdue,
+                textToTranslate: card.textToTranslate,
+                translation: card.translation,
             })
         }
     }
 
     mockedBeFunctions.readTranslateCardsByFilter = (filter) => {
         console.log('filter', filter)
-        return okResponse([])
+        // return okResponse([])
+        return okResponse(CARDS.map(c=>mockedBeFunctions.readTranslateCardById({cardId:c.id}).data))
     }
 
     mockedBeFunctions.validateTranslateCard = ({cardId, userProvidedTranslation}) => {
@@ -286,7 +296,8 @@ function createFeBeBridgeForUiTestMode() {
             .forEach(s=>mockedBeFunctions.createTranslateCard({
                 textToTranslate:s.toUpperCase(),
                 translation:s.toLowerCase(),
-                tagIds:getRandomTagIds()
+                tagIds:getRandomTagIds(),
+                paused: randomInt(0,1) === 1
             }))
     }
     fillDbWithMockData()

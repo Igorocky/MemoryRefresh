@@ -389,6 +389,14 @@ class ReadTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
         val card3 = createCard(cardId = 3L, tagIds = listOf(tagId2, tagId3), mapper = {it.copy(paused = !it.paused)})
         val card4 = createCard(cardId = 4L, tagIds = listOf(tagId4, tagId5, tagId6))
 
+        //search by 0 tags - all cards are returned
+        assertSearchResult(
+            listOf(card1, card2, card3, card4),
+            dm.readTranslateCardsByFilter(ReadTranslateCardsByFilterArgs(
+                tagIdsToInclude = setOf()
+            ))
+        )
+
         //search by one tag
         assertSearchResult(
             listOf(card1, card3),
@@ -434,6 +442,14 @@ class ReadTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
         val card2 = createCard(cardId = 2L, tagIds = listOf())
         val card3 = createCard(cardId = 3L, tagIds = listOf(tagId2, tagId3), mapper = {it.copy(paused = !it.paused)})
         val card4 = createCard(cardId = 4L, tagIds = listOf(tagId4, tagId5, tagId6))
+
+        //search by 0 tags - all cards are returned
+        assertSearchResult(
+            listOf(card1, card2, card3, card4),
+            dm.readTranslateCardsByFilter(ReadTranslateCardsByFilterArgs(
+                tagIdsToExclude = setOf()
+            ))
+        )
 
         //search by one tag
         assertSearchResult(
