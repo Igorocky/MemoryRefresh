@@ -22,7 +22,7 @@ const AVAILABLE_TRANSLATE_CARD_SORT_DIR = {
     DESC:'DESC',
 }
 
-const TranslateCardFilterCmp = ({onSubmit}) => {
+const TranslateCardFilterCmp = ({onSubmit, minimized}) => {
     const {renderMessagePopup, showMessage, confirmAction, showError, showDialog} = useMessagePopup()
     const af = AVAILABLE_TRANSLATE_CARD_FILTERS
     const sb = AVAILABLE_TRANSLATE_CARD_SORT_BY
@@ -35,7 +35,7 @@ const TranslateCardFilterCmp = ({onSubmit}) => {
     const [cardToTagsMap, setCardToTagsMap] = useState(null)
     const [errorLoadingCardToTagsMap, setErrorLoadingCardToTagsMap] = useState(null)
 
-    const [filtersSelected, setFiltersSelected] = useState([af.SORT_BY])
+    const [filtersSelected, setFiltersSelected] = useState([af.INCLUDE_TAGS])
     const [focusedFilter, setFocusedFilter] = useState(filtersSelected[0])
 
     const [searchInActive, setSearchInActive] = useState(true)
@@ -152,6 +152,7 @@ const TranslateCardFilterCmp = ({onSubmit}) => {
                         )
                     ))
                 ),
+                renderMinimized: () => `Search in: ${searchInActive ? 'Active' : 'Paused'}`,
                 getFilterValues: () => ({paused: !searchInActive})
             }
         }
@@ -186,6 +187,10 @@ const TranslateCardFilterCmp = ({onSubmit}) => {
                         color:'primary',
                         minimized,
                     })
+                ),
+                renderMinimized: () => RE.Fragment({},
+                    'Include: ',
+                    renderListOfTags({tags: tagsToInclude, color:'primary'})
                 ),
                 getFilterValues: () => ({tagIdsToInclude: tagsToInclude.map(t=>t.id)})
             }
@@ -222,6 +227,10 @@ const TranslateCardFilterCmp = ({onSubmit}) => {
                         minimized,
                     })
                 ),
+                renderMinimized: () => RE.Fragment({},
+                    'Exclude: ',
+                    renderListOfTags({tags: tagsToExclude, color:'secondary'})
+                ),
                 getFilterValues: () => ({tagIdsToExclude: tagsToExclude.map(t=>t.id)})
             }
         }
@@ -249,6 +258,7 @@ const TranslateCardFilterCmp = ({onSubmit}) => {
                         minimized,
                     })
                 ),
+                renderMinimized: () => `Created on or after: ${createdOnOrAfter.getFullYear()} ${ALL_MONTHS[createdOnOrAfter.getMonth()]} ${createdOnOrAfter.getDate()}`,
                 getFilterValues: () => ({createdFrom: startOfDay(createdOnOrAfter).getTime()})
             }
         }
@@ -276,6 +286,7 @@ const TranslateCardFilterCmp = ({onSubmit}) => {
                         minimized,
                     })
                 ),
+                renderMinimized: () => `Created on or before: ${createdOnOrBefore.getFullYear()} ${ALL_MONTHS[createdOnOrBefore.getMonth()]} ${createdOnOrBefore.getDate()}`,
                 getFilterValues: () => ({createdTill: addDays(startOfDay(createdOnOrBefore),1).getTime()})
             }
         }
@@ -284,6 +295,7 @@ const TranslateCardFilterCmp = ({onSubmit}) => {
     function createNativeTextLengthFilterObject() {
         const filterName = af.NATIVE_TEXT_LENGTH
         const minimized = filterName !== focusedFilter
+        const parameterName = '(native text length)'
         return {
             [filterName]: {
                 render: () => RE.Container.col.top.left({},{},
@@ -303,10 +315,11 @@ const TranslateCardFilterCmp = ({onSubmit}) => {
                         selectedMax: nativeTextMaxLength,
                         onMinSelected: newValue => setNativeTextMinLength(newValue),
                         onMaxSelected: newValue => setNativeTextMaxLength(newValue),
-                        parameterName: '(native text length)',
+                        parameterName: parameterName,
                         minimized,
                     })
                 ),
+                renderMinimized: () => `${(hasValue(nativeTextMinLength) ? nativeTextMinLength : 0) + ' \u2264 '}${parameterName}${hasValue(nativeTextMaxLength) ? ' \u2264 ' + nativeTextMaxLength : ''}`,
                 getFilterValues: () => ({
                     textToTranslateLengthGreaterThan: hasValue(nativeTextMinLength) ? nativeTextMinLength - 1 : null,
                     textToTranslateLengthLessThan: hasValue(nativeTextMaxLength) ? (nativeTextMaxLength-0) + 1 : null,
@@ -350,6 +363,7 @@ const TranslateCardFilterCmp = ({onSubmit}) => {
                         },
                     }))
                 ),
+                renderMinimized: () => `Native text contains: "${nativeTextContains}"`,
                 getFilterValues: () => ({textToTranslateContains: nativeTextContains})
             }
         }
@@ -358,6 +372,7 @@ const TranslateCardFilterCmp = ({onSubmit}) => {
     function createForeignTextLengthFilterObject() {
         const filterName = af.FOREIGN_TEXT_LENGTH
         const minimized = filterName !== focusedFilter
+        const parameterName = '(foreign text length)'
         return {
             [filterName]: {
                 render: () => RE.Container.col.top.left({},{},
@@ -377,10 +392,11 @@ const TranslateCardFilterCmp = ({onSubmit}) => {
                         selectedMax: foreignTextMaxLength,
                         onMinSelected: newValue => setForeignTextMinLength(newValue),
                         onMaxSelected: newValue => setForeignTextMaxLength(newValue),
-                        parameterName: '(foreign text length)',
+                        parameterName: parameterName,
                         minimized,
                     })
                 ),
+                renderMinimized: () => `${(hasValue(foreignTextMinLength) ? foreignTextMinLength : 0) + ' \u2264 '}${parameterName}${hasValue(foreignTextMaxLength) ? ' \u2264 ' + foreignTextMaxLength : ''}`,
                 getFilterValues: () => ({
                     translationLengthGreaterThan: hasValue(foreignTextMinLength) ? foreignTextMinLength - 1 : null,
                     translationLengthLessThan: hasValue(foreignTextMaxLength) ? (foreignTextMaxLength-0) + 1 : null,
@@ -424,6 +440,7 @@ const TranslateCardFilterCmp = ({onSubmit}) => {
                         },
                     }))
                 ),
+                renderMinimized: () => `Foreign text contains: "${foreignTextContains}"`,
                 getFilterValues: () => ({translationContains: foreignTextContains})
             }
         }
@@ -432,6 +449,8 @@ const TranslateCardFilterCmp = ({onSubmit}) => {
     function createSortByFilterObject() {
         const filterName = af.SORT_BY
         const minimized = filterName !== focusedFilter
+        const possibleParams = {[sb.TIME_CREATED]:{displayName:'Date created'}}
+        const possibleDirs = {[sd.ASC]:{displayName:'A-Z'}, [sd.DESC]:{displayName:'Z-A'}}
         return {
             [filterName]: {
                 render: () => RE.Container.col.top.left({},{},
@@ -447,15 +466,16 @@ const TranslateCardFilterCmp = ({onSubmit}) => {
                         RE.span({style:{paddingRight:'10px'}, onClick: () => setFocusedFilter(null)}, 'Sort by:')
                     ),
                     re(SortBySelector,{
-                        possibleParams: {[sb.TIME_CREATED]:{displayName:'Date created'}},
+                        possibleParams: possibleParams,
                         selectedParam: sortBy,
                         onParamSelected: newSortBy => setSortBy(newSortBy),
-                        possibleDirs: {[sd.ASC]:{displayName:'A-Z'}, [sd.DESC]:{displayName:'Z-A'}},
+                        possibleDirs: possibleDirs,
                         selectedDir: sortDir,
                         onDirSelected: newSortDir => setSortDir(newSortDir),
                         minimized,
                     })
                 ),
+                renderMinimized: () => `Sort by: ${possibleParams[sortBy].displayName} ${possibleDirs[sortDir].displayName}`,
                 getFilterValues: () => ({sortBy, sortDir})
             }
         }
@@ -553,8 +573,16 @@ const TranslateCardFilterCmp = ({onSubmit}) => {
         }
     }
 
-    return RE.Fragment({},
-        renderComponentContent(),
-        renderMessagePopup()
-    )
+    if (minimized) {
+        return RE.Paper({style:{padding:'5px'}},
+            RE.Container.col.top.left({},{},
+                filtersSelected.map(filterName => allFilterObjects[filterName].renderMinimized())
+            )
+        )
+    } else {
+        return RE.Fragment({},
+            renderComponentContent(),
+            renderMessagePopup()
+        )
+    }
 }

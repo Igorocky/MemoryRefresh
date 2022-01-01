@@ -11,6 +11,7 @@ const CardsSearchView = ({query,openView,setPageTitle}) => {
     const [focusedCardId, setFocusedCardId] = useState(null)
 
     async function reloadCards({filter}) {
+        setAllCards(null)
         const res = await be.readTranslateCardsByFilter(filter)
         if (res.err) {
             setErrorLoadingCards(res.err)
@@ -22,7 +23,9 @@ const CardsSearchView = ({query,openView,setPageTitle}) => {
 
     function renderListOfCards() {
         if (!isFilterMode) {
-            if (allCards.length == 0) {
+            if (hasNoValue(allCards)) {
+                return 'Loading cards...'
+            } else if (allCards.length == 0) {
                 return 'There are no cards matching the search criteria.'
             } else {
                 return re(ListOfObjectsCmp,{
@@ -74,14 +77,18 @@ const CardsSearchView = ({query,openView,setPageTitle}) => {
 
     function renderFilter() {
         return re(TranslateCardFilterCmp, {
-            onSubmit: filter => console.log('filter', filter)
+            onSubmit: filter => {
+                setIsFilterMode(false)
+                reloadCards({filter})
+            },
+            minimized: !isFilterMode
         })
     }
 
     function renderPageContent() {
         return RE.Container.col.top.left({style: {marginTop:'5px'}},{},
             renderFilter(),
-            // renderListOfCards()
+            renderListOfCards()
         )
     }
 

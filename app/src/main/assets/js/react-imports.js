@@ -271,3 +271,16 @@ function parseSearchParams(url) {
     }
     return result
 }
+
+function renderListOfTags({tags,color}) {
+    return RE.Fragment({},
+        tags.map(tag => RE.Chip({
+            style: {marginRight:'10px', marginBottom:'5px'},
+            key:tag.id,
+            variant:'outlined',
+            size:'small',
+            label: tag.name,
+            color:color??'default',
+        }))
+    )
+}
