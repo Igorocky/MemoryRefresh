@@ -10,11 +10,23 @@ const AVAILABLE_TRANSLATE_CARD_FILTERS = {
     NATIVE_TEXT_CONTAINS:'NATIVE_TEXT_CONTAINS',
     FOREIGN_TEXT_LENGTH:'FOREIGN_TEXT_LENGTH',
     FOREIGN_TEXT_CONTAINS:'FOREIGN_TEXT_CONTAINS',
+    SORT_BY:'SORT_BY',
+}
+
+const AVAILABLE_TRANSLATE_CARD_SORT_BY = {
+    TIME_CREATED:'TIME_CREATED',
+}
+
+const AVAILABLE_TRANSLATE_CARD_SORT_DIR = {
+    ASC:'ASC',
+    DESC:'DESC',
 }
 
 const TranslateCardFilterCmp = ({onSubmit}) => {
     const {renderMessagePopup, showMessage, confirmAction, showError, showDialog} = useMessagePopup()
     const af = AVAILABLE_TRANSLATE_CARD_FILTERS
+    const sb = AVAILABLE_TRANSLATE_CARD_SORT_BY
+    const sd = AVAILABLE_TRANSLATE_CARD_SORT_DIR
 
     const [allTags, setAllTags] = useState(null)
     const [allTagsMap, setAllTagsMap] = useState(null)
@@ -23,7 +35,7 @@ const TranslateCardFilterCmp = ({onSubmit}) => {
     const [cardToTagsMap, setCardToTagsMap] = useState(null)
     const [errorLoadingCardToTagsMap, setErrorLoadingCardToTagsMap] = useState(null)
 
-    const [filtersSelected, setFiltersSelected] = useState([af.SEARCH_IN_ACTIVE])
+    const [filtersSelected, setFiltersSelected] = useState([af.SORT_BY])
     const [focusedFilter, setFocusedFilter] = useState(filtersSelected[0])
 
     const [searchInActive, setSearchInActive] = useState(true)
@@ -41,6 +53,9 @@ const TranslateCardFilterCmp = ({onSubmit}) => {
     const [foreignTextMinLength, setForeignTextMinLength] = useState(null)
     const [foreignTextMaxLength, setForeignTextMaxLength] = useState(null)
     const [foreignTextContains, setForeignTextContains] = useState('')
+
+    const [sortBy, setSortBy] = useState(sb.TIME_CREATED)
+    const [sortDir, setSortDir] = useState(sd.ASC)
 
     useEffect(async () => {
         const res = await be.readAllTags()
@@ -357,6 +372,32 @@ const TranslateCardFilterCmp = ({onSubmit}) => {
         )
     }
 
+    function renderSortBy() {
+        const filterName = af.SORT_BY
+        return RE.Container.col.top.left({},{},
+            RE.Container.row.left.center({},{},
+                iconButton({
+                    iconName:'cancel',
+                    onClick: () => {
+                        removeFilter(filterName)
+                        setSortBy(sb.TIME_CREATED)
+                        setSortDir(sd.ASC)
+                    }
+                }),
+                RE.span({style:{paddingRight:'10px'}, onClick: () => setFocusedFilter(null)}, 'Sort by:')
+            ),
+            re(SortBySelector,{
+                possibleParams: {[sb.TIME_CREATED]:{displayName:'Date created'}},
+                selectedParam: sortBy,
+                onParamSelected: newSortBy => setSortBy(newSortBy),
+                possibleDirs: {[sd.ASC]:{displayName:'A-Z'}, [sd.DESC]:{displayName:'Z-A'}},
+                selectedDir: sortDir,
+                onDirSelected: newSortDir => setSortDir(newSortDir),
+                minimized: filterName !== focusedFilter,
+            })
+        )
+    }
+
     function renderSelectedFilters() {
         return RE.Container.col.top.left({style:{marginTop:'5px'}},{style:{marginTop:'5px'}},
             filtersSelected.map(filterName => RE.Paper({onClick: () => focusedFilter !== filterName ? setFocusedFilter(filterName) : null},
@@ -369,6 +410,7 @@ const TranslateCardFilterCmp = ({onSubmit}) => {
                 : (filterName === af.FOREIGN_TEXT_LENGTH) ? renderForeignTextLength()
                 : (filterName === af.FOREIGN_TEXT_CONTAINS) ? renderForeignTextContains()
                 : (filterName === af.SEARCH_IN_ACTIVE) ? renderSearchInActive()
+                : (filterName === af.SORT_BY) ? renderSortBy()
                 : `unexpected filter - ${filterName}`
             ))
         )
@@ -395,6 +437,7 @@ const TranslateCardFilterCmp = ({onSubmit}) => {
             renderAvailableFilterListItem({filterName: af.NATIVE_TEXT_CONTAINS, filterDisplayName: 'Native text contains', resolve}),
             renderAvailableFilterListItem({filterName: af.FOREIGN_TEXT_LENGTH, filterDisplayName: 'Foreign text length', resolve}),
             renderAvailableFilterListItem({filterName: af.FOREIGN_TEXT_CONTAINS, filterDisplayName: 'Foreign text contains', resolve}),
+            renderAvailableFilterListItem({filterName: af.SORT_BY, filterDisplayName: 'Sort by', resolve}),
         )
     }
 
