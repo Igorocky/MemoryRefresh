@@ -1,7 +1,14 @@
 "use strict";
 
+const AVAILABLE_TRANSLATE_CARD_FILTERS = {
+    INCLUDE_TAGS:'INCLUDE_TAGS',
+    EXCLUDE_TAGS:'EXCLUDE_TAGS',
+    CREATED_WHEN:'CREATED_WHEN',
+}
+
 const TranslateCardFilterCmp = ({onSubmit}) => {
-    const {renderMessagePopup, showMessage, confirmAction, showError} = useMessagePopup()
+    const {renderMessagePopup, showMessage, confirmAction, showError, showDialog} = useMessagePopup()
+    const af = AVAILABLE_TRANSLATE_CARD_FILTERS
 
     const [allTags, setAllTags] = useState(null)
     const [allTagsMap, setAllTagsMap] = useState(null)
@@ -13,6 +20,9 @@ const TranslateCardFilterCmp = ({onSubmit}) => {
     const [tagsToInclude, setTagsToInclude] = useState([])
     const [tagsToExclude, setTagsToExclude] = useState([])
     const [remainingTags, setRemainingTags] = useState([])
+
+    // const [filtersSelected, setFiltersSelected] = useState([af.INCLUDE_TAGS, af.EXCLUDE_TAGS])
+    const [filtersSelected, setFiltersSelected] = useState([])
 
     useEffect(async () => {
         const res = await be.readAllTags()
@@ -76,6 +86,110 @@ const TranslateCardFilterCmp = ({onSubmit}) => {
         setRemainingTags(remainingTags)
     }
 
+    function addFilter(name) {
+        setFiltersSelected(prev => [name, ...prev])
+    }
+
+    function removeFilter(name) {
+        setFiltersSelected(prev => prev.filter(n => n !== name))
+    }
+
+    function renderTagsToInclude() {
+        return RE.Container.col.top.left({},{},
+            RE.Container.row.left.center({},{},
+                iconButton({
+                    iconName:'cancel',
+                    onClick: () => {
+                        removeFilter(af.INCLUDE_TAGS)
+                        setTagsToInclude([])
+                    }}
+                ),
+                'Tags to include:'
+            ),
+            re(TagSelector,{
+                allTags: remainingTags,
+                selectedTags: tagsToInclude,
+                onTagRemoved:tag=>{
+                    setTagsToInclude(prev=>prev.filter(t=>t.id!=tag.id))
+                },
+                onTagSelected:tag=>{
+                    setTagsToInclude(prev=>[...prev,tag])
+                },
+                label: 'Include',
+                color:'primary',
+            })
+        )
+    }
+
+    function renderTagsToExclude() {
+        return RE.Container.col.top.left({},{},
+            RE.Container.row.left.center({},{},
+                iconButton({
+                    iconName:'cancel',
+                    onClick: () => {
+                        removeFilter(af.EXCLUDE_TAGS)
+                        setTagsToExclude([])
+                    }
+                }),
+                'Tags to exclude:'
+            ),
+            re(TagSelector,{
+                allTags: remainingTags,
+                selectedTags: tagsToExclude,
+                onTagRemoved:tag=>{
+                    setTagsToExclude(prev=>prev.filter(t=>t.id!=tag.id))
+                },
+                onTagSelected:tag=>{
+                    setTagsToExclude(prev=>[...prev,tag])
+                },
+                label: 'Exclude',
+                color:'secondary',
+            })
+        )
+    }
+
+    function renderSelectedFilters() {
+        return RE.Container.col.top.left({style:{marginTop:'5px'}},{style:{marginTop:'5px'}},
+            filtersSelected.map(filterName => RE.Paper({},
+                (filterName === af.INCLUDE_TAGS) ? renderTagsToInclude()
+                : (filterName === af.EXCLUDE_TAGS) ? renderTagsToExclude()
+                : `unexpected filter - ${filterName}`
+            ))
+        )
+    }
+
+    function renderAvailableFilterListItem({filterName, filterDisplayName, resolve}) {
+        return RE.If(!filtersSelected.includes(filterName), () => RE.ListItem(
+            {button:true, onClick: () => resolve(filterName)},
+            RE.ListItemText({}, filterDisplayName)
+        ))
+    }
+
+    function renderListOfAvailableFilters(resolve) {
+        return RE.List({},
+            renderAvailableFilterListItem({filterName: af.INCLUDE_TAGS, filterDisplayName: 'Tags to include', resolve}),
+            renderAvailableFilterListItem({filterName: af.EXCLUDE_TAGS, filterDisplayName: 'Tags to exclude', resolve}),
+        )
+    }
+
+    function renderAddFilterButton() {
+        return iconButton({
+            iconName: 'playlist_add',
+            onClick: async () => {
+                const selectedFilter = await showDialog({
+                    title: 'Select filter:',
+                    cancelBtnText: 'cancel',
+                    contentRenderer: resolve => {
+                        return renderListOfAvailableFilters(resolve)
+                    }
+                })
+                if (hasValue(selectedFilter)) {
+                    addFilter(selectedFilter)
+                }
+            }
+        })
+    }
+
     function renderComponentContent() {
         if (errorLoadingTags) {
             return RE.Fragment({},
@@ -89,34 +203,8 @@ const TranslateCardFilterCmp = ({onSubmit}) => {
             return 'Loading tags...'
         } else {
             return RE.Container.col.top.left({style:{marginTop:'5px'}},{style:{marginTop:'5px'}},
-                RE.Paper({},
-                    re(TagSelector,{
-                        allTags: remainingTags,
-                        selectedTags: tagsToInclude,
-                        onTagRemoved:tag=>{
-                            setTagsToInclude(prev=>prev.filter(t=>t.id!=tag.id))
-                        },
-                        onTagSelected:tag=>{
-                            setTagsToInclude(prev=>[...prev,tag])
-                        },
-                        label: 'Include',
-                        color:'primary',
-                    })
-                ),
-                RE.Paper({},
-                    re(TagSelector,{
-                        allTags: remainingTags,
-                        selectedTags: tagsToExclude,
-                        onTagRemoved:tag=>{
-                            setTagsToExclude(prev=>prev.filter(t=>t.id!=tag.id))
-                        },
-                        onTagSelected:tag=>{
-                            setTagsToExclude(prev=>[...prev,tag])
-                        },
-                        label: 'Exclude',
-                        color:'secondary',
-                    })
-                ),
+                renderAddFilterButton(),
+                renderSelectedFilters(),
             )
         }
     }
