@@ -1,6 +1,7 @@
 "use strict";
 
 const AVAILABLE_TRANSLATE_CARD_FILTERS = {
+    SEARCH_IN_ACTIVE:'SEARCH_IN_ACTIVE',
     INCLUDE_TAGS:'INCLUDE_TAGS',
     EXCLUDE_TAGS:'EXCLUDE_TAGS',
     CREATED_ON_OR_AFTER:'CREATED_ON_OR_AFTER',
@@ -22,8 +23,10 @@ const TranslateCardFilterCmp = ({onSubmit}) => {
     const [cardToTagsMap, setCardToTagsMap] = useState(null)
     const [errorLoadingCardToTagsMap, setErrorLoadingCardToTagsMap] = useState(null)
 
-    const [filtersSelected, setFiltersSelected] = useState([af.NATIVE_TEXT_CONTAINS])
+    const [filtersSelected, setFiltersSelected] = useState([af.SEARCH_IN_ACTIVE])
     const [focusedFilter, setFocusedFilter] = useState(filtersSelected[0])
+
+    const [searchInActive, setSearchInActive] = useState(true)
 
     const [tagsToInclude, setTagsToInclude] = useState([])
     const [tagsToExclude, setTagsToExclude] = useState([])
@@ -108,6 +111,30 @@ const TranslateCardFilterCmp = ({onSubmit}) => {
 
     function removeFilter(name) {
         setFiltersSelected(prev => prev.filter(n => n !== name))
+    }
+
+    function renderSearchInActive() {
+        const filterName = af.SEARCH_IN_ACTIVE
+        const minimized = filterName !== focusedFilter
+        return RE.Container.col.top.left({},{},
+            RE.Container.row.left.center({},{},
+                iconButton({
+                    iconName:'cancel',
+                    onClick: () => {
+                        removeFilter(filterName)
+                        setSearchInActive(true)
+                    }}
+                ),
+                RE.span({style:{paddingRight:'10px'}, onClick: () => setFocusedFilter(null)}, 'Active or paused:')
+            ),
+            RE.If(minimized, () => RE.span({style:{padding:'5px', color:'blue'}}, searchInActive ? 'Active' : 'Paused')),
+            RE.IfNot(minimized, () => RE.FormControl({component:'fieldset', style:{marginLeft:'10px'}},
+                RE.RadioGroup({row:true, value: searchInActive, onChange: event => setSearchInActive(event.target.value === 'true')},
+                    RE.FormControlLabel({value:true, control:RE.Radio({}), label: 'Active'}),
+                    RE.FormControlLabel({value:false, control:RE.Radio({}), label: 'Paused', style:{marginLeft:'10px'}}),
+                )
+            ))
+        )
     }
 
     function renderTagsToInclude() {
@@ -341,6 +368,7 @@ const TranslateCardFilterCmp = ({onSubmit}) => {
                 : (filterName === af.NATIVE_TEXT_CONTAINS) ? renderNativeTextContains()
                 : (filterName === af.FOREIGN_TEXT_LENGTH) ? renderForeignTextLength()
                 : (filterName === af.FOREIGN_TEXT_CONTAINS) ? renderForeignTextContains()
+                : (filterName === af.SEARCH_IN_ACTIVE) ? renderSearchInActive()
                 : `unexpected filter - ${filterName}`
             ))
         )
@@ -358,6 +386,7 @@ const TranslateCardFilterCmp = ({onSubmit}) => {
 
     function renderListOfAvailableFilters(resolve) {
         return RE.List({},
+            renderAvailableFilterListItem({filterName: af.SEARCH_IN_ACTIVE, filterDisplayName: 'Active or Paused', resolve}),
             renderAvailableFilterListItem({filterName: af.INCLUDE_TAGS, filterDisplayName: 'Tags to include', resolve}),
             renderAvailableFilterListItem({filterName: af.EXCLUDE_TAGS, filterDisplayName: 'Tags to exclude', resolve}),
             renderAvailableFilterListItem({filterName: af.CREATED_ON_OR_AFTER, filterDisplayName: 'Created on or after', resolve}),
