@@ -48,6 +48,7 @@ const RE = {
     DialogContent: reFactory(MaterialUI.DialogContent),
     DialogTitle: reFactory(MaterialUI.DialogTitle),
     DialogActions: reFactory(MaterialUI.DialogActions),
+    Divider: reFactory(MaterialUI.Divider),
     FormControlLabel: reFactory(MaterialUI.FormControlLabel),
     FormControl: reFactory(MaterialUI.FormControl),
     FormLabel: reFactory(MaterialUI.FormLabel),

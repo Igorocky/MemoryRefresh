@@ -6,7 +6,9 @@ const AVAILABLE_TRANSLATE_CARD_FILTERS = {
     CREATED_ON_OR_AFTER:'CREATED_ON_OR_AFTER',
     CREATED_ON_OR_BEFORE:'CREATED_ON_OR_BEFORE',
     NATIVE_TEXT_LENGTH:'NATIVE_TEXT_LENGTH',
+    NATIVE_TEXT_CONTAINS:'NATIVE_TEXT_CONTAINS',
     FOREIGN_TEXT_LENGTH:'FOREIGN_TEXT_LENGTH',
+    FOREIGN_TEXT_CONTAINS:'FOREIGN_TEXT_CONTAINS',
 }
 
 const TranslateCardFilterCmp = ({onSubmit}) => {
@@ -20,7 +22,7 @@ const TranslateCardFilterCmp = ({onSubmit}) => {
     const [cardToTagsMap, setCardToTagsMap] = useState(null)
     const [errorLoadingCardToTagsMap, setErrorLoadingCardToTagsMap] = useState(null)
 
-    const [filtersSelected, setFiltersSelected] = useState([af.NATIVE_TEXT_LENGTH])
+    const [filtersSelected, setFiltersSelected] = useState([af.NATIVE_TEXT_CONTAINS])
     const [focusedFilter, setFocusedFilter] = useState(filtersSelected[0])
 
     const [tagsToInclude, setTagsToInclude] = useState([])
@@ -32,8 +34,10 @@ const TranslateCardFilterCmp = ({onSubmit}) => {
 
     const [nativeTextMinLength, setNativeTextMinLength] = useState(null)
     const [nativeTextMaxLength, setNativeTextMaxLength] = useState(null)
+    const [nativeTextContains, setNativeTextContains] = useState('')
     const [foreignTextMinLength, setForeignTextMinLength] = useState(null)
     const [foreignTextMaxLength, setForeignTextMaxLength] = useState(null)
+    const [foreignTextContains, setForeignTextContains] = useState('')
 
     useEffect(async () => {
         const res = await be.readAllTags()
@@ -231,6 +235,41 @@ const TranslateCardFilterCmp = ({onSubmit}) => {
         )
     }
 
+    function renderNativeTextContains() {
+        const filterName = af.NATIVE_TEXT_CONTAINS
+        const minimized = filterName !== focusedFilter
+        return RE.Container.col.top.left({},{},
+            RE.Container.row.left.center({},{},
+                iconButton({
+                    iconName:'cancel',
+                    onClick: () => {
+                        removeFilter(filterName)
+                        setNativeTextContains('')
+                    }
+                }),
+                RE.span({style:{paddingRight:'10px'}, onClick: () => setFocusedFilter(null)}, 'Native text contains:')
+            ),
+            RE.If(minimized, () => RE.span({style:{padding:'5px', color:'blue'}}, `"${nativeTextContains}"`)),
+            RE.IfNot(minimized, () => RE.TextField({
+                autoCorrect: 'off', autoCapitalize: 'off', spellCheck: 'false',
+                value: nativeTextContains,
+                label: 'Native text contains',
+                variant: 'outlined',
+                multiline: false,
+                maxRows: 1,
+                size: 'small',
+                inputProps: {size:24},
+                style: {margin:'5px'},
+                onChange: event => {
+                    const newText = event.nativeEvent.target.value
+                    if (newText != nativeTextContains) {
+                        setNativeTextContains(newText)
+                    }
+                },
+            }))
+        )
+    }
+
     function renderForeignTextLength() {
         const filterName = af.FOREIGN_TEXT_LENGTH
         return RE.Container.col.top.left({},{},
@@ -256,6 +295,41 @@ const TranslateCardFilterCmp = ({onSubmit}) => {
         )
     }
 
+    function renderForeignTextContains() {
+        const filterName = af.FOREIGN_TEXT_CONTAINS
+        const minimized = filterName !== focusedFilter
+        return RE.Container.col.top.left({},{},
+            RE.Container.row.left.center({},{},
+                iconButton({
+                    iconName:'cancel',
+                    onClick: () => {
+                        removeFilter(filterName)
+                        setForeignTextContains('')
+                    }
+                }),
+                RE.span({style:{paddingRight:'10px'}, onClick: () => setFocusedFilter(null)}, 'Foreign text contains:')
+            ),
+            RE.If(minimized, () => RE.span({style:{padding:'5px', color:'blue'}}, `"${foreignTextContains}"`)),
+            RE.IfNot(minimized, () => RE.TextField({
+                autoCorrect: 'off', autoCapitalize: 'off', spellCheck: 'false',
+                value: foreignTextContains,
+                label: 'Foreign text contains',
+                variant: 'outlined',
+                multiline: false,
+                maxRows: 1,
+                size: 'small',
+                inputProps: {size:24},
+                style: {margin:'5px'},
+                onChange: event => {
+                    const newText = event.nativeEvent.target.value
+                    if (newText != foreignTextContains) {
+                        setForeignTextContains(newText)
+                    }
+                },
+            }))
+        )
+    }
+
     function renderSelectedFilters() {
         return RE.Container.col.top.left({style:{marginTop:'5px'}},{style:{marginTop:'5px'}},
             filtersSelected.map(filterName => RE.Paper({onClick: () => focusedFilter !== filterName ? setFocusedFilter(filterName) : null},
@@ -264,16 +338,21 @@ const TranslateCardFilterCmp = ({onSubmit}) => {
                 : (filterName === af.CREATED_ON_OR_AFTER) ? renderCreatedOnOrAfter()
                 : (filterName === af.CREATED_ON_OR_BEFORE) ? renderCreatedOnOrBefore()
                 : (filterName === af.NATIVE_TEXT_LENGTH) ? renderNativeTextLength()
+                : (filterName === af.NATIVE_TEXT_CONTAINS) ? renderNativeTextContains()
                 : (filterName === af.FOREIGN_TEXT_LENGTH) ? renderForeignTextLength()
+                : (filterName === af.FOREIGN_TEXT_CONTAINS) ? renderForeignTextContains()
                 : `unexpected filter - ${filterName}`
             ))
         )
     }
 
     function renderAvailableFilterListItem({filterName, filterDisplayName, resolve}) {
-        return RE.If(!filtersSelected.includes(filterName), () => RE.ListItem(
-            {button:true, onClick: () => resolve(filterName)},
-            RE.ListItemText({}, filterDisplayName)
+        return RE.If(!filtersSelected.includes(filterName), () => RE.Fragment({},
+            RE.ListItem(
+                {button:true, onClick: () => resolve(filterName)},
+                RE.ListItemText({}, filterDisplayName)
+            ),
+            RE.Divider({})
         ))
     }
 
@@ -284,7 +363,9 @@ const TranslateCardFilterCmp = ({onSubmit}) => {
             renderAvailableFilterListItem({filterName: af.CREATED_ON_OR_AFTER, filterDisplayName: 'Created on or after', resolve}),
             renderAvailableFilterListItem({filterName: af.CREATED_ON_OR_BEFORE, filterDisplayName: 'Created on or before', resolve}),
             renderAvailableFilterListItem({filterName: af.NATIVE_TEXT_LENGTH, filterDisplayName: 'Native text length', resolve}),
+            renderAvailableFilterListItem({filterName: af.NATIVE_TEXT_CONTAINS, filterDisplayName: 'Native text contains', resolve}),
             renderAvailableFilterListItem({filterName: af.FOREIGN_TEXT_LENGTH, filterDisplayName: 'Foreign text length', resolve}),
+            renderAvailableFilterListItem({filterName: af.FOREIGN_TEXT_CONTAINS, filterDisplayName: 'Foreign text contains', resolve}),
         )
     }
 

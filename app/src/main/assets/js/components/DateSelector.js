@@ -48,7 +48,7 @@ const DateSelector = ({selectedDate, onDateSelected, minimized = false}) => {
     }
 
     if (minimized) {
-        return RE.span({style: {marginLeft: '5px'}},`${getSelectedYear()} ${ALL_MONTHS[getSelectedMonth()]} ${getSelectedDayOfMonth()}`)
+        return RE.span({style: {marginLeft: '5px', color:'blue'}},`${getSelectedYear()} ${ALL_MONTHS[getSelectedMonth()]} ${getSelectedDayOfMonth()}`)
     } else {
         return RE.Container.row.left.center({},{style:{margin:'5px'}},
             RE.FormControl({variant:"outlined"},

@@ -20,7 +20,7 @@ const IntRangeSelector = ({selectedMin = null, selectedMax = null, onMinSelected
 
     if (minimized) {
         return RE.span(
-            {style: {marginLeft: '5px'}},
+            {style: {marginLeft: '5px', color:'blue'}},
             `${(hasValue(selectedMin) ? selectedMin : 0) + ' \u2264 '}${parameterName}${hasValue(selectedMax) ? ' \u2264 ' + selectedMax : ''}`
         )
     } else {
