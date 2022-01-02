@@ -5,4 +5,4 @@ import java.lang.annotation.RetentionPolicy
 
 @Retention(RetentionPolicy.RUNTIME)
 @Target(AnnotationTarget.FUNCTION)
-annotation class BeMethod
+annotation class BeMethod(val restrictAccessViaHttps: Boolean = false)

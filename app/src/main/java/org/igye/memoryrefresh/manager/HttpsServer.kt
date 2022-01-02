@@ -33,7 +33,7 @@ class HttpsServer(
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
 ) {
     private val logger = LoggerImpl("http-server")
-    private val beMethods = createMethodMap(javascriptInterface)
+    private val beMethods = createMethodMap(javascriptInterface) { !it.restrictAccessViaHttps }
 
     private val assetsPathHandler: CustomAssetsPathHandler = CustomAssetsPathHandler(
         appContext = appContext,

@@ -26,11 +26,14 @@ object Utils {
     fun <T> strToObj(str:String, classOfT: Class<T>): T = gson.fromJson(str, classOfT)
     fun objToStr(obj:Any): String = gson.toJson(obj)
 
-    fun createMethodMap(jsInterfaces: List<Any>): Map<String, (String) -> String> {
+    fun createMethodMap(jsInterfaces: List<Any>, filter: (BeMethod) -> Boolean = {true}): Map<String, (String) -> String> {
         val resultMap = HashMap<String, (String) -> String>()
         jsInterfaces.forEach{ jsInterface ->
             jsInterface.javaClass.methods.asSequence()
-                .filter { it.getAnnotation(BeMethod::class.java) != null }
+                .filter {
+                    val beMethod = it.getAnnotation(BeMethod::class.java)
+                    beMethod != null && filter(beMethod)
+                }
                 .forEach { method ->
                     if (resultMap.containsKey(method.name)) {
                         throw MemoryRefreshException(

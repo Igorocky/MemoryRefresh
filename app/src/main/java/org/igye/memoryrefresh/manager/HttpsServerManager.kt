@@ -19,7 +19,7 @@ class HttpsServerManager(
     private val self = this
     private val httpsServer: AtomicReference<HttpsServer> = AtomicReference(null)
 
-    @BeMethod
+    @BeMethod(restrictAccessViaHttps = true)
     fun getHttpServerState(): BeRespose<HttpServerState> {
         val settings = settingsManager.getHttpServerSettings()
         return BeRespose(data = HttpServerState(
@@ -29,13 +29,13 @@ class HttpsServerManager(
         ))
     }
 
-    @BeMethod
+    @BeMethod(restrictAccessViaHttps = true)
     fun saveHttpServerSettings(httpServerSettings: HttpServerSettings): BeRespose<HttpServerState> {
         settingsManager.saveHttpServerSettings(httpServerSettings)
         return getHttpServerState()
     }
 
-    @BeMethod
+    @BeMethod(restrictAccessViaHttps = true)
     fun startHttpServer(): BeRespose<HttpServerState> {
         val keyStorFile = settingsManager.getKeyStorFile()
         return if (keyStorFile == null) {
@@ -66,7 +66,7 @@ class HttpsServerManager(
         }
     }
 
-    @BeMethod
+    @BeMethod(restrictAccessViaHttps = true)
     fun stopHttpServer(): BeRespose<HttpServerState> {
         httpsServer.get()?.stop()
         httpsServer.set(null)
