@@ -147,6 +147,11 @@ function createFeBeBridgeForUiTestMode() {
         //     cards: [],
         //     nextCardIn: ''
         // })
+
+        return okResponse({
+            cards: CARDS.map(c=>mockedBeFunctions.readTranslateCardById({cardId:c.id}).data)
+        })
+
         if (topCnt !== 1) {
             topCnt++
             return okResponse({

@@ -1,22 +1,25 @@
 "use strict";
 
-const RepeatTranslateCardCmp = ({filterSummary, card, onDone,controlsContainer}) => {
+const RepeatTranslateCardCmp = ({allTags, allTagsMap, controlsContainer, cardToRepeat, filterSummary, onCardWasDeleted, onDone}) => {
     const USER_INPUT_TEXT_FIELD = 'user-input'
     const CARD_DELAY_TEXT_FIELD = 'card-delay'
 
     const {renderMessagePopup, showError, showMessage} = useMessagePopup()
 
+    const [card, setCard] = useState(cardToRepeat)
+    const [errorLoadingCard, setErrorLoadingCard] = useState(null)
     const [userInput, setUserInput] = useState('')
     const [validationRequestIsInProgress, setValidationRequestIsInProgress] = useState(false)
     const [answerFromBE, setAnswerFromBE] = useState(null)
     const [answerFromBEIsShown, setAnswerFromBEIsShown] = useState(false)
     const [beValidationResult, setBeValidationResult] = useState(null)
-    const [delay, setDelay] = useState(card.schedule.delay)
+    const [delay, setDelay] = useState(card?.schedule?.delay)
     const [autoFocusDelay, setAutoFocusDelay] = useState(false)
     const delayTextField = useRef(null)
     const [updateDelayRequestIsInProgress, setUpdateDelayRequestIsInProgress] = useState(false)
 
     const [editMode, setEditMode] = useState(false)
+    const [cardWasUpdated, setCardWasUpdated] = useState(false)
 
     useEffect(() => {
         if (autoFocusDelay && delayTextField.current) {
@@ -27,6 +30,23 @@ const RepeatTranslateCardCmp = ({filterSummary, card, onDone,controlsContainer})
             setAutoFocusDelay(false)
         }
     }, [delayTextField.current])
+
+    async function reloadCard() {
+        setCard(null)
+        setDelay(null)
+        setErrorLoadingCard(null)
+        const resp = await be.readTranslateCardById({cardId:cardToRepeat.id})
+        if (resp.err) {
+            await showError(resp.err)
+            setErrorLoadingCard(resp.err)
+        } else {
+            setCard(resp.data)
+            setDelay(resp.data.schedule.delay)
+            if (editMode && hasValue(answerFromBE)) {
+                setAnswerFromBE(resp.data.translation.trim())
+            }
+        }
+    }
 
     function renderQuestion() {
         if (card) {
@@ -145,7 +165,7 @@ const RepeatTranslateCardCmp = ({filterSummary, card, onDone,controlsContainer})
         if (res.err) {
             showError(res.err)
         } else {
-            onDone()
+            onDone({cardWasUpdated})
         }
     }
 
@@ -207,14 +227,25 @@ const RepeatTranslateCardCmp = ({filterSummary, card, onDone,controlsContainer})
     function renderPageContent() {
         if (editMode) {
             return re(EditTranslateCardCmp, {
+                allTags,
+                allTagsMap,
                 card,
-                translationEnabled: hasValue(answerFromBE),
+                reducedMode: hasNoValue(answerFromBE),
                 onCancelled: () => setEditMode(false),
-                onSaved: loadCard,
-                onDeleted: onDone
+                onSaved: () => {
+                    setCardWasUpdated(true)
+                    setEditMode(false)
+                    reloadCard()
+                },
+                onDeleted: onCardWasDeleted
             })
+        } else if (hasValue(errorLoadingCard)) {
+            return `An error occurred during card loading: [${errorLoadingCard.code}] - ${errorLoadingCard.msg}`
+        } else if (hasNoValue(card)) {
+            return `Reloading card...`
         } else {
-            return RE.Container.col.top.left({},{style: {marginTop: '10px'}},
+            return RE.Container.col.top.left({},{style: {marginBottom: '10px'}},
+                filterSummary,
                 renderQuestion(),
                 RE.If(answerFromBEIsShown, renderExpectedTranslation),
                 RE.Container.row.left.center({},{},

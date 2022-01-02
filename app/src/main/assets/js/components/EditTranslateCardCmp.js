@@ -93,7 +93,7 @@ const EditTranslateCardCmp = ({allTags, allTagsMap, card, reducedMode = false, o
             tagIdsOnChange: newValue => setTagIds(newValue),
             tagIdsBgColor: getBgColor(tagIdsIsModified),
 
-            activatesIn: card.activatesIn,
+            activatesIn: reducedMode ? null : card.activatesIn,
             createdAt,
 
             onSave: doSave,

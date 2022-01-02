@@ -71,9 +71,12 @@ const RepeatCardsView = ({query,openView,setPageTitle,controlsContainer}) => {
             } else {
                 return re(RepeatTranslateCardCmp, {
                     key: cardCounter,
+                    allTags,
+                    allTagsMap,
                     filterSummary: renderFilter(),
-                    card:cardToRepeat,
-                    onDone: () => proceedToNextCard({}),
+                    cardToRepeat,
+                    onCardWasDeleted: () => reloadCards({filter}),
+                    onDone: ({cardWasUpdated}) => cardWasUpdated ? reloadCards({filter}) : proceedToNextCard({}),
                     controlsContainer
                 })
             }
@@ -120,8 +123,8 @@ const RepeatCardsView = ({query,openView,setPageTitle,controlsContainer}) => {
         } else if (hasNoValue(allTags) || hasNoValue(allTagsMap)) {
             return 'Loading tags...'
         } else {
-            return RE.Container.col.top.left({style: {marginTop:'5px'}},{style:{marginBottom:'10px'}},
-                renderFilter(),
+            return RE.Container.col.top.left({style: {marginTop:'5px'}},{},
+                RE.If(isFilterMode, () => renderFilter()),
                 renderCardToRepeat()
             )
         }
