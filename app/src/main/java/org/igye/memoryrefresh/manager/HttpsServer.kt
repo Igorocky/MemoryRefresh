@@ -37,7 +37,8 @@ class HttpsServer(
 
     private val assetsPathHandler: CustomAssetsPathHandler = CustomAssetsPathHandler(
         appContext = appContext,
-        feBeBridge = "js/http-fe-be-bridge.js"
+        feBeBridge = "js/http-fe-be-bridge.js",
+        isInWebview = false
     )
 
     private val keyStore = KeyStore.getInstance(KeyStore.getDefaultType()).also {keyStore->

@@ -52,7 +52,8 @@ abstract class WebViewViewModel(
                     CustomAssetsPathHandler(
                         appContext = appContext,
                         rootReactComponent = rootReactComponent,
-                        feBeBridge = "js/android-fe-be-bridge.js"
+                        feBeBridge = "js/android-fe-be-bridge.js",
+                        isInWebview = true
                     )
                 )
                 .addPathHandler("/res/", WebViewAssetLoader.ResourcesPathHandler(appContext))

@@ -34,11 +34,11 @@ const BackupsView = ({query,openView,setPageTitle}) => {
                                     ? iconButton({iconName:'ios_share', onClick: () => restoreFromBackup({backup})})
                                     : null
                             ),
-                            RE.td({},
+                            RE.If(IS_IN_WEBVIEW, () => RE.td({},
                                 focusedBackup?.name === backup.name
                                     ? iconButton({iconName:'share', onClick: () => shareBackup({backupName:backup.name})})
                                     : null
-                            ),
+                            )),
                         )
                     )
                 )
@@ -91,7 +91,9 @@ const BackupsView = ({query,openView,setPageTitle}) => {
                 const newBackupName = res.data.name
                 await showMessage({
                     text: `A backup was created '${newBackupName}'`,
-                    additionalActionsRenderer: () => iconButton({iconName:'share', onClick: () => shareBackup({backupName:newBackupName})})
+                    additionalActionsRenderer: () => IS_IN_WEBVIEW
+                        ? iconButton({iconName:'share', onClick: () => shareBackup({backupName:newBackupName})})
+                        : null
                 })
                 setAllBackups(prev => [res.data, ...prev])
                 setFocusedBackup(null)

@@ -8,7 +8,8 @@ import java.io.ByteArrayInputStream
 class CustomAssetsPathHandler(
     appContext: Context,
     private val rootReactComponent: String = "ViewSelector",
-    private val feBeBridge: String
+    private val feBeBridge: String,
+    private val isInWebview: Boolean,
 ) : WebViewAssetLoader.PathHandler {
     private val delegate = WebViewAssetLoader.AssetsPathHandler(appContext)
     override fun handle(path: String): WebResourceResponse? {
@@ -23,6 +24,10 @@ class CustomAssetsPathHandler(
                         .replaceFirst(
                             "const ROOT_REACT_COMPONENT = null",
                             "const ROOT_REACT_COMPONENT = $rootReactComponent"
+                        )
+                        .replaceFirst(
+                            "const IS_IN_WEBVIEW = false",
+                            "const IS_IN_WEBVIEW = $isInWebview"
                         )
                         .toByteArray()
                 )
