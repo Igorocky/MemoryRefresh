@@ -1,64 +1,137 @@
 "use strict";
 
 const RepeatCardsView = ({query,openView,setPageTitle,controlsContainer}) => {
-    const {showError, renderMessagePopup} = useMessagePopup()
+    const {renderMessagePopup, showMessage, confirmAction, showError, showMessageWithProgress} = useMessagePopup()
+
+    const af = AVAILABLE_TRANSLATE_CARD_FILTERS
+
+    const [isFilterMode, setIsFilterMode] = useState(true)
+
+    const {allTags, allTagsMap, errorLoadingTags} = useTags()
 
     const [cardCounter, setCardCounter] = useState(0)
-    const [nextCardResponse, setNextCardResponse] = useState(null)
-    const [errorLoadingCard, setErrorLoadingCard] = useState(null)
+    const [filter, setFilter] = useState(0)
+    const [allCards, setAllCards] = useState(null)
+    const [nextCardWillBeAvailableIn, setNextCardWillBeAvailableIn] = useState(null)
+    const [errorLoadingCards, setErrorLoadingCards] = useState(null)
 
-    useEffect(() => {
-        loadNextCard()
-    }, [])
+    const [cardToRepeat, setCardToRepeat] = useState(null)
 
-    async function loadNextCard() {
-        setNextCardResponse(null)
-        setErrorLoadingCard(null)
-        const res = await be.getNextCardToRepeat()
+    async function reloadCards({filter}) {
+        setAllCards(null)
+        setCardToRepeat(null)
+        setErrorLoadingCards(null)
+        setNextCardWillBeAvailableIn(null)
+        const res = await be.selectTopOverdueTranslateCards(filter)
         if (res.err) {
-            await showError(res.err)
-            setErrorLoadingCard(res.err)
-            setNextCardResponse(null)
+            setErrorLoadingCards(res.err)
+            showError(res.err)
         } else {
-            setErrorLoadingCard(null)
-            setNextCardResponse(res.data)
-            setCardCounter(cnt => cnt+1)
-        }
-    }
-
-    function renderRefreshButton() {
-        return iconButton({iconName:'refresh', onClick: loadNextCard})
-    }
-
-    function renderPageContent() {
-        if (errorLoadingCard) {
-            return RE.Fragment({},
-                `An error occurred during card loading: [${errorLoadingCard.code}] - ${errorLoadingCard.msg}`,
-                renderRefreshButton()
-            )
-        } else if (!nextCardResponse) {
-            return 'Loading card...'
-        } else {
-            if (nextCardResponse.cardsRemain > 0) {
-                return re(RepeatTranslateCardCmp, {
-                    key: cardCounter,
-                    cardId:nextCardResponse.cardId,
-                    cardsRemain:nextCardResponse.cardsRemain,
-                    onDone: loadNextCard,
-                    controlsContainer
-                })
-            } else if (nextCardResponse.nextCardIn === '') {
-                return `There are no cards to repeat.`
+            if (res.data?.cards?.length??0) {
+                const allCards = res.data.cards
+                setAllCards(allCards)
+                proceedToNextCard({cards:allCards})
             } else {
-                return RE.Fragment({},
-                    `Next card will be available in ${nextCardResponse.nextCardIn}`,
-                    renderRefreshButton()
-                )
+                setAllCards([])
+                setNextCardWillBeAvailableIn(res.data?.nextCardIn)
             }
         }
     }
 
+    function proceedToNextCard({cards}) {
+        setCardCounter(prev => prev+1)
+        if (hasValue(cards)) {
+            if (cards.length) {
+                setCardToRepeat(cards[0])
+            }
+        } else {
+            const newAllCards = allCards.filter(c=>c.id !== cardToRepeat.id)
+            if (newAllCards.length === 0) {
+                reloadCards({filter})
+            } else {
+                setAllCards(newAllCards)
+                setCardToRepeat(newAllCards[0])
+            }
+        }
+    }
+
+    function renderCardToRepeat() {
+        if (!isFilterMode) {
+            if (errorLoadingCards) {
+                return `An error occurred during loading of cards: [${errorLoadingCards.code}] - ${errorLoadingCards.msg}`
+            } else if (hasValue(nextCardWillBeAvailableIn) && nextCardWillBeAvailableIn !== '') {
+                return RE.Container.col.top.left({},{},
+                    `Next card will be available in ${nextCardWillBeAvailableIn}`,
+                    renderRefreshButton()
+                )
+            } else if (hasNoValue(allCards)) {
+                return `Loading cards...`
+            } else if (hasNoValue(cardToRepeat)) {
+                return `No cards were found matching the search criteria.`
+            } else {
+                return re(RepeatTranslateCardCmp, {
+                    key: cardCounter,
+                    filterSummary: renderFilter(),
+                    card:cardToRepeat,
+                    onDone: () => proceedToNextCard({}),
+                    controlsContainer
+                })
+            }
+        }
+    }
+
+    function renderRefreshButton() {
+        return iconButton({iconName:'refresh', onClick: () => reloadCards({filter})})
+    }
+
+    function openFilter() {
+        setIsFilterMode(true)
+        setCardToRepeat(null)
+        setAllCards(null)
+        setErrorLoadingCards(null)
+        setNextCardWillBeAvailableIn(null)
+    }
+
+    function renderFilter() {
+        return re(TranslateCardFilterCmp, {
+            allTags,
+            allTagsMap,
+            submitButtonIconName:'play_arrow',
+            onSubmit: filter => {
+                setIsFilterMode(false)
+                setFilter(filter)
+                reloadCards({filter})
+            },
+            allowedFilters:[af.INCLUDE_TAGS, af.EXCLUDE_TAGS, af.FOREIGN_TEXT_LENGTH],
+            minimized: !isFilterMode
+        })
+    }
+
+    function renderOpenSearchButton() {
+        return iconButton({iconName:'youtube_searched_for', onClick: openFilter})
+    }
+
+    function renderPageContent() {
+        if (errorLoadingTags) {
+            return RE.Container.col.top.left({},{},
+                `An error occurred during loading of tags: [${errorLoadingTags.code}] - ${errorLoadingTags.msg}`,
+                renderRefreshButton()
+            )
+        } else if (hasNoValue(allTags) || hasNoValue(allTagsMap)) {
+            return 'Loading tags...'
+        } else {
+            return RE.Container.col.top.left({style: {marginTop:'5px'}},{style:{marginBottom:'10px'}},
+                renderFilter(),
+                renderCardToRepeat()
+            )
+        }
+    }
+
     return RE.Fragment({},
+        RE.If(controlsContainer?.current && hasValue(allCards), () => RE.Portal({container:controlsContainer.current},
+            renderOpenSearchButton(),
+            `Cards: ${allCards?.length??0}`
+        )),
         renderPageContent(),
         renderMessagePopup()
     )

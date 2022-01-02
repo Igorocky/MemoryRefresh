@@ -44,7 +44,7 @@ const ViewSelector = ({}) => {
     }, [pageTitle])
 
     useEffect(() => {
-        openView(CREATE_CARD_VIEW)
+        openView(REPEAT_CARDS_VIEW)
     }, [])
 
     function updatePageTitle() {

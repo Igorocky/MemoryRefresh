@@ -24,6 +24,7 @@ const be = {
     createTranslateCard: createBeFunction('createTranslateCard'),
     readTranslateCardById: createBeFunction('readTranslateCardById'),
     readTranslateCardsByFilter: createBeFunction('readTranslateCardsByFilter'),
+    selectTopOverdueTranslateCards: createBeFunction('selectTopOverdueTranslateCards'),
     validateTranslateCard: createBeFunction('validateTranslateCard'),
     updateTranslateCard: createBeFunction('updateTranslateCard'),
     getNextCardToRepeat: createBeFunction('getNextCardToRepeat'),

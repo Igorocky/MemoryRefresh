@@ -22,8 +22,12 @@ const AVAILABLE_TRANSLATE_CARD_SORT_DIR = {
     DESC:'DESC',
 }
 
-const TranslateCardFilterCmp = ({allTags, allTagsMap, onSubmit, minimized}) => {
-    const {renderMessagePopup, showMessage, confirmAction, showError, showDialog} = useMessagePopup()
+const TranslateCardFilterCmp = ({
+                                    allTags, allTagsMap, onSubmit, minimized,
+                                    submitButtonIconName = 'search',
+                                    allowedFilters, defaultFilter = AVAILABLE_TRANSLATE_CARD_FILTERS.INCLUDE_TAGS
+                                }) => {
+    const {renderMessagePopup, showError, showDialog} = useMessagePopup()
     const af = AVAILABLE_TRANSLATE_CARD_FILTERS
     const sb = AVAILABLE_TRANSLATE_CARD_SORT_BY
     const sd = AVAILABLE_TRANSLATE_CARD_SORT_DIR
@@ -31,7 +35,7 @@ const TranslateCardFilterCmp = ({allTags, allTagsMap, onSubmit, minimized}) => {
     const [cardToTagsMap, setCardToTagsMap] = useState(null)
     const [errorLoadingCardToTagsMap, setErrorLoadingCardToTagsMap] = useState(null)
 
-    const [filtersSelected, setFiltersSelected] = useState([af.INCLUDE_TAGS])
+    const [filtersSelected, setFiltersSelected] = useState([defaultFilter])
     const [focusedFilter, setFocusedFilter] = useState(filtersSelected[0])
 
     const [searchInActive, setSearchInActive] = useState(true)
@@ -115,6 +119,7 @@ const TranslateCardFilterCmp = ({allTags, allTagsMap, onSubmit, minimized}) => {
         const minimized = filterName !== focusedFilter
         return {
             [filterName]: {
+                displayName: 'Active or Paused',
                 render: () => RE.Container.col.top.left({},{},
                     RE.Container.row.left.center({},{},
                         iconButton({
@@ -145,6 +150,7 @@ const TranslateCardFilterCmp = ({allTags, allTagsMap, onSubmit, minimized}) => {
         const minimized = filterName !== focusedFilter
         return {
             [filterName]: {
+                displayName: 'Tags to include',
                 render: () => RE.Container.col.top.left({},{},
                     RE.Container.row.left.center({},{},
                         iconButton({
@@ -168,6 +174,7 @@ const TranslateCardFilterCmp = ({allTags, allTagsMap, onSubmit, minimized}) => {
                         label: 'Include',
                         color:'primary',
                         minimized,
+                        autoFocus: true,
                     })
                 ),
                 renderMinimized: () => RE.Fragment({},
@@ -184,6 +191,7 @@ const TranslateCardFilterCmp = ({allTags, allTagsMap, onSubmit, minimized}) => {
         const minimized = filterName !== focusedFilter
         return {
             [filterName]: {
+                displayName: 'Tags to exclude',
                 render: () => RE.Container.col.top.left({},{},
                     RE.Container.row.left.center({},{},
                         iconButton({
@@ -207,6 +215,7 @@ const TranslateCardFilterCmp = ({allTags, allTagsMap, onSubmit, minimized}) => {
                         label: 'Exclude',
                         color:'secondary',
                         minimized,
+                        autoFocus: true,
                     })
                 ),
                 renderMinimized: () => RE.Fragment({},
@@ -223,6 +232,7 @@ const TranslateCardFilterCmp = ({allTags, allTagsMap, onSubmit, minimized}) => {
         const minimized = filterName !== focusedFilter
         return {
             [filterName]: {
+                displayName: 'Created on or after',
                 render: () => RE.Container.col.top.left({},{},
                     RE.Container.row.left.center({},{},
                         iconButton({
@@ -251,6 +261,7 @@ const TranslateCardFilterCmp = ({allTags, allTagsMap, onSubmit, minimized}) => {
         const minimized = filterName !== focusedFilter
         return {
             [filterName]: {
+                displayName: 'Created on or before',
                 render: () => RE.Container.col.top.left({},{},
                     RE.Container.row.left.center({},{},
                         iconButton({
@@ -280,6 +291,7 @@ const TranslateCardFilterCmp = ({allTags, allTagsMap, onSubmit, minimized}) => {
         const parameterName = '(native text length)'
         return {
             [filterName]: {
+                displayName: 'Native text length',
                 render: () => RE.Container.col.top.left({},{},
                     RE.Container.row.left.center({},{},
                         iconButton({
@@ -315,6 +327,7 @@ const TranslateCardFilterCmp = ({allTags, allTagsMap, onSubmit, minimized}) => {
         const minimized = filterName !== focusedFilter
         return {
             [filterName]: {
+                displayName: 'Native text contains',
                 render: () => RE.Container.col.top.left({},{},
                     RE.Container.row.left.center({},{},
                         iconButton({
@@ -357,6 +370,7 @@ const TranslateCardFilterCmp = ({allTags, allTagsMap, onSubmit, minimized}) => {
         const parameterName = '(foreign text length)'
         return {
             [filterName]: {
+                displayName: 'Foreign text length',
                 render: () => RE.Container.col.top.left({},{},
                     RE.Container.row.left.center({},{},
                         iconButton({
@@ -392,6 +406,7 @@ const TranslateCardFilterCmp = ({allTags, allTagsMap, onSubmit, minimized}) => {
         const minimized = filterName !== focusedFilter
         return {
             [filterName]: {
+                displayName: 'Foreign text contains',
                 render: () => RE.Container.col.top.left({},{},
                     RE.Container.row.left.center({},{},
                         iconButton({
@@ -435,6 +450,7 @@ const TranslateCardFilterCmp = ({allTags, allTagsMap, onSubmit, minimized}) => {
         const possibleDirs = {[sd.ASC]:{displayName:'A-Z'}, [sd.DESC]:{displayName:'Z-A'}}
         return {
             [filterName]: {
+                displayName: 'Sort by',
                 render: () => RE.Container.col.top.left({},{},
                     RE.Container.row.left.center({},{},
                         iconButton({
@@ -485,27 +501,34 @@ const TranslateCardFilterCmp = ({allTags, allTagsMap, onSubmit, minimized}) => {
     }
 
     function renderAvailableFilterListItem({filterName, filterDisplayName, resolve}) {
-        return RE.If(!filtersSelected.includes(filterName), () => RE.Fragment({},
+        return RE.If(!filtersSelected.includes(filterName), () => RE.Fragment({key:filterName},
             RE.ListItem(
-                {button:true, onClick: () => resolve(filterName)},
+                {key:filterName, button:true, onClick: () => resolve(filterName)},
                 RE.ListItemText({}, filterDisplayName)
             ),
-            RE.Divider({})
+            RE.Divider({key:filterName+'-d'})
         ))
     }
 
     function renderListOfAvailableFilters(resolve) {
+        let filterNames = hasValue(allowedFilters)
+            ? allowedFilters
+            : [
+                af.INCLUDE_TAGS,
+                af.EXCLUDE_TAGS,
+                af.SEARCH_IN_ACTIVE,
+                af.CREATED_ON_OR_AFTER,
+                af.CREATED_ON_OR_BEFORE,
+                af.NATIVE_TEXT_LENGTH,
+                af.NATIVE_TEXT_CONTAINS,
+                af.FOREIGN_TEXT_LENGTH,
+                af.FOREIGN_TEXT_CONTAINS,
+                af.SORT_BY,
+            ]
         return RE.List({},
-            renderAvailableFilterListItem({filterName: af.INCLUDE_TAGS, filterDisplayName: 'Tags to include', resolve}),
-            renderAvailableFilterListItem({filterName: af.EXCLUDE_TAGS, filterDisplayName: 'Tags to exclude', resolve}),
-            renderAvailableFilterListItem({filterName: af.SEARCH_IN_ACTIVE, filterDisplayName: 'Active or Paused', resolve}),
-            renderAvailableFilterListItem({filterName: af.CREATED_ON_OR_AFTER, filterDisplayName: 'Created on or after', resolve}),
-            renderAvailableFilterListItem({filterName: af.CREATED_ON_OR_BEFORE, filterDisplayName: 'Created on or before', resolve}),
-            renderAvailableFilterListItem({filterName: af.NATIVE_TEXT_LENGTH, filterDisplayName: 'Native text length', resolve}),
-            renderAvailableFilterListItem({filterName: af.NATIVE_TEXT_CONTAINS, filterDisplayName: 'Native text contains', resolve}),
-            renderAvailableFilterListItem({filterName: af.FOREIGN_TEXT_LENGTH, filterDisplayName: 'Foreign text length', resolve}),
-            renderAvailableFilterListItem({filterName: af.FOREIGN_TEXT_CONTAINS, filterDisplayName: 'Foreign text contains', resolve}),
-            renderAvailableFilterListItem({filterName: af.SORT_BY, filterDisplayName: 'Sort by', resolve}),
+            filterNames.map(filterName =>
+                renderAvailableFilterListItem({filterName, filterDisplayName: allFilterObjects[filterName].displayName, resolve})
+            )
         )
     }
 
@@ -549,7 +572,7 @@ const TranslateCardFilterCmp = ({allTags, allTagsMap, onSubmit, minimized}) => {
             return RE.Container.col.top.left({style:{marginTop:'5px'}},{style:{marginTop:'5px'}},
                 RE.Container.row.left.center({},{},
                     renderAddFilterButton(),
-                    iconButton({iconName:'search', onClick: () => onSubmit(getSelectedFilter())})
+                    iconButton({iconName:submitButtonIconName, onClick: () => onSubmit(getSelectedFilter())})
                 ),
                 renderSelectedFilters(),
             )
@@ -560,7 +583,7 @@ const TranslateCardFilterCmp = ({allTags, allTagsMap, onSubmit, minimized}) => {
         const filtersToRender = getEffectiveSelectedFilterNames()
         return RE.Paper({style:{padding:'5px'}},
             filtersToRender.length ? RE.Container.col.top.left({},{},
-                filtersSelected.map(filterName => allFilterObjects[filterName].renderMinimized())
+                filtersToRender.map(filterName => allFilterObjects[filterName].renderMinimized())
             ) : 'All cards'
         )
     } else {

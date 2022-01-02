@@ -1,6 +1,6 @@
 'use strict';
 
-const TagSelector = ({allTags, selectedTags, onTagSelected, onTagRemoved, label, color, minimized = false, selectedTagsBgColor}) => {
+const TagSelector = ({allTags, selectedTags, onTagSelected, onTagRemoved, label, color, minimized = false, selectedTagsBgColor, autoFocus}) => {
 
     const [filterText, setFilterText] = useState('')
     let selectedTagIds = selectedTags.map(t=>t.id)
@@ -27,6 +27,7 @@ const TagSelector = ({allTags, selectedTags, onTagSelected, onTagRemoved, label,
                     variant: 'outlined',
                     style: {width: 200},
                     size: 'small',
+                    autoFocus,
                     label,
                     onChange: event => setFilterText(event.nativeEvent.target.value.trim().toLowerCase()),
                     value: filterText

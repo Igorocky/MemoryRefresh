@@ -86,11 +86,11 @@ function randomString({minLength = 0, maxLength = 100}) {
     return res.join('')
 }
 
-function randomSentence({minLength = 1, maxLength = 10}) {
-    const length = randomInt(minLength, maxLength)
+function randomSentence({wordsMinCnt = 1, wordsMaxCnt = 10, wordMinLength = 1, wordMaxLength = 8}) {
+    const length = randomInt(wordsMinCnt, wordsMaxCnt)
     const res = []
     for (let i = 0; i < length; i++) {
-        res.push(randomAlphaNumString({minLength:1,maxLength:8}))
+        res.push(randomAlphaNumString({minLength:wordMinLength, maxLength:wordMaxLength}))
     }
     return res.join(' ')
 }

@@ -1,28 +1,22 @@
 "use strict";
 
-const RepeatTranslateCardCmp = ({cardId,cardsRemain,onDone,controlsContainer}) => {
+const RepeatTranslateCardCmp = ({filterSummary, card, onDone,controlsContainer}) => {
     const USER_INPUT_TEXT_FIELD = 'user-input'
     const CARD_DELAY_TEXT_FIELD = 'card-delay'
 
     const {renderMessagePopup, showError, showMessage} = useMessagePopup()
 
-    const [errorLoadingCard, setErrorLoadingCard] = useState(null)
-    const [card, setCard] = useState(null)
     const [userInput, setUserInput] = useState('')
     const [validationRequestIsInProgress, setValidationRequestIsInProgress] = useState(false)
     const [answerFromBE, setAnswerFromBE] = useState(null)
     const [answerFromBEIsShown, setAnswerFromBEIsShown] = useState(false)
     const [beValidationResult, setBeValidationResult] = useState(null)
-    const [delay, setDelay] = useState(null)
+    const [delay, setDelay] = useState(card.schedule.delay)
     const [autoFocusDelay, setAutoFocusDelay] = useState(false)
     const delayTextField = useRef(null)
     const [updateDelayRequestIsInProgress, setUpdateDelayRequestIsInProgress] = useState(false)
 
     const [editMode, setEditMode] = useState(false)
-
-    useEffect(async () => {
-        loadCard()
-    }, [])
 
     useEffect(() => {
         if (autoFocusDelay && delayTextField.current) {
@@ -33,22 +27,6 @@ const RepeatTranslateCardCmp = ({cardId,cardsRemain,onDone,controlsContainer}) =
             setAutoFocusDelay(false)
         }
     }, [delayTextField.current])
-
-    async function loadCard() {
-        setCard(null)
-        const resp = await be.readTranslateCardById({cardId})
-        if (resp.err) {
-            await showError(resp.err)
-            setErrorLoadingCard(resp.err)
-        } else {
-            setCard(resp.data)
-            setDelay(resp.data.schedule.delay)
-            if (editMode && hasValue(answerFromBE)) {
-                setAnswerFromBE(resp.data.translation.trim())
-            }
-        }
-        setEditMode(false)
-    }
 
     function renderQuestion() {
         if (card) {
@@ -108,7 +86,7 @@ const RepeatTranslateCardCmp = ({cardId,cardsRemain,onDone,controlsContainer}) =
                 showMessage({text: 'Translation must not be empty.'})
             } else {
                 setValidationRequestIsInProgress(true)
-                const res = await be.validateTranslateCard({cardId, userProvidedTranslation: userInput})
+                const res = await be.validateTranslateCard({cardId:card.id, userProvidedTranslation: userInput})
                 setValidationRequestIsInProgress(false)
                 if (res.err) {
                     await showError(res.err)
@@ -162,17 +140,13 @@ const RepeatTranslateCardCmp = ({cardId,cardsRemain,onDone,controlsContainer}) =
 
     async function updateSchedule() {
         setUpdateDelayRequestIsInProgress(true)
-        const res = await be.updateTranslateCard({cardId, delay, recalculateDelay: true})
+        const res = await be.updateTranslateCard({cardId:card.id, delay, recalculateDelay: true})
         setUpdateDelayRequestIsInProgress(false)
         if (res.err) {
             showError(res.err)
         } else {
             onDone()
         }
-    }
-
-    function renderCardsRemaining() {
-        return RE.div({}, `Cards: ${cardsRemain}`)
     }
 
     function focusUserTranslation() {
@@ -231,11 +205,7 @@ const RepeatTranslateCardCmp = ({cardId,cardsRemain,onDone,controlsContainer}) =
     }
 
     function renderPageContent() {
-        if (errorLoadingCard) {
-            return `An error occurred during card loading: [${errorLoadingCard.code}] - ${errorLoadingCard.msg}`
-        } else if (hasNoValue(card)) {
-            return 'Loading card...'
-        } else if (editMode) {
+        if (editMode) {
             return re(EditTranslateCardCmp, {
                 card,
                 translationEnabled: hasValue(answerFromBE),
@@ -263,8 +233,7 @@ const RepeatTranslateCardCmp = ({cardId,cardsRemain,onDone,controlsContainer}) =
     return RE.Fragment({},
         renderPageContent(),
         RE.If(controlsContainer?.current && !editMode, () => RE.Portal({container:controlsContainer.current},
-            renderEditButton(),
-            renderCardsRemaining()
+            renderEditButton()
         )),
         renderMessagePopup(),
     )

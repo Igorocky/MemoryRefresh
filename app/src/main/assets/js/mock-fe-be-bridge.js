@@ -137,9 +137,29 @@ function createFeBeBridgeForUiTestMode() {
     }
 
     mockedBeFunctions.readTranslateCardsByFilter = (filter) => {
-        console.log('filter', filter)
         // return okResponse([])
         return okResponse(CARDS.map(c=>mockedBeFunctions.readTranslateCardById({cardId:c.id}).data))
+    }
+
+    let topCnt = 0
+    mockedBeFunctions.selectTopOverdueTranslateCards = (filter) => {
+        // return okResponse({
+        //     cards: [],
+        //     nextCardIn: ''
+        // })
+        if (topCnt !== 1) {
+            topCnt++
+            return okResponse({
+                cards: CARDS.map(c=>mockedBeFunctions.readTranslateCardById({cardId:c.id}).data)
+            })
+        } else {
+            topCnt++
+            return okResponse({
+                nextCardIn: '8h 38m'
+            })
+        }
+        // return okResponse([])
+
     }
 
     mockedBeFunctions.validateTranslateCard = ({cardId, userProvidedTranslation}) => {
@@ -282,9 +302,9 @@ function createFeBeBridgeForUiTestMode() {
             return result
         }
 
-        const numOfCards = 101
+        const numOfCards = 2
         ints(1,numOfCards)
-            .map(i=>randomSentence({minLength: 1, maxLength: 3}))
+            .map(i=>randomSentence({wordsMinCnt:1, wordsMaxCnt:1, wordMinLength:1, wordMaxLength:1}))
             .forEach(s=>mockedBeFunctions.createTranslateCard({
                 textToTranslate:s.toUpperCase(),
                 translation:s.toLowerCase(),
@@ -300,7 +320,8 @@ function createFeBeBridgeForUiTestMode() {
             console.error(`mocked backend function is not defined - ${funcName}`)
         }
         return function (arg) {
-            console.log(`BE.${funcName}`, hasValue(arg) ? arg : 'no args')
+            const curTime = new Date().toTimeString().substring(0,8)
+            console.log(`${curTime} BE.${funcName}`, hasValue(arg) ? arg : 'no args')
             return new Promise((resolve,reject) => {
                 const doResolve = () => resolve(beFunc(arg))
                 if (hasValue(delay)) {

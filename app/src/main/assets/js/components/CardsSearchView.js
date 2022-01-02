@@ -5,9 +5,7 @@ const CardsSearchView = ({query,openView,setPageTitle}) => {
 
     const [isFilterMode, setIsFilterMode] = useState(true)
 
-    const [allTags, setAllTags] = useState(null)
-    const [allTagsMap, setAllTagsMap] = useState(null)
-    const [errorLoadingTags, setErrorLoadingTags] = useState(null)
+    const {allTags, allTagsMap, errorLoadingTags} = useTags()
 
     const [allCards, setAllCards] = useState(null)
     const [errorLoadingCards, setErrorLoadingCards] = useState(null)
@@ -18,22 +16,6 @@ const CardsSearchView = ({query,openView,setPageTitle}) => {
 
     const [focusedCardId, setFocusedCardId] = useState(null)
     const [cardToEdit, setCardToEdit] = useState(null)
-
-    useEffect(async () => {
-        const res = await be.readAllTags()
-        if (res.err) {
-            setErrorLoadingTags(res.err)
-            showError(res.err)
-        } else {
-            const allTags = res.data
-            setAllTags(allTags)
-            const allTagsMap = {}
-            for (const tag of allTags) {
-                allTagsMap[tag.id] = tag
-            }
-            setAllTagsMap(allTagsMap)
-        }
-    }, [])
 
     async function reloadCards({filter}) {
         setAllCards(null)
