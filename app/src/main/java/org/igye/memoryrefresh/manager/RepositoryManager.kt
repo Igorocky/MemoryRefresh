@@ -42,10 +42,11 @@ class RepositoryManager(
     @Synchronized
     fun doBackup(): BeRespose<Backup> {
         val dbName = getRepo().dbName
+        val dbVersionNumber: Int = getRepo().readableDatabase.version
         try {
             getRepo().close()
             val databasePath: File = context.getDatabasePath(dbName)
-            val backupFileName = createBackupFileName(databasePath)
+            val backupFileName = createBackupFileName(databasePath, dbVersionNumber)
             val backupFile = File(backupDir, backupFileName + ".zip")
 
             return ZipOutputStream(FileOutputStream(backupFile)).use { zipOut ->
@@ -130,7 +131,7 @@ class RepositoryManager(
 
     private val backupDir = Utils.getBackupsDir(context)
 
-    private fun createBackupFileName(dbPath: File): String {
-        return "${dbPath.name}-backup-${dateTimeFormatter.format(clock.instant()).replace(":","-")}"
+    private fun createBackupFileName(dbPath: File, dbVersionNumber: Int): String {
+        return "${dbPath.name}-v${dbVersionNumber}-backup-${dateTimeFormatter.format(clock.instant()).replace(":","-")}"
     }
 }
