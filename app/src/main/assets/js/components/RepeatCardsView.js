@@ -15,7 +15,11 @@ const RepeatCardsView = ({query,openView,setPageTitle,controlsContainer}) => {
     const [nextCardWillBeAvailableIn, setNextCardWillBeAvailableIn] = useState(null)
     const [errorLoadingCards, setErrorLoadingCards] = useState(null)
 
-    const [cardToRepeat, setCardToRepeat] = useState(null)
+    const [cardToRepeat, setCardToRepeatOrig] = useState(null)
+    function setCardToRepeat(card) {
+        setCardToRepeatOrig(card)
+        setCardCounter(prev => prev+1)
+    }
 
     async function reloadCards({filter}) {
         setAllCards(null)
@@ -39,18 +43,17 @@ const RepeatCardsView = ({query,openView,setPageTitle,controlsContainer}) => {
     }
 
     function proceedToNextCard({cards}) {
-        setCardCounter(prev => prev+1)
         if (hasValue(cards)) {
             if (cards.length) {
                 setCardToRepeat(cards[0])
             }
         } else {
             const newAllCards = allCards.filter(c=>c.id !== cardToRepeat.id)
-            if (newAllCards.length === 0) {
-                reloadCards({filter})
-            } else {
+            if (newAllCards.length) {
                 setAllCards(newAllCards)
                 setCardToRepeat(newAllCards[0])
+            } else {
+                reloadCards({filter})
             }
         }
     }
@@ -73,7 +76,6 @@ const RepeatCardsView = ({query,openView,setPageTitle,controlsContainer}) => {
                     key: cardCounter,
                     allTags,
                     allTagsMap,
-                    filterSummary: renderFilter(),
                     cardToRepeat,
                     onCardWasDeleted: () => reloadCards({filter}),
                     onDone: ({cardWasUpdated}) => cardWasUpdated ? reloadCards({filter}) : proceedToNextCard({}),
@@ -123,8 +125,8 @@ const RepeatCardsView = ({query,openView,setPageTitle,controlsContainer}) => {
         } else if (hasNoValue(allTags) || hasNoValue(allTagsMap)) {
             return 'Loading tags...'
         } else {
-            return RE.Container.col.top.left({style: {marginTop:'5px'}},{},
-                RE.If(isFilterMode, () => renderFilter()),
+            return RE.Container.col.top.left({style: {marginTop:'5px'}},{style: {marginBottom:'5px'}},
+                renderFilter(),
                 renderCardToRepeat()
             )
         }
