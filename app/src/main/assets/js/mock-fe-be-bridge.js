@@ -97,6 +97,7 @@ function createFeBeBridgeForUiTestMode() {
                     nextAccessAt: new Date().getTime()
                 },
                 timeSinceLastCheck: '1d 3h',
+                activatesIn: '5h 23m',
                 overdue: 1.03,
                 textToTranslate,
                 translation
@@ -127,6 +128,7 @@ function createFeBeBridgeForUiTestMode() {
                     nextAccessAt: card.schedule.nextAccessAt,
                 },
                 timeSinceLastCheck: card.timeSinceLastCheck,
+                activatesIn: card.activatesIn,
                 overdue: card.overdue,
                 textToTranslate: card.textToTranslate,
                 translation: card.translation,
@@ -152,11 +154,12 @@ function createFeBeBridgeForUiTestMode() {
         }
     }
 
-    mockedBeFunctions.updateTranslateCard = ({cardId, textToTranslate, translation, delay, recalculateDelay}) => {
+    mockedBeFunctions.updateTranslateCard = ({cardId, textToTranslate, translation, delay, recalculateDelay, paused, tagIds}) => {
         const card = CARDS.find(c=>c.id==cardId)
         if (hasNoValue(card)) {
             return errResponse(7, 'Error getting translate card by id.')
         } else {
+            card.paused = paused??card.paused
             card.textToTranslate = textToTranslate??card.textToTranslate
             card.translation = translation??card.translation
             if (hasValue(delay) && (delay != card.schedule.delay || recalculateDelay)) {
@@ -164,18 +167,7 @@ function createFeBeBridgeForUiTestMode() {
                 card.schedule.nextAccessInMillis = 1000
                 card.schedule.nextAccessAt = (new Date().getTime()) + card.schedule.nextAccessInMillis
             }
-            return okResponse({
-                id: card.id,
-                textToTranslate: card.textToTranslate,
-                translation: card.translation,
-                timeSinceLastCheck: card.timeSinceLastCheck,
-                schedule: {
-                    cardId: card.schedule.cardId,
-                    delay: card.schedule.delay,
-                    nextAccessInMillis: card.schedule.nextAccessInMillis,
-                    nextAccessAt: card.schedule.nextAccessAt,
-                }
-            })
+            return okResponse(true)
         }
     }
 
@@ -290,7 +282,7 @@ function createFeBeBridgeForUiTestMode() {
             return result
         }
 
-        const numOfCards = 1001
+        const numOfCards = 101
         ints(1,numOfCards)
             .map(i=>randomSentence({minLength: 1, maxLength: 3}))
             .forEach(s=>mockedBeFunctions.createTranslateCard({

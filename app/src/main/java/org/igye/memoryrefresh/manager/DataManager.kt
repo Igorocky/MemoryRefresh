@@ -188,13 +188,13 @@ class DataManager(
         select
             c.${c.id},
             s.${s.updatedAt},
+            s.${s.nextAccessAt},
             c.${c.createdAt},
             c.${c.paused},
             (? - s.${s.nextAccessAt} ) * 1.0 / (case when s.${s.nextAccessInMillis} = 0 then 1 else s.${s.nextAccessInMillis} end),
             (select group_concat(ctg.${ctg.tagId}) from $ctg ctg where ctg.${ctg.cardId} = c.${c.id}) as tagIds,
             s.${s.delay},
             s.${s.nextAccessInMillis},
-            s.${s.nextAccessAt},
             t.${t.textToTranslate}, 
             t.${t.translation} 
         from 
@@ -211,6 +211,7 @@ class DataManager(
             select(query = readTranslateCardByIdQuery, args = arrayOf(currTime.toString(), args.cardId.toString())){
                 val cardId = it.getLong()
                 val updatedAt = it.getLong()
+                val nextAccessAt = it.getLong()
                 TranslateCard(
                     id = cardId,
                     createdAt = it.getLong(),
@@ -222,9 +223,10 @@ class DataManager(
                         updatedAt = updatedAt,
                         delay = it.getString(),
                         nextAccessInMillis = it.getLong(),
-                        nextAccessAt = it.getLong(),
+                        nextAccessAt = nextAccessAt,
                     ),
                     timeSinceLastCheck = Utils.millisToDurationStr(currTime - updatedAt),
+                    activatesIn = Utils.millisToDurationStr(nextAccessAt - currTime),
                     textToTranslate = it.getString(),
                     translation = it.getString(),
                 )
@@ -594,13 +596,13 @@ class DataManager(
             select
                 c.${c.id},
                 s.${s.updatedAt},
+                s.${s.nextAccessAt},
                 c.${c.createdAt},
                 c.${c.paused},
                 $overdueFormula overdue,
                 c.tagIds,
                 s.${s.delay},
                 s.${s.nextAccessInMillis},
-                s.${s.nextAccessAt},
                 t.${t.textToTranslate}, 
                 t.${t.translation}
             from
@@ -627,6 +629,7 @@ class DataManager(
             val result = select(query = query, args = queryArgs.toTypedArray()) {
                 val cardId = it.getLong()
                 val updatedAt = it.getLong()
+                val nextAccessAt = it.getLong()
                 TranslateCard(
                     id = cardId,
                     createdAt = it.getLong(),
@@ -638,9 +641,10 @@ class DataManager(
                         updatedAt = updatedAt,
                         delay = it.getString(),
                         nextAccessInMillis = it.getLong(),
-                        nextAccessAt = it.getLong(),
+                        nextAccessAt = nextAccessAt,
                     ),
                     timeSinceLastCheck = Utils.millisToDurationStr(currTime - updatedAt),
+                    activatesIn = Utils.millisToDurationStr(nextAccessAt - currTime),
                     textToTranslate = it.getString(),
                     translation = it.getString(),
                 )

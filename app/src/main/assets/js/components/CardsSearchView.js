@@ -1,7 +1,7 @@
 "use strict";
 
 const CardsSearchView = ({query,openView,setPageTitle}) => {
-    const {renderMessagePopup, showMessage, confirmAction, showError} = useMessagePopup()
+    const {renderMessagePopup, showMessage, confirmAction, showError, showMessageWithProgress} = useMessagePopup()
 
     const [isFilterMode, setIsFilterMode] = useState(true)
 
@@ -17,6 +17,7 @@ const CardsSearchView = ({query,openView,setPageTitle}) => {
         usePagination({items:allCards, pageSize: pageSize, onlyArrowButtons:true})
 
     const [focusedCardId, setFocusedCardId] = useState(null)
+    const [cardToEdit, setCardToEdit] = useState(null)
 
     useEffect(async () => {
         const res = await be.readAllTags()
@@ -67,7 +68,7 @@ const CardsSearchView = ({query,openView,setPageTitle}) => {
                         beginIdx: pageFirstItemIdx,
                         endIdx: pageLastItemIdx,
                         onObjectClicked: cardId => setFocusedCardId(prev => prev !== cardId ? cardId : null),
-                        renderObject: (card,idx) => RE.Paper({style:{backgroundColor:card.paused?'rgb(242, 242, 242)':'white'}}, renderCard(card,idx))
+                        renderObject: (card,idx) => RE.Paper({style:{backgroundColor:card.paused?'rgb(242, 242, 242)':'rgb(255, 249, 230)'}}, renderCard(card,idx))
                     }),
                     RE.If(allCards.length > pageSize, () => renderPaginationControls({onPageChange: () => window.scrollTo(0, 0)})),
                 )
@@ -75,16 +76,19 @@ const CardsSearchView = ({query,openView,setPageTitle}) => {
         }
     }
 
-    // async function deleteTag({tag}) {
-    //     if (await confirmAction({text: `Delete tag '${tag.name}'?`, okBtnColor: 'secondary'})) {
-    //         const res = await be.deleteTag({tagId:tag.id})
-    //         if (res.err) {
-    //             showError(res.err)
-    //         } else {
-    //             reloadAllTags()
-    //         }
-    //     }
-    // }
+    async function deleteCard({card}) {
+        if (await confirmAction({text: `Delete this card? "${truncateToMaxLength(20,card.textToTranslate)}"`, okBtnColor: 'secondary'})) {
+            const closeProgressIndicator = showMessageWithProgress({text: 'Deleting...'})
+            const res = await be.deleteTranslateCard({cardId:card.id})
+            closeProgressIndicator()
+            if (res.err) {
+                await showError(res.err)
+                openFilter()
+            } else {
+                setAllCards(prev => prev.filter(c => c.id !== card.id))
+            }
+        }
+    }
 
     function truncateToMaxLength(maxLength,text) {
         return text.substring(0,maxLength) + (text.length > maxLength ? '...' : '')
@@ -124,8 +128,8 @@ const CardsSearchView = ({query,openView,setPageTitle}) => {
         if (focusedCardId === card.id) {
             return RE.Container.col.top.left({}, {},
                 RE.Container.row.left.center({}, {},
-                    iconButton({iconName: 'delete', onClick: () => null}),
-                    iconButton({iconName: 'edit', onClick: () => null}),
+                    iconButton({iconName: 'delete', onClick: () => deleteCard({card})}),
+                    iconButton({iconName: 'edit', onClick: () => setCardToEdit(card)}),
                 ),
                 cardElem
             )
@@ -134,15 +138,18 @@ const CardsSearchView = ({query,openView,setPageTitle}) => {
         }
     }
 
+    function openFilter() {
+        setCardToEdit(null)
+        setIsFilterMode(true)
+        setAllCards(null)
+    }
+
     function renderFilter() {
         return RE.Container.col.top.left({},{},
             RE.IfNot(isFilterMode, () => RE.Fragment({},
                 iconButton({
                     iconName:'youtube_searched_for',
-                    onClick: () => {
-                        setIsFilterMode(true)
-                        setAllCards(null)
-                    }
+                    onClick: openFilter
                 }),
                 RE.span({style: {fontWeight:'bold'}}, 'Filters:')
             )),
@@ -165,6 +172,27 @@ const CardsSearchView = ({query,openView,setPageTitle}) => {
             )
         } else if (hasNoValue(allTags) || hasNoValue(allTagsMap)) {
             return 'Loading tags...'
+        } else if (hasValue(cardToEdit)) {
+            return re(EditTranslateCardCmp,{
+                allTags, allTagsMap, card:cardToEdit,
+                onCancelled: () => setCardToEdit(null),
+                onSaved: async () => {
+                    const closeProgressIndicator = showMessageWithProgress({text: 'Reloading changed card...'})
+                    const res = await be.readTranslateCardById({cardId: cardToEdit.id})
+                    closeProgressIndicator()
+                    if (res.err) {
+                        await showError(res.err)
+                        openFilter()
+                    } else {
+                        setCardToEdit(null)
+                        setAllCards(prev => prev.map(card => card.id === cardToEdit.id ? res.data : card))
+                    }
+                },
+                onDeleted: () => {
+                    setCardToEdit(null)
+                    setAllCards(prev => prev.filter(card => card.id !== cardToEdit.id))
+                }
+            })
         } else {
             return RE.Container.col.top.left({style: {marginTop:'5px'}},{style:{marginBottom:'10px'}},
                 renderFilter(),
