@@ -561,7 +561,7 @@ const TranslateCardFilterCmp = ({allTags, allTagsMap, onSubmit, minimized}) => {
         return RE.Paper({style:{padding:'5px'}},
             filtersToRender.length ? RE.Container.col.top.left({},{},
                 filtersSelected.map(filterName => allFilterObjects[filterName].renderMinimized())
-            ) : 'Select all cards'
+            ) : 'All cards'
         )
     } else {
         return RE.Fragment({},

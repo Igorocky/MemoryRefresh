@@ -1,18 +1,18 @@
 "use strict";
 
 //curIdx + pageNumShift = currPageNum
-function Pagination({pageNumShift,numOfPages,curIdx,onChange}) {
+function Pagination({numOfPages,curIdx,onChange,pageNumShift=1,onlyArrowButtons=false}) {
     return RE.Container.row.left.center({},{style: {marginRight:'15px'}},
-        RE.TextField(
+        RE.IfNot(onlyArrowButtons, () => RE.TextField(
             {
-                autoCorrect: 'off', autoCapitalize: 'off', spellCheck:'false',
+                autoCorrect: 'off', autoCapitalize: 'off', spellCheck: 'false',
                 variant: 'outlined', label: 'Page',
                 style: {width: 80},
                 size: 'small',
                 onKeyDown: ({nativeEvent:event}) => {
                     if (event.keyCode == 13) {
                         const newPageNumStr = event.target.value?.trim()
-                        if (newPageNumStr.length) {
+                        if (newPageNumStr.length && /^\d*$/g.test(newPageNumStr)) {
                             const newIdx = Math.max(0, Math.min(numOfPages-1, parseInt(newPageNumStr)-pageNumShift))
                             if (newIdx != curIdx) {
                                 onChange(newIdx)
@@ -22,28 +22,28 @@ function Pagination({pageNumShift,numOfPages,curIdx,onChange}) {
                     }
                 },
             }
-        ),
+        )),
         RE.ButtonGroup({variant:'contained', size:'small'},
             RE.Button({onClick: () => onChange(0), disabled: curIdx === 0},
                 '<<'
             ),
             RE.Button({onClick: () => onChange(curIdx-1), disabled: curIdx === 0},
-                '<'
+                '\u{000A0}\u{000A0}\u{000A0}<\u{000A0}\u{000A0}\u{000A0}'
             ),
             RE.Button({onClick: () => onChange(curIdx+1), disabled: curIdx === numOfPages-1},
-                '>'
+                '\u{000A0}\u{000A0}\u{000A0}>\u{000A0}\u{000A0}\u{000A0}'
             ),
             RE.Button({onClick: () => onChange(numOfPages-1), disabled: curIdx == numOfPages-1},
                 '>>'
             ),
-            ints(Math.max(0,curIdx-3),Math.min(numOfPages-1,curIdx+3)).map(idx => RE.Button(
+            RE.IfNot(onlyArrowButtons, () => ints(Math.max(0,curIdx-3),Math.min(numOfPages-1,curIdx+3)).map(idx => RE.Button(
                 {
                     key:`page-btn-${idx}`,
                     onClick: () => idx===curIdx?null:onChange(idx)
                 },
                 idx===curIdx?(`[${idx+pageNumShift}]`):(idx+pageNumShift)
-            )),
-            (curIdx+3 < numOfPages-1)?[
+            ))),
+            (!onlyArrowButtons && curIdx+3 < numOfPages-1)?[
                 RE.Button({key:`...-btn`,disabled: true},
                     '...'
                 ),

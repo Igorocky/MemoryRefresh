@@ -12,6 +12,10 @@ const CardsSearchView = ({query,openView,setPageTitle}) => {
     const [allCards, setAllCards] = useState(null)
     const [errorLoadingCards, setErrorLoadingCards] = useState(null)
 
+    const pageSize = 100
+    const {setCurrPageIdx,renderPaginationControls,pageFirstItemIdx,pageLastItemIdx} =
+        usePagination({items:allCards, pageSize: pageSize, onlyArrowButtons:true})
+
     const [focusedCardId, setFocusedCardId] = useState(null)
 
     useEffect(async () => {
@@ -42,6 +46,7 @@ const CardsSearchView = ({query,openView,setPageTitle}) => {
                 card.tagIds = card.tagIds.map(id => allTagsMap[id]).sortBy('name').map(t=>t.id)
             }
             setAllCards(allCards)
+            setCurrPageIdx(0)
         }
     }
 
@@ -52,14 +57,17 @@ const CardsSearchView = ({query,openView,setPageTitle}) => {
             } else if (allCards.length == 0) {
                 return 'There are no cards matching the search criteria.'
             } else {
-                return RE.Container.col.top.left({},{},
-                    RE.span({style: {fontWeight:'bold'}}, `Cards found (${allCards.length}):`),
+                return RE.Container.col.top.left({},{style:{marginBottom: '5px'}},
+                    RE.Container.row.left.center({},{},
+                        RE.span({style: {fontWeight:'bold'}}, `Cards found (${allCards.length})`),
+                        RE.If(allCards.length > pageSize, () => renderPaginationControls()),
+                    ),
                     re(ListOfObjectsCmp,{
                         objects: allCards,
-                        beginIdx: 0,
-                        endIdx: allCards.length-1,
+                        beginIdx: pageFirstItemIdx,
+                        endIdx: pageLastItemIdx,
                         onObjectClicked: cardId => setFocusedCardId(prev => prev !== cardId ? cardId : null),
-                        renderObject: renderCard
+                        renderObject: (card,idx) => RE.Paper({style:{backgroundColor:card.paused?'rgb(242, 242, 242)':'white'}}, renderCard(card,idx))
                     })
                 )
             }
@@ -93,7 +101,7 @@ const CardsSearchView = ({query,openView,setPageTitle}) => {
                         style:{
                             color:card.paused?'grey':'black',
                             display: 'inline-block',
-                            border:'solid 1px grey',
+                            border:'solid 1px lightgrey',
                             borderRadius:'10px',
                             paddingLeft:'4px',
                             paddingRight:'4px',

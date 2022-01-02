@@ -10,7 +10,7 @@ const ListOfObjectsCmp = ({objects,beginIdx,endIdx,onObjectClicked,renderObject}
                         key:obj.id,
                         onClick: () => onObjectClicked(obj.id),
                     },
-                    RE.td({}, RE.Paper({},renderObject(obj,idx))),
+                    RE.td({}, renderObject(obj,idx)),
                 )
             )
         )

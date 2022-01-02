@@ -290,7 +290,7 @@ function createFeBeBridgeForUiTestMode() {
             return result
         }
 
-        const numOfCards = 1_000
+        const numOfCards = 1001
         ints(1,numOfCards)
             .map(i=>randomSentence({minLength: 1, maxLength: 3}))
             .forEach(s=>mockedBeFunctions.createTranslateCard({
