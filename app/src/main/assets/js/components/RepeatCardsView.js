@@ -10,6 +10,7 @@ const RepeatCardsView = ({query,openView,setPageTitle,controlsContainer}) => {
     const {allTags, allTagsMap, errorLoadingTags} = useTags()
 
     const [cardCounter, setCardCounter] = useState(0)
+    const [cardUpdateCounter, setCardUpdateCounter] = useState(0)
     const [filter, setFilter] = useState(0)
     const [allCards, setAllCards] = useState(null)
     const [nextCardWillBeAvailableIn, setNextCardWillBeAvailableIn] = useState(null)
@@ -77,7 +78,13 @@ const RepeatCardsView = ({query,openView,setPageTitle,controlsContainer}) => {
                     allTags,
                     allTagsMap,
                     cardToRepeat,
-                    onCardWasDeleted: () => reloadCards({filter}),
+                    onCardWasUpdated: () => {
+                        setCardUpdateCounter(prev => prev + 1)
+                    },
+                    onCardWasDeleted: () => {
+                        setCardUpdateCounter(prev => prev + 1)
+                        reloadCards({filter})
+                    },
                     onDone: ({cardWasUpdated}) => cardWasUpdated ? reloadCards({filter}) : proceedToNextCard({}),
                     controlsContainer
                 })
@@ -108,7 +115,8 @@ const RepeatCardsView = ({query,openView,setPageTitle,controlsContainer}) => {
                 reloadCards({filter})
             },
             allowedFilters:[af.INCLUDE_TAGS, af.EXCLUDE_TAGS, af.FOREIGN_TEXT_LENGTH],
-            minimized: !isFilterMode
+            minimized: !isFilterMode,
+            cardUpdateCounter
         })
     }
 

@@ -1,6 +1,6 @@
 "use strict";
 
-const RepeatTranslateCardCmp = ({allTags, allTagsMap, controlsContainer, cardToRepeat, onCardWasDeleted, onDone}) => {
+const RepeatTranslateCardCmp = ({allTags, allTagsMap, controlsContainer, cardToRepeat, onCardWasDeleted, onCardWasUpdated, onDone}) => {
     const USER_INPUT_TEXT_FIELD = 'user-input'
     const CARD_DELAY_TEXT_FIELD = 'card-delay'
 
@@ -233,6 +233,7 @@ const RepeatTranslateCardCmp = ({allTags, allTagsMap, controlsContainer, cardToR
                 reducedMode: hasNoValue(answerFromBE),
                 onCancelled: () => setEditMode(false),
                 onSaved: () => {
+                    onCardWasUpdated()
                     setCardWasUpdated(true)
                     setEditMode(false)
                     reloadCard()

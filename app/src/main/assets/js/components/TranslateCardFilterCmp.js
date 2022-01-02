@@ -25,7 +25,8 @@ const AVAILABLE_TRANSLATE_CARD_SORT_DIR = {
 const TranslateCardFilterCmp = ({
                                     allTags, allTagsMap, onSubmit, minimized,
                                     submitButtonIconName = 'search',
-                                    allowedFilters, defaultFilter = AVAILABLE_TRANSLATE_CARD_FILTERS.INCLUDE_TAGS
+                                    allowedFilters, defaultFilter = AVAILABLE_TRANSLATE_CARD_FILTERS.INCLUDE_TAGS,
+                                    cardUpdateCounter
                                 }) => {
     const {renderMessagePopup, showError, showDialog} = useMessagePopup()
     const af = AVAILABLE_TRANSLATE_CARD_FILTERS
@@ -65,7 +66,7 @@ const TranslateCardFilterCmp = ({
         } else {
             setCardToTagsMap(res.data)
         }
-    }, [])
+    }, [cardUpdateCounter])
 
     useEffect(async () => {
         if (cardToTagsMap) {
