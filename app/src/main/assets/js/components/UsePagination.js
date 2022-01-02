@@ -12,11 +12,14 @@ function usePagination({items, pageSize, onlyArrowButtons = false}) {
     const pageFirstItemIdx = currPageIdx*pageSize
     const pageLastItemIdx = pageFirstItemIdx+pageSize-1
 
-    function renderPaginationControls() {
+    function renderPaginationControls({onPageChange}) {
         return re(Pagination, {
             numOfPages:numberOfPages,
             curIdx:currPageIdx,
-            onChange: newPageIdx => setCurrPageIdx(newPageIdx),
+            onChange: newPageIdx => {
+                setCurrPageIdx(newPageIdx)
+                onPageChange?.(newPageIdx)
+            },
             onlyArrowButtons
         })
     }

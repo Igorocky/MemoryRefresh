@@ -60,7 +60,7 @@ const CardsSearchView = ({query,openView,setPageTitle}) => {
                 return RE.Container.col.top.left({},{style:{marginBottom: '5px'}},
                     RE.Container.row.left.center({},{},
                         RE.span({style: {fontWeight:'bold'}}, `Cards found (${allCards.length})`),
-                        RE.If(allCards.length > pageSize, () => renderPaginationControls()),
+                        RE.If(allCards.length > pageSize, () => renderPaginationControls({})),
                     ),
                     re(ListOfObjectsCmp,{
                         objects: allCards,
@@ -68,7 +68,8 @@ const CardsSearchView = ({query,openView,setPageTitle}) => {
                         endIdx: pageLastItemIdx,
                         onObjectClicked: cardId => setFocusedCardId(prev => prev !== cardId ? cardId : null),
                         renderObject: (card,idx) => RE.Paper({style:{backgroundColor:card.paused?'rgb(242, 242, 242)':'white'}}, renderCard(card,idx))
-                    })
+                    }),
+                    RE.If(allCards.length > pageSize, () => renderPaginationControls({onPageChange: () => window.scrollTo(0, 0)})),
                 )
             }
         }
