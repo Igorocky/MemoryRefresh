@@ -1,6 +1,6 @@
 "use strict";
 
-const RepeatCardsView = ({query,openView,setPageTitle,controlsContainer}) => {
+const RepeatCardsView = ({query,openView,setPageTitle,controlsContainer, cycledMode}) => {
     const {renderMessagePopup, showMessage, confirmAction, showError, showMessageWithProgress} = useMessagePopup()
 
     const af = AVAILABLE_TRANSLATE_CARD_FILTERS
@@ -8,6 +8,8 @@ const RepeatCardsView = ({query,openView,setPageTitle,controlsContainer}) => {
     const [isFilterMode, setIsFilterMode] = useState(true)
 
     const {allTags, allTagsMap, errorLoadingTags} = useTags()
+
+    const {getNextCardId, countCard, numberOfFullCycles, getNumberOfCompletedCardsInCycle, resetCardCounts} = useCardCounts()
 
     const [cardCounter, setCardCounter] = useState(0)
     const [cardUpdateCounter, setCardUpdateCounter] = useState(0)
@@ -27,34 +29,54 @@ const RepeatCardsView = ({query,openView,setPageTitle,controlsContainer}) => {
         setCardToRepeat(null)
         setErrorLoadingCards(null)
         setNextCardWillBeAvailableIn(null)
-        const res = await be.selectTopOverdueTranslateCards(filter)
-        if (res.err) {
-            setErrorLoadingCards(res.err)
-            showError(res.err)
+        if (!cycledMode) {
+            const res = await be.selectTopOverdueTranslateCards(filter)
+            if (res.err) {
+                setErrorLoadingCards(res.err)
+                showError(res.err)
+            } else {
+                if (res.data?.cards?.length??0) {
+                    const allCards = res.data.cards
+                    setAllCards(allCards)
+                    proceedToNextCard({cards:allCards})
+                } else {
+                    setAllCards([])
+                    setNextCardWillBeAvailableIn(res.data?.nextCardIn)
+                }
+            }
         } else {
-            if (res.data?.cards?.length??0) {
-                const allCards = res.data.cards
+            const res = await be.readTranslateCardsByFilter(filter)
+            if (res.err) {
+                setErrorLoadingCards(res.err)
+                showError(res.err)
+            } else {
+                const allCards = res.data
                 setAllCards(allCards)
                 proceedToNextCard({cards:allCards})
-            } else {
-                setAllCards([])
-                setNextCardWillBeAvailableIn(res.data?.nextCardIn)
             }
         }
     }
 
     function proceedToNextCard({cards}) {
-        if (hasValue(cards)) {
-            if (cards.length) {
-                setCardToRepeat(cards[0])
+        if (!cycledMode) {
+            if (hasValue(cards)) {
+                if (cards.length) {
+                    setCardToRepeat(cards[0])
+                }
+            } else {
+                const newAllCards = allCards.filter(c=>c.id !== cardToRepeat.id)
+                if (newAllCards.length) {
+                    setAllCards(newAllCards)
+                    setCardToRepeat(newAllCards[0])
+                } else {
+                    reloadCards({filter})
+                }
             }
         } else {
-            const newAllCards = allCards.filter(c=>c.id !== cardToRepeat.id)
-            if (newAllCards.length) {
-                setAllCards(newAllCards)
-                setCardToRepeat(newAllCards[0])
-            } else {
-                reloadCards({filter})
+            cards = cards??allCards
+            if (cards.length) {
+                const nextCardId = getNextCardId(cards??allCards)
+                setCardToRepeat(cards.find(c=>c.id===nextCardId))
             }
         }
     }
@@ -71,7 +93,7 @@ const RepeatCardsView = ({query,openView,setPageTitle,controlsContainer}) => {
             } else if (hasNoValue(allCards)) {
                 return `Loading cards...`
             } else if (hasNoValue(cardToRepeat)) {
-                return `No cards were found matching the search criteria.`
+                return `No cards matching the search criteria were found.`
             } else {
                 return re(RepeatTranslateCardCmp, {
                     key: cardCounter,
@@ -85,8 +107,14 @@ const RepeatCardsView = ({query,openView,setPageTitle,controlsContainer}) => {
                         setCardUpdateCounter(prev => prev + 1)
                         reloadCards({filter})
                     },
-                    onDone: ({cardWasUpdated}) => cardWasUpdated ? reloadCards({filter}) : proceedToNextCard({}),
-                    controlsContainer
+                    onDone: ({cardWasUpdated}) => {
+                        if (cycledMode) {
+                            countCard(cardToRepeat.id)
+                        }
+                        cardWasUpdated ? reloadCards({filter}) : proceedToNextCard({})
+                    },
+                    controlsContainer,
+                    cycledMode
                 })
             }
         }
@@ -102,6 +130,7 @@ const RepeatCardsView = ({query,openView,setPageTitle,controlsContainer}) => {
         setAllCards(null)
         setErrorLoadingCards(null)
         setNextCardWillBeAvailableIn(null)
+        resetCardCounts()
     }
 
     function renderFilter() {
@@ -114,7 +143,7 @@ const RepeatCardsView = ({query,openView,setPageTitle,controlsContainer}) => {
                 setFilter(filter)
                 reloadCards({filter})
             },
-            allowedFilters:[af.INCLUDE_TAGS, af.EXCLUDE_TAGS, af.FOREIGN_TEXT_LENGTH],
+            allowedFilters:cycledMode?null:[af.INCLUDE_TAGS, af.EXCLUDE_TAGS, af.FOREIGN_TEXT_LENGTH],
             minimized: !isFilterMode,
             cardUpdateCounter
         })
@@ -143,7 +172,9 @@ const RepeatCardsView = ({query,openView,setPageTitle,controlsContainer}) => {
     return RE.Fragment({},
         RE.If(controlsContainer?.current && hasValue(allCards), () => RE.Portal({container:controlsContainer.current},
             renderOpenSearchButton(),
-            `Cards: ${allCards?.length??0}`
+            cycledMode
+                ?`${allCards?.length??0}: ${numberOfFullCycles}/${getNumberOfCompletedCardsInCycle(allCards)}`
+                :`Remains: ${allCards?.length??0}`
         )),
         renderPageContent(),
         renderMessagePopup()

@@ -12,13 +12,14 @@ const TAGS_VIEW = 'TAGS_VIEW'
 const CARDS_SEARCH_VIEW = 'CARDS_SEARCH_VIEW'
 const CREATE_CARD_VIEW = 'CREATE_CARD_VIEW'
 const REPEAT_CARDS_VIEW = 'REPEAT_CARDS_VIEW'
+const FAST_REPEAT_CARDS_VIEW = 'FAST_REPEAT_CARDS_VIEW'
 
 const VIEWS = {}
-function addView({name, component}) {
+function addView({name, component, params}) {
     VIEWS[name] = {
         name,
         render({openView, setPageTitle, query, controlsContainer}) {
-            return re(component,{openView, setPageTitle, query, controlsContainer})
+            return re(component,{...(params??{}), openView, setPageTitle, query, controlsContainer})
         }
     }
 }
@@ -28,7 +29,8 @@ addView({name: HTTP_SERVER_VIEW, component: HttpServerView})
 addView({name: TAGS_VIEW, component: TagsView})
 addView({name: CARDS_SEARCH_VIEW, component: CardsSearchView})
 addView({name: CREATE_CARD_VIEW, component: CreateCardView})
-addView({name: REPEAT_CARDS_VIEW, component: RepeatCardsView})
+addView({name: REPEAT_CARDS_VIEW, component: RepeatCardsView, params: {key:1, cycledMode:false}})
+addView({name: FAST_REPEAT_CARDS_VIEW, component: RepeatCardsView, params: {key:2, cycledMode:true}})
 
 const ViewSelector = ({}) => {
     const [currentViewUrl, setCurrentViewUrl] = useState(null)
@@ -76,6 +78,7 @@ const ViewSelector = ({}) => {
         const bgColor = viewName => viewName == selectedViewName ? '#00d0ff' : undefined
         const additionalButtons = [
             [
+                {key:FAST_REPEAT_CARDS_VIEW, viewName:FAST_REPEAT_CARDS_VIEW, iconName:'speed'},
                 {key:TAGS_VIEW, viewName:TAGS_VIEW, iconName:'sell'},
                 {key:CARDS_SEARCH_VIEW, viewName:CARDS_SEARCH_VIEW, iconName:'search'},
                 {key:BACKUPS_VIEW, viewName:BACKUPS_VIEW, iconName:'archive'},
@@ -107,7 +110,7 @@ const ViewSelector = ({}) => {
 
         function openViewInternal(viewName,params) {
             setShowMoreControlButtons(false)
-            openView(viewName)
+            openView(viewName,params)
         }
 
         return RE.Container.row.left.center({ref: controlsContainer},{},

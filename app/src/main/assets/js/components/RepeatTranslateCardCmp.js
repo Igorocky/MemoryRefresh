@@ -1,6 +1,6 @@
 "use strict";
 
-const RepeatTranslateCardCmp = ({allTags, allTagsMap, controlsContainer, cardToRepeat, onCardWasDeleted, onCardWasUpdated, onDone}) => {
+const RepeatTranslateCardCmp = ({allTags, allTagsMap, controlsContainer, cardToRepeat, onCardWasDeleted, onCardWasUpdated, onDone, cycledMode}) => {
     const USER_INPUT_TEXT_FIELD = 'user-input'
     const CARD_DELAY_TEXT_FIELD = 'card-delay'
 
@@ -24,9 +24,9 @@ const RepeatTranslateCardCmp = ({allTags, allTagsMap, controlsContainer, cardToR
     useEffect(() => {
         if (autoFocusDelay && delayTextField.current) {
             const delayInput = document.getElementById(CARD_DELAY_TEXT_FIELD)
-            delayInput?.focus()
-            delayInput?.select()
-            delayInput?.scrollIntoView()
+            delayInput?.focus?.()
+            delayInput?.select?.()
+            delayInput?.scrollIntoView?.()
             setAutoFocusDelay(false)
         }
     }, [delayTextField.current])
@@ -137,25 +137,29 @@ const RepeatTranslateCardCmp = ({allTags, allTagsMap, controlsContainer, cardToR
     }
 
     function renderDelay() {
-        return RE.TextField({
-            ref: delayTextField,
-            id: CARD_DELAY_TEXT_FIELD,
-            autoCorrect: 'off', autoCapitalize: 'off', spellCheck: 'false',
-            value: delay??'',
-            label: 'Delay',
-            variant: 'outlined',
-            multiline: false,
-            maxRows: 10,
-            size: 'small',
-            inputProps: {size:8, tabIndex:2},
-            onChange: event => {
-                const newText = event.nativeEvent.target.value
-                if (newText !== delay) {
-                    setDelay(newText)
-                }
-            },
-            onKeyUp: event => (event.keyCode === ENTER_KEY_CODE) ? updateSchedule() : null,
-        })
+        if (cycledMode) {
+            return RE.Button({ref: delayTextField, id: CARD_DELAY_TEXT_FIELD, onClick: proceedToNextCard}, 'Next')
+        } else {
+            return RE.TextField({
+                ref: delayTextField,
+                id: CARD_DELAY_TEXT_FIELD,
+                autoCorrect: 'off', autoCapitalize: 'off', spellCheck: 'false',
+                value: delay??'',
+                label: 'Delay',
+                variant: 'outlined',
+                multiline: false,
+                maxRows: 10,
+                size: 'small',
+                inputProps: {size:8, tabIndex:2},
+                onChange: event => {
+                    const newText = event.nativeEvent.target.value
+                    if (newText !== delay) {
+                        setDelay(newText)
+                    }
+                },
+                onKeyUp: event => (event.keyCode === ENTER_KEY_CODE) ? updateSchedule() : null,
+            })
+        }
     }
 
     async function updateSchedule() {
@@ -165,8 +169,12 @@ const RepeatTranslateCardCmp = ({allTags, allTagsMap, controlsContainer, cardToR
         if (res.err) {
             showError(res.err)
         } else {
-            onDone({cardWasUpdated})
+            proceedToNextCard()
         }
+    }
+
+    function proceedToNextCard() {
+        onDone({cardWasUpdated})
     }
 
     function focusUserTranslation() {
@@ -253,9 +261,9 @@ const RepeatTranslateCardCmp = ({allTags, allTagsMap, controlsContainer, cardToR
                     renderValidateButton(),
                 ),
                 RE.If(hasValue(answerFromBE) && isUserInputCorrect(), () => RE.Container.row.left.center({},{},
-                    RE.span({style:{marginRight:'10px'}}, card.timeSinceLastCheck),
+                    RE.IfNot(cycledMode, () => RE.span({style:{marginRight:'10px'}}, card.timeSinceLastCheck)),
                     renderDelay(),
-                    renderNextButton(),
+                    RE.IfNot(cycledMode, () => renderNextButton()),
                 )),
             )
         }
