@@ -24,7 +24,7 @@ const CardsSearchView = ({query,openView,setPageTitle}) => {
             setErrorLoadingCards(res.err)
             showError(res.err)
         } else {
-            const allCards = res.data
+            const allCards = res.data.cards
             for (const card of allCards) {
                 card.tagIds = card.tagIds.map(id => allTagsMap[id]).sortBy('name').map(t=>t.id)
             }

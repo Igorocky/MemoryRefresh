@@ -910,39 +910,6 @@ class ReadTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
         )
     }
 
-    private fun createCard(cardId: Long, tagIds: List<Long> = emptyList(), mapper: (TranslateCard) -> TranslateCard = {it}): TranslateCard {
-        val createdAt = 1000 * cardId + 1
-        val updatedAt = 10000 * cardId + 1
-        val currTime = testClock.currentMillis()
-        val nextAccessInMillis = MILLIS_IN_HOUR * cardId + 2
-        val modifiedCard = mapper(
-            TranslateCard(
-                id = cardId,
-                createdAt = createdAt,
-                paused = false,
-                tagIds = tagIds,
-                schedule = CardSchedule(
-                    cardId = cardId,
-                    updatedAt = updatedAt,
-                    delay = "delay-" + cardId,
-                    nextAccessInMillis = nextAccessInMillis,
-                    nextAccessAt = updatedAt + nextAccessInMillis,
-                ),
-                timeSinceLastCheck = Utils.millisToDurationStr(currTime - updatedAt),
-                overdue = 0.0,
-                textToTranslate = "textToTranslate-" + cardId,
-                translation = "translation-" + cardId,
-            )
-        )
-        val finalCard = modifiedCard.copy(
-            schedule = modifiedCard.schedule.copy(
-                nextAccessAt = (currTime - modifiedCard.overdue * modifiedCard.schedule.nextAccessInMillis).toLong()
-            )
-        )
-        createTranslateCard(finalCard)
-        return finalCard
-    }
-
     private fun assertSearchResult(expected: List<TranslateCard>, actual: BeRespose<ReadTranslateCardsByFilterResp>, matchOrder:Boolean = false) {
         val actualCardsList = actual.data!!.cards
         assertEquals(expected.size, actualCardsList.size)

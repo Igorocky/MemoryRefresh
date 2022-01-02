@@ -50,7 +50,7 @@ const RepeatCardsView = ({query,openView,setPageTitle,controlsContainer, cycledM
                 setErrorLoadingCards(res.err)
                 showError(res.err)
             } else {
-                const allCards = res.data
+                const allCards = res.data.cards
                 setAllCards(allCards)
                 proceedToNextCard({cards:allCards})
             }

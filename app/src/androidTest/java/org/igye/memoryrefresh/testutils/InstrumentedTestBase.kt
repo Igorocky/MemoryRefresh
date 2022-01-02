@@ -5,10 +5,12 @@ import android.database.Cursor.*
 import androidx.test.platform.app.InstrumentationRegistry
 import org.igye.memoryrefresh.ErrorCode.ERROR_IN_TEST
 import org.igye.memoryrefresh.common.MemoryRefreshException
+import org.igye.memoryrefresh.common.Utils
 import org.igye.memoryrefresh.database.CardType
 import org.igye.memoryrefresh.database.Repository
 import org.igye.memoryrefresh.database.Table
 import org.igye.memoryrefresh.database.tables.*
+import org.igye.memoryrefresh.dto.domain.CardSchedule
 import org.igye.memoryrefresh.dto.domain.TranslateCard
 import org.igye.memoryrefresh.manager.DataManager
 import org.igye.memoryrefresh.manager.RepositoryManager
@@ -110,6 +112,42 @@ open class InstrumentedTestBase {
             ))
         }
         return card.id
+    }
+
+    protected fun createCard(cardId: Long, tagIds: List<Long> = emptyList(), mapper: (TranslateCard) -> TranslateCard = {it}): TranslateCard {
+        val createdAt = 1000 * cardId + 1
+        val updatedAt = 10000 * cardId + 1
+        val currTime = testClock.currentMillis()
+        val nextAccessInMillis = Utils.MILLIS_IN_HOUR * cardId + 2
+        val modifiedCard = mapper(
+            TranslateCard(
+                id = cardId,
+                createdAt = createdAt,
+                paused = false,
+                tagIds = tagIds,
+                schedule = CardSchedule(
+                    cardId = cardId,
+                    updatedAt = updatedAt,
+                    delay = "delay-" + cardId,
+                    nextAccessInMillis = nextAccessInMillis,
+                    nextAccessAt = updatedAt + nextAccessInMillis,
+                ),
+                timeSinceLastCheck = Utils.millisToDurationStr(currTime - updatedAt),
+                activatesIn = "",
+                overdue = 0.0,
+                textToTranslate = "textToTranslate-" + cardId,
+                translation = "translation-" + cardId,
+            )
+        )
+        val finalNextAccessAt = (currTime - modifiedCard.overdue * modifiedCard.schedule.nextAccessInMillis).toLong()
+        val finalCard = modifiedCard.copy(
+            schedule = modifiedCard.schedule.copy(
+                nextAccessAt = finalNextAccessAt,
+            ),
+            activatesIn = Utils.millisToDurationStr(finalNextAccessAt - currTime)
+        )
+        createTranslateCard(finalCard)
+        return finalCard
     }
 
     protected fun assertTranslateCardsEqual(expected: TranslateCard, actual: TranslateCard) {

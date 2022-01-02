@@ -88,6 +88,9 @@ class DataManager(
                 query = getCardToTagMappingQuery,
             ) {
                 val cid = it.getLong()
+                if (cardId == null) {
+                    cardId = cid
+                }
                 if (cardId != null && cardId != cid) {
                     result[cardId!!] = ArrayList(tagIds)
                     cardId = cid

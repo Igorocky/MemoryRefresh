@@ -1,6 +1,8 @@
 package org.igye.memoryrefresh
 
 enum class ErrorCode(val code: Long) {
+    UPGRADE_IS_NOT_IMPLEMENTED(45L),
+    DOWNGRADE_IS_NOT_SUPPORTED(44L),
     GET_CARD_TO_TAG_MAPPING(43L),
     READ_TOP_OVERDUE_TRANSLATE_CARDS(42L),
     READ_TRANSLATE_CARD_BY_FILTER(41L),

@@ -138,7 +138,7 @@ function createFeBeBridgeForUiTestMode() {
 
     mockedBeFunctions.readTranslateCardsByFilter = (filter) => {
         // return okResponse([])
-        return okResponse(CARDS.map(c=>mockedBeFunctions.readTranslateCardById({cardId:c.id}).data))
+        return okResponse({cards:CARDS.map(c => mockedBeFunctions.readTranslateCardById({cardId: c.id}).data)})
     }
 
     let topCnt = 0
