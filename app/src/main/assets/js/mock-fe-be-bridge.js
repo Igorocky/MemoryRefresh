@@ -300,6 +300,7 @@ function createFeBeBridgeForUiTestMode() {
             console.error(`mocked backend function is not defined - ${funcName}`)
         }
         return function (arg) {
+            console.log(`BE.${funcName}`, hasValue(arg) ? arg : 'no args')
             return new Promise((resolve,reject) => {
                 const doResolve = () => resolve(beFunc(arg))
                 if (hasValue(delay)) {

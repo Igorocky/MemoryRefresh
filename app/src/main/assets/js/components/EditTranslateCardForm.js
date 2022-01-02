@@ -44,7 +44,7 @@ const EditTranslateCardForm = ({
     }
 
     function renderButtons() {
-        return RE.Container.row.left.center({}, {style: {}},
+        return RE.Container.row.left.center({}, {},
             renderDeleteButton(),
             renderCancelButton(),
             renderSaveButton()
@@ -55,7 +55,7 @@ const EditTranslateCardForm = ({
 
     return RE.Container.col.top.left({}, {},
         renderButtons(),
-        RE.If(hasValue(paused), () => RE.FormGroup({style:{backgroundColor:pausedBgColor, marginTop:margin}},
+        RE.If(hasValue(paused), () => RE.FormGroup({style:{backgroundColor:pausedBgColor, marginTop:'20px'}},
             RE.FormControlLabel({
                 control: RE.Checkbox({checked: paused, onChange: event => pausedOnChange(event.target.checked)}),
                 label:"Paused"
