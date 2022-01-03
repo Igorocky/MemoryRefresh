@@ -89,4 +89,60 @@ class ReadTagInstrumentedUnitTest: InstrumentedTestBase() {
         Assert.assertEquals(listOf(tagId1, tagId3), mapping[cardId2])
         Assert.assertEquals(listOf(tagId2,tagId3), mapping[cardId3])
     }
+
+    @Test
+    fun getCardToTagMapping_returns_result_as_expected_when_first_card_has_one_tag() {
+        //given
+        val tagId1 = createTag(tagId = 1, name = "t1")
+        val tagId2 = createTag(tagId = 2, name = "t2")
+        val tagId3 = createTag(tagId = 3, name = "t3")
+        val cardId1 = createCard(cardId = 1L).id
+        val cardId2 = createCard(cardId = 2L).id
+        val cardId3 = createCard(cardId = 3L).id
+
+        insert(repo = repo, table = ctg, listOf(
+            listOf(ctg.cardId to cardId2, ctg.tagId to tagId1),
+            listOf(ctg.cardId to cardId3, ctg.tagId to tagId2),
+            listOf(ctg.cardId to cardId2, ctg.tagId to tagId3),
+            listOf(ctg.cardId to cardId1, ctg.tagId to tagId2),
+            listOf(ctg.cardId to cardId3, ctg.tagId to tagId3),
+        ))
+
+        //when
+        val mapping = dm.getCardToTagMapping().data!!
+
+        //then
+        Assert.assertEquals(3, mapping.size)
+        Assert.assertEquals(listOf(tagId2), mapping[cardId1])
+        Assert.assertEquals(listOf(tagId1, tagId3), mapping[cardId2])
+        Assert.assertEquals(listOf(tagId2,tagId3), mapping[cardId3])
+    }
+
+    @Test
+    fun getCardToTagMapping_returns_result_as_expected_when_middle_card_has_one_tag() {
+        //given
+        val tagId1 = createTag(tagId = 1, name = "t1")
+        val tagId2 = createTag(tagId = 2, name = "t2")
+        val tagId3 = createTag(tagId = 3, name = "t3")
+        val cardId1 = createCard(cardId = 1L).id
+        val cardId2 = createCard(cardId = 2L).id
+        val cardId3 = createCard(cardId = 3L).id
+
+        insert(repo = repo, table = ctg, listOf(
+            listOf(ctg.cardId to cardId1, ctg.tagId to tagId1),
+            listOf(ctg.cardId to cardId2, ctg.tagId to tagId3),
+            listOf(ctg.cardId to cardId3, ctg.tagId to tagId2),
+            listOf(ctg.cardId to cardId3, ctg.tagId to tagId3),
+            listOf(ctg.cardId to cardId1, ctg.tagId to tagId2),
+        ))
+
+        //when
+        val mapping = dm.getCardToTagMapping().data!!
+
+        //then
+        Assert.assertEquals(3, mapping.size)
+        Assert.assertEquals(listOf(tagId1, tagId2), mapping[cardId1])
+        Assert.assertEquals(listOf(tagId3), mapping[cardId2])
+        Assert.assertEquals(listOf(tagId2,tagId3), mapping[cardId3])
+    }
 }
