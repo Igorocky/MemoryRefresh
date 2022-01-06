@@ -82,21 +82,10 @@ const CardsSearchView = ({query,openView,setPageTitle}) => {
             RE.div(
                 {style:{borderBottom:'solid 1px lightgrey', padding:'3px'}},
                 RE.span({style:{fontWeight:'bold'}},`${idx+1}. `),
-                card.tagIds.map(tagId => RE.span(
-                    {
-                        key:tagId,
-                        style:{
-                            color:card.paused?'grey':'black',
-                            display: 'inline-block',
-                            border:'solid 1px lightgrey',
-                            borderRadius:'10px',
-                            paddingLeft:'4px',
-                            paddingRight:'4px',
-                            marginRight:'1px'
-                        }
-                    },
-                    allTagsMap[tagId].name
-                ))
+                renderListOfTags({
+                    tags: card.tagIds.map(id => allTagsMap[id]),
+                    color:card.paused?'grey':'black',
+                })
             ),
             RE.div(
                 {style:{borderBottom:'solid 1px lightgrey', padding:'3px'}},

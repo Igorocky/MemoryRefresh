@@ -25,7 +25,7 @@ const AVAILABLE_TRANSLATE_CARD_SORT_DIR = {
 const TranslateCardFilterCmp = ({
                                     allTags, allTagsMap, onSubmit, minimized,
                                     submitButtonIconName = 'search',
-                                    allowedFilters, defaultFilter = AVAILABLE_TRANSLATE_CARD_FILTERS.INCLUDE_TAGS,
+                                    allowedFilters, defaultFilters = [AVAILABLE_TRANSLATE_CARD_FILTERS.INCLUDE_TAGS, AVAILABLE_TRANSLATE_CARD_FILTERS.EXCLUDE_TAGS],
                                     cardUpdateCounter
                                 }) => {
     const {renderMessagePopup, showError, showDialog} = useMessagePopup()
@@ -36,7 +36,7 @@ const TranslateCardFilterCmp = ({
     const [cardToTagsMap, setCardToTagsMap] = useState(null)
     const [errorLoadingCardToTagsMap, setErrorLoadingCardToTagsMap] = useState(null)
 
-    const [filtersSelected, setFiltersSelected] = useState([defaultFilter])
+    const [filtersSelected, setFiltersSelected] = useState(defaultFilters)
     const [focusedFilter, setFocusedFilter] = useState(filtersSelected[0])
 
     const [searchInActive, setSearchInActive] = useState(true)
@@ -180,7 +180,7 @@ const TranslateCardFilterCmp = ({
                 ),
                 renderMinimized: () => RE.Fragment({},
                     'Include: ',
-                    renderListOfTags({tags: tagsToInclude, color:'primary'})
+                    renderListOfTags({tags: tagsToInclude, color:'blue'})
                 ),
                 getFilterValues: () => ({tagIdsToInclude: tagsToInclude.map(t=>t.id)})
             }
@@ -221,7 +221,7 @@ const TranslateCardFilterCmp = ({
                 ),
                 renderMinimized: () => RE.Fragment({},
                     'Exclude: ',
-                    renderListOfTags({tags: tagsToExclude, color:'secondary'})
+                    renderListOfTags({tags: tagsToExclude, color:'red'})
                 ),
                 getFilterValues: () => ({tagIdsToExclude: tagsToExclude.map(t=>t.id)})
             }

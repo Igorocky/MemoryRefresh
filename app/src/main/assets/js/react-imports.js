@@ -272,15 +272,21 @@ function parseSearchParams(url) {
     return result
 }
 
-function renderListOfTags({tags,color}) {
-    return RE.Fragment({},
-        tags.map(tag => RE.Chip({
-            style: {marginRight:'10px', marginBottom:'5px'},
+function renderListOfTags({tags,color,fontSize = '14px'}) {
+    return tags.map(tag => RE.span(
+        {
             key:tag.id,
-            variant:'outlined',
-            size:'small',
-            label: tag.name,
-            color:color??'default',
-        }))
-    )
+            style:{
+                color:color,
+                fontSize: fontSize,
+                display: 'inline-block',
+                border:`solid 1px ${color??'lightgrey'}`,
+                borderRadius:'10px',
+                paddingLeft:'4px',
+                paddingRight:'4px',
+                marginRight:'1px'
+            }
+        },
+        tag.name
+    ))
 }
