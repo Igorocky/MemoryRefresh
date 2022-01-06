@@ -62,10 +62,11 @@ class Repository(
     }
 
     private fun upgradeFromV1ToV2(db: SQLiteDatabase) {
-        throw MemoryRefreshException(
-            msg = "Upgrade for a database of version 11111 is not implemented.",
-            errCode = ErrorCode.UPGRADE_IS_NOT_IMPLEMENTED
-        )
+        db.execSQL("""
+                ALTER TABLE $cards ADD COLUMN ${cards.paused} integer not null check (${cards.paused} in (0,1)) default 0
+        """.trimIndent())
+        tags.create(db)
+        cardToTag.create(db)
     }
 }
 
