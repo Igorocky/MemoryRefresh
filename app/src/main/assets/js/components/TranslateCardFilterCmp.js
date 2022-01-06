@@ -13,6 +13,19 @@ const AVAILABLE_TRANSLATE_CARD_FILTERS = {
     SORT_BY:'SORT_BY',
 }
 
+const CARD_FILTER_SORT_ORDER = {
+    SEARCH_IN_ACTIVE:1,
+    INCLUDE_TAGS:2,
+    EXCLUDE_TAGS:3,
+    CREATED_ON_OR_AFTER:4,
+    CREATED_ON_OR_BEFORE:5,
+    NATIVE_TEXT_LENGTH:6,
+    NATIVE_TEXT_CONTAINS:7,
+    FOREIGN_TEXT_LENGTH:8,
+    FOREIGN_TEXT_CONTAINS:9,
+    SORT_BY:10,
+}
+
 const AVAILABLE_TRANSLATE_CARD_SORT_BY = {
     TIME_CREATED:'TIME_CREATED',
 }
@@ -581,7 +594,7 @@ const TranslateCardFilterCmp = ({
     }
 
     if (minimized) {
-        const filtersToRender = getEffectiveSelectedFilterNames()
+        const filtersToRender = getEffectiveSelectedFilterNames().sortBy(n => CARD_FILTER_SORT_ORDER[n])
         return RE.Paper({style:{padding:'5px'}},
             filtersToRender.length ? RE.Container.col.top.left({},{},
                 filtersToRender.map(filterName => allFilterObjects[filterName].renderMinimized())

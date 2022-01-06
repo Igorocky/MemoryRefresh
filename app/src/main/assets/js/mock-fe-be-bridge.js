@@ -307,9 +307,9 @@ function createFeBeBridgeForUiTestMode() {
             return result
         }
 
-        const numOfCards = 2
+        const numOfCards = 1000
         ints(1,numOfCards)
-            .map(i=>randomSentence({wordsMinCnt:1, wordsMaxCnt:1, wordMinLength:1, wordMaxLength:1}))
+            .map(i=>randomSentence({wordsMinCnt:1, wordsMaxCnt:3, wordMinLength:1, wordMaxLength:5}))
             .forEach(s=>mockedBeFunctions.createTranslateCard({
                 textToTranslate:s.toUpperCase(),
                 translation:s.toLowerCase(),
