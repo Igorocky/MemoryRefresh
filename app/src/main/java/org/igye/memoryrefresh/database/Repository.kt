@@ -17,7 +17,7 @@ class Repository(
     val translationCardsLog: TranslationCardsLogTable,
     val tags: TagsTable,
     val cardToTag: CardToTagTable
-) : SQLiteOpenHelper(context, dbName, null, 2) {
+) : SQLiteOpenHelper(context, dbName, null, DATABASE_VERSION) {
     private val allTables = listOf(cards, cardsSchedule, translationCards, translationCardsLog, tags, cardToTag)
 
     override fun onCreate(db: SQLiteDatabase) {
@@ -47,6 +47,13 @@ class Repository(
 
     override fun onOpen(db: SQLiteDatabase) {
         super.onOpen(db)
+        val actualDbVersion: Int = db.select("PRAGMA user_version") { it.getLong() }.rows[0].toInt()
+        if (actualDbVersion != DATABASE_VERSION) {
+            throw MemoryRefreshException(
+                msg = "Database version mismatch: expected $DATABASE_VERSION, actual $actualDbVersion.",
+                errCode = ErrorCode.DATABASE_VERSION_MISMATCH
+            )
+        }
         allTables.forEach { it.prepareStatements(db) }
     }
 
@@ -149,7 +156,7 @@ class Repository(
                 translationCardsLog.matched,
             ),
             reconstructIndexes = listOf(
-                "CREATE INDEX IDX_${translationCardsLog}_CARD_ID on $this ( ${translationCardsLog.cardId}, ${translationCardsLog.timestamp} desc )"
+                "CREATE INDEX IDX_${translationCardsLog}_CARD_ID on $translationCardsLog ( ${translationCardsLog.cardId}, ${translationCardsLog.timestamp} desc )"
             )
         )
 
@@ -211,6 +218,10 @@ class Repository(
             //12. If foreign keys constraints were originally enabled, reenable them now.
             db.execSQL("PRAGMA foreign_keys=ON")
         }
+    }
+
+    companion object {
+        const val DATABASE_VERSION = 2
     }
 }
 
