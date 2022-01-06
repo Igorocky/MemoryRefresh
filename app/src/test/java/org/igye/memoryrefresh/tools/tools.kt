@@ -64,6 +64,7 @@ object Tools {
 
     private fun changeFileProviderName(from:String, to:String) {
         replaceSubstringInFile(File("./app/src/main/AndroidManifest.xml"), from, to)
+        replaceSubstringInFile(File("./app/src/main/java/org/igye/memoryrefresh/manager/RepositoryManager.kt"), from, to)
     }
 
     private fun changeAppBackgroundColor(from:String, to:String) {
