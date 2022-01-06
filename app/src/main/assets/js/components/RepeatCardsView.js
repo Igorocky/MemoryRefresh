@@ -13,7 +13,8 @@ const RepeatCardsView = ({query,openView,setPageTitle,controlsContainer, cycledM
 
     const [cardCounter, setCardCounter] = useState(0)
     const [cardUpdateCounter, setCardUpdateCounter] = useState(0)
-    const [filter, setFilter] = useState(0)
+    const [filter, setFilter] = useState({})
+    const filterInitialState = useMemo(() => query.filterFromLocalStor ? readFromLocalStorage(CARDS_FILTER_LOCAL_STOR_KEY, {}) : null, [])
     const [allCards, setAllCards] = useState(null)
     const [nextCardWillBeAvailableIn, setNextCardWillBeAvailableIn] = useState(null)
     const [errorLoadingCards, setErrorLoadingCards] = useState(null)
@@ -137,6 +138,7 @@ const RepeatCardsView = ({query,openView,setPageTitle,controlsContainer, cycledM
         return re(TranslateCardFilterCmp, {
             allTags,
             allTagsMap,
+            initialState: filterInitialState,
             submitButtonIconName:'play_arrow',
             onSubmit: filter => {
                 setIsFilterMode(false)

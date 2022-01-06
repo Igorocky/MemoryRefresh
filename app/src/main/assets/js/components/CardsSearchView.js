@@ -1,9 +1,12 @@
 "use strict";
 
-const CardsSearchView = ({query,openView,setPageTitle}) => {
+const CARDS_FILTER_LOCAL_STOR_KEY = 'cards-filter'
+
+const CardsSearchView = ({query,openView,setPageTitle,controlsContainer}) => {
     const {renderMessagePopup, showMessage, confirmAction, showError, showMessageWithProgress} = useMessagePopup()
 
     const [isFilterMode, setIsFilterMode] = useState(true)
+    const filterStateRef = useRef(null)
 
     const {allTags, allTagsMap, errorLoadingTags} = useTags()
 
@@ -127,6 +130,7 @@ const CardsSearchView = ({query,openView,setPageTitle}) => {
             re(TranslateCardFilterCmp, {
                 allTags,
                 allTagsMap,
+                stateRef: filterStateRef,
                 onSubmit: filter => {
                     setIsFilterMode(false)
                     reloadCards({filter})
@@ -134,6 +138,13 @@ const CardsSearchView = ({query,openView,setPageTitle}) => {
                 minimized: !isFilterMode
             })
         )
+    }
+
+    function renderFastRepeatButton() {
+        return iconButton({iconName:'speed', onClick: () => {
+            saveToLocalStorage(CARDS_FILTER_LOCAL_STOR_KEY, filterStateRef.current)
+            openView(FAST_REPEAT_CARDS_VIEW, {filterFromLocalStor: true})
+        }})
     }
 
     function renderPageContent() {
@@ -173,6 +184,9 @@ const CardsSearchView = ({query,openView,setPageTitle}) => {
     }
 
     return RE.Fragment({},
+        RE.If(controlsContainer?.current && !isFilterMode && allCards?.length, () => RE.Portal({container:controlsContainer.current},
+            renderFastRepeatButton()
+        )),
         renderPageContent(),
         renderMessagePopup()
     )

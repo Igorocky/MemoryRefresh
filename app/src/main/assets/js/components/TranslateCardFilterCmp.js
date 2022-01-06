@@ -36,7 +36,7 @@ const AVAILABLE_TRANSLATE_CARD_SORT_DIR = {
 }
 
 const TranslateCardFilterCmp = ({
-                                    allTags, allTagsMap, onSubmit, minimized,
+                                    allTags, allTagsMap, initialState, stateRef, onSubmit, minimized,
                                     submitButtonIconName = 'search',
                                     allowedFilters, defaultFilters = [AVAILABLE_TRANSLATE_CARD_FILTERS.INCLUDE_TAGS, AVAILABLE_TRANSLATE_CARD_FILTERS.EXCLUDE_TAGS],
                                     cardUpdateCounter
@@ -49,27 +49,52 @@ const TranslateCardFilterCmp = ({
     const [cardToTagsMap, setCardToTagsMap] = useState(null)
     const [errorLoadingCardToTagsMap, setErrorLoadingCardToTagsMap] = useState(null)
 
-    const [filtersSelected, setFiltersSelected] = useState(defaultFilters)
-    const [focusedFilter, setFocusedFilter] = useState(filtersSelected[0])
+    const [filtersSelected, setFiltersSelected] = useState(initialState?.filtersSelected??defaultFilters)
+    const [focusedFilter, setFocusedFilter] = useState(initialState?.focusedFilter??filtersSelected[0])
 
-    const [searchInActive, setSearchInActive] = useState(true)
+    const [searchInActive, setSearchInActive] = useState(initialState?.searchInActive??true)
 
-    const [tagsToInclude, setTagsToInclude] = useState([])
-    const [tagsToExclude, setTagsToExclude] = useState([])
+    const [tagsToInclude, setTagsToInclude] = useState(initialState?.tagsToInclude??[])
+    const [tagsToExclude, setTagsToExclude] = useState(initialState?.tagsToExclude??[])
     const [remainingTags, setRemainingTags] = useState([])
 
-    const [createdOnOrAfter, setCreatedOnOrAfter] = useState(new Date())
-    const [createdOnOrBefore, setCreatedOnOrBefore] = useState(new Date())
+    const [createdOnOrAfter, setCreatedOnOrAfter] = useState(() => initialState?.createdOnOrAfter ? new Date(initialState?.createdOnOrAfter) : new Date())
+    const [createdOnOrBefore, setCreatedOnOrBefore] = useState(() => initialState?.createdOnOrBefore ? new Date(initialState?.createdOnOrBefore) : new Date())
 
-    const [nativeTextMinLength, setNativeTextMinLength] = useState(null)
-    const [nativeTextMaxLength, setNativeTextMaxLength] = useState(null)
-    const [nativeTextContains, setNativeTextContains] = useState('')
-    const [foreignTextMinLength, setForeignTextMinLength] = useState(null)
-    const [foreignTextMaxLength, setForeignTextMaxLength] = useState(null)
-    const [foreignTextContains, setForeignTextContains] = useState('')
+    const [nativeTextMinLength, setNativeTextMinLength] = useState(initialState?.nativeTextMinLength??null)
+    const [nativeTextMaxLength, setNativeTextMaxLength] = useState(initialState?.nativeTextMaxLength??null)
+    const [nativeTextContains, setNativeTextContains] = useState(initialState?.nativeTextContains??'')
+    const [foreignTextMinLength, setForeignTextMinLength] = useState(initialState?.foreignTextMinLength??null)
+    const [foreignTextMaxLength, setForeignTextMaxLength] = useState(initialState?.foreignTextMaxLength??null)
+    const [foreignTextContains, setForeignTextContains] = useState(initialState?.foreignTextContains??'')
 
-    const [sortBy, setSortBy] = useState(sb.TIME_CREATED)
-    const [sortDir, setSortDir] = useState(sd.ASC)
+    const [sortBy, setSortBy] = useState(initialState?.sortBy??sb.TIME_CREATED)
+    const [sortDir, setSortDir] = useState(initialState?.sortDir??sd.ASC)
+
+    if (stateRef) {
+        stateRef.current = {}
+        stateRef.current.filtersSelected = filtersSelected
+        stateRef.current.focusedFilter = focusedFilter
+        stateRef.current.searchInActive = searchInActive
+        stateRef.current.tagsToInclude = tagsToInclude
+        stateRef.current.tagsToExclude = tagsToExclude
+        stateRef.current.createdOnOrAfter = createdOnOrAfter.getTime()
+        stateRef.current.createdOnOrBefore = createdOnOrBefore.getTime()
+        stateRef.current.nativeTextMinLength = nativeTextMinLength
+        stateRef.current.nativeTextMaxLength = nativeTextMaxLength
+        stateRef.current.nativeTextContains = nativeTextContains
+        stateRef.current.foreignTextMinLength = foreignTextMinLength
+        stateRef.current.foreignTextMaxLength = foreignTextMaxLength
+        stateRef.current.foreignTextContains = foreignTextContains
+        stateRef.current.sortBy = sortBy
+        stateRef.current.sortDir = sortDir
+    }
+
+    useEffect(() => {
+        if (initialState) {
+            doSubmit()
+        }
+    }, [])
 
     useEffect(async () => {
         const res = await be.getCardToTagMapping()
@@ -575,6 +600,10 @@ const TranslateCardFilterCmp = ({
             .reduce((acc,elem) => ({...acc,...elem.getFilterValues()}), {})
     }
 
+    function doSubmit() {
+        onSubmit(getSelectedFilter())
+    }
+
     function renderComponentContent() {
         if (errorLoadingCardToTagsMap) {
             return RE.Fragment({},
@@ -586,7 +615,7 @@ const TranslateCardFilterCmp = ({
             return RE.Container.col.top.left({style:{marginTop:'5px'}},{style:{marginTop:'5px'}},
                 RE.Container.row.left.center({},{},
                     renderAddFilterButton(),
-                    iconButton({iconName:submitButtonIconName, onClick: () => onSubmit(getSelectedFilter())})
+                    iconButton({iconName:submitButtonIconName, onClick: doSubmit})
                 ),
                 renderSelectedFilters(),
             )
