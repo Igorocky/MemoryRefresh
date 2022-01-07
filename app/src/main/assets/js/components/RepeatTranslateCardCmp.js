@@ -21,7 +21,7 @@ const RepeatTranslateCardCmp = ({allTags, allTagsMap, controlsContainer, cardToR
     const [editMode, setEditMode] = useState(false)
     const [cardWasUpdated, setCardWasUpdated] = useState(false)
 
-    const {renderValidationHistory} = useTranslateCardHistory({cardId:cardToRepeat.id})
+    const {renderValidationHistory} = useTranslateCardHistory({cardId:cardToRepeat.id,tabIndex:3})
 
     useEffect(() => {
         if (autoFocusDelay && delayTextField.current) {
@@ -152,7 +152,7 @@ const RepeatTranslateCardCmp = ({allTags, allTagsMap, controlsContainer, cardToR
 
     function renderDelay() {
         if (cycledMode) {
-            return RE.Button({ref: delayTextField, id: CARD_DELAY_TEXT_FIELD, onClick: proceedToNextCard}, 'Next')
+            return RE.Button({ref: delayTextField, id: CARD_DELAY_TEXT_FIELD, tabIndex:2, onClick: proceedToNextCard}, 'Next')
         } else {
             return RE.TextField({
                 ref: delayTextField,

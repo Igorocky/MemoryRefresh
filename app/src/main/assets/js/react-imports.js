@@ -255,9 +255,9 @@ const inButtonCircularProgressStyle = {
     marginLeft: -12,
 }
 
-function buttonWithCircularProgress({variant, disabled, onClick, text, showProgress}) {
+function buttonWithCircularProgress({variant, disabled, onClick, text, showProgress, buttonAttrs}) {
     return RE.div({style:{position: 'relative'}},
-        RE.Button({variant, disabled, onClick}, text),
+        RE.Button({...(buttonAttrs??{}), variant, disabled, onClick}, text),
         RE.If(showProgress,
             () => RE.CircularProgress({size:24, style: inButtonCircularProgressStyle})
         )

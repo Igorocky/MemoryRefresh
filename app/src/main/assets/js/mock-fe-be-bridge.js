@@ -329,7 +329,7 @@ function createFeBeBridgeForUiTestMode() {
     }
     fillDbWithMockData()
 
-    function createBeFunction(funcName, delay = 1000) {
+    function createBeFunction(funcName, delay) {
         const beFunc = mockedBeFunctions[funcName]
         if (hasNoValue(beFunc)) {
             console.error(`mocked backend function is not defined - ${funcName}`)

@@ -1,6 +1,6 @@
 "use strict";
 
-function useTranslateCardHistory({cardId}) {
+function useTranslateCardHistory({cardId, tabIndex}) {
     const {renderMessagePopup, showError} = useMessagePopup()
 
     const [validationHistory, setValidationHistory] = useState(null)
@@ -73,7 +73,8 @@ function useTranslateCardHistory({cardId}) {
             return buttonWithCircularProgress({
                 onClick: loadHistory,
                 text: 'Load history',
-                showProgress: validationHistoryRequested
+                showProgress: validationHistoryRequested,
+                buttonAttrs: {tabIndex}
             })
         }
     }
