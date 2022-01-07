@@ -3,7 +3,7 @@
 const EditTranslateCardForm = ({
                                     allTags, allTagsMap,
                                     paused,pausedOnChange,pausedBgColor,
-                                    textToTranslate,textToTranslateOnChange,textToTranslateBgColor,
+                                    textToTranslate,textToTranslateOnChange,textToTranslateBgColor,textToTranslateId,
                                     translation,translationOnChange,translationBgColor,
                                     delay,delayOnChange,delayBgColor,
                                     tagIds,tagIdsOnChange,tagIdsBgColor,
@@ -62,6 +62,7 @@ const EditTranslateCardForm = ({
             })
         )),
         RE.If(hasValue(textToTranslate), () => RE.TextField({
+            id: textToTranslateId,
             autoCorrect: 'off', autoCapitalize: 'off', spellCheck: 'false',
             value: textToTranslate,
             label: 'Native text',

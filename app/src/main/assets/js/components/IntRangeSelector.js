@@ -30,6 +30,7 @@ const IntRangeSelector = ({selectedMin = null, selectedMax = null, onMinSelected
                 value: getSelectedMin(),
                 label: 'Min',
                 variant: 'outlined',
+                autoFocus:true,
                 multiline: false,
                 maxRows: 1,
                 size: 'small',

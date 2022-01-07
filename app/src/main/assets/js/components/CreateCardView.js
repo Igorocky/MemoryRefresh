@@ -1,5 +1,7 @@
 "use strict";
 
+const TEXT_TO_TRANSLATE_ID = 'textToTranslateId'
+
 const CreateCardView = ({query,openView,setPageTitle}) => {
     const {renderMessagePopup, showError, showMessageWithProgress} = useMessagePopup()
 
@@ -39,6 +41,7 @@ const CreateCardView = ({query,openView,setPageTitle}) => {
             setTextToTranslate('')
             setTranslation('')
             setCardCounter(c => c + 1)
+            document.getElementById(TEXT_TO_TRANSLATE_ID)?.focus()
         }
     }
 
@@ -54,7 +57,7 @@ const CreateCardView = ({query,openView,setPageTitle}) => {
                 key: cardCounter,
                 allTags, allTagsMap,
                 paused,pausedOnChange:newValue => setPaused(newValue),
-                textToTranslate,textToTranslateOnChange: newValue => setTextToTranslate(newValue),
+                textToTranslate,textToTranslateOnChange: newValue => setTextToTranslate(newValue),textToTranslateId: TEXT_TO_TRANSLATE_ID,
                 translation,translationOnChange: newValue => setTranslation(newValue),
                 tagIds,tagIdsOnChange:newValue => setTagIds(newValue),
                 onSave: createCard, saveDisabled: !textToTranslate.length || !translation.length
