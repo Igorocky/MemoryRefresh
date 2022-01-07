@@ -20,6 +20,8 @@ const CardsSearchView = ({query,openView,setPageTitle,controlsContainer}) => {
     const [focusedCardId, setFocusedCardId] = useState(null)
     const [cardToEdit, setCardToEdit] = useState(null)
 
+    const [cardUpdateCounter, setCardUpdateCounter] = useState(0)
+
     useEffect(() => {
         if (hasValue(focusedCardId) && hasNoValue(cardToEdit)) {
             document.getElementById(focusedCardId)?.scrollIntoView()
@@ -69,6 +71,7 @@ const CardsSearchView = ({query,openView,setPageTitle,controlsContainer}) => {
 
     async function deleteCard({card}) {
         if (await confirmAction({text: `Delete this card? "${truncateToMaxLength(20,card.textToTranslate)}"`, okBtnColor: 'secondary'})) {
+            setCardUpdateCounter(prev => prev + 1)
             const closeProgressIndicator = showMessageWithProgress({text: 'Deleting...'})
             const res = await be.deleteTranslateCard({cardId:card.id})
             closeProgressIndicator()
@@ -141,7 +144,8 @@ const CardsSearchView = ({query,openView,setPageTitle,controlsContainer}) => {
                     setIsFilterMode(false)
                     reloadCards({filter})
                 },
-                minimized: !isFilterMode
+                minimized: !isFilterMode,
+                cardUpdateCounter
             })
         )
     }
@@ -160,31 +164,37 @@ const CardsSearchView = ({query,openView,setPageTitle,controlsContainer}) => {
             )
         } else if (hasNoValue(allTags) || hasNoValue(allTagsMap)) {
             return 'Loading tags...'
-        } else if (hasValue(cardToEdit)) {
-            return re(EditTranslateCardCmp,{
-                allTags, allTagsMap, card:cardToEdit,
-                onCancelled: () => setCardToEdit(null),
-                onSaved: async () => {
-                    const closeProgressIndicator = showMessageWithProgress({text: 'Reloading changed card...'})
-                    const res = await be.readTranslateCardById({cardId: cardToEdit.id})
-                    closeProgressIndicator()
-                    if (res.err) {
-                        await showError(res.err)
-                        openFilter()
-                    } else {
-                        setCardToEdit(null)
-                        setAllCards(prev => prev.map(card => card.id === cardToEdit.id ? res.data : card))
-                    }
-                },
-                onDeleted: () => {
-                    setCardToEdit(null)
-                    setAllCards(prev => prev.filter(card => card.id !== cardToEdit.id))
-                }
-            })
         } else {
+            let cardsOrEditCmp
+            if (hasValue(cardToEdit)) {
+                cardsOrEditCmp = re(EditTranslateCardCmp,{
+                    allTags, allTagsMap, card:cardToEdit,
+                    onCancelled: () => setCardToEdit(null),
+                    onSaved: async () => {
+                        setCardUpdateCounter(prev => prev + 1)
+                        const closeProgressIndicator = showMessageWithProgress({text: 'Reloading changed card...'})
+                        const res = await be.readTranslateCardById({cardId: cardToEdit.id})
+                        closeProgressIndicator()
+                        if (res.err) {
+                            await showError(res.err)
+                            openFilter()
+                        } else {
+                            setCardToEdit(null)
+                            setAllCards(prev => prev.map(card => card.id === cardToEdit.id ? res.data : card))
+                        }
+                    },
+                    onDeleted: () => {
+                        setCardUpdateCounter(prev => prev + 1)
+                        setCardToEdit(null)
+                        setAllCards(prev => prev.filter(card => card.id !== cardToEdit.id))
+                    }
+                })
+            } else {
+                cardsOrEditCmp = renderListOfCards()
+            }
             return RE.Container.col.top.left({style: {marginTop:'5px'}},{style:{marginBottom:'10px'}},
                 renderFilter(),
-                renderListOfCards()
+                cardsOrEditCmp
             )
         }
     }
