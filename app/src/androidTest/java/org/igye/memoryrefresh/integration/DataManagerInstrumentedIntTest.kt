@@ -205,7 +205,7 @@ class DataManagerInstrumentedIntTest: InstrumentedTestBase() {
         assertEquals(time2, createCard1Resp.schedule.nextAccessAt)
 
         assertTableContent(repo = repo, table = c, matchColumn = c.id, expectedRows = listOf(
-            listOf(c.id to card1Id, c.type to TR_TP, c.createdAt to time2)
+            listOf(c.id to card1Id, c.type to TR_TP, c.createdAt to time2, c.paused to 0, c.lastCheckedAt to time2)
         ))
         assertTableContent(repo = repo, table = c.ver, matchColumn = c.id, expectedRows = listOf())
 
@@ -249,7 +249,7 @@ class DataManagerInstrumentedIntTest: InstrumentedTestBase() {
         assertTrue(validateCard1Resp1.isCorrect)
 
         assertTableContent(repo = repo, table = c, matchColumn = c.id, expectedRows = listOf(
-            listOf(c.id to card1Id, c.type to TR_TP, c.createdAt to time2)
+            listOf(c.id to card1Id, c.type to TR_TP, c.createdAt to time2, c.paused to 0, c.lastCheckedAt to time5)
         ))
         assertTableContent(repo = repo, table = c.ver, matchColumn = c.id, expectedRows = listOf())
 
@@ -277,7 +277,7 @@ class DataManagerInstrumentedIntTest: InstrumentedTestBase() {
         assertEquals("1d", setDelayCard1Resp1.schedule.delay)
 
         assertTableContent(repo = repo, table = c, matchColumn = c.id, expectedRows = listOf(
-            listOf(c.id to card1Id, c.type to TR_TP, c.createdAt to time2)
+            listOf(c.id to card1Id, c.type to TR_TP, c.createdAt to time2, c.paused to 0, c.lastCheckedAt to time5)
         ))
         assertTableContent(repo = repo, table = c.ver, matchColumn = c.id, expectedRows = listOf())
 
@@ -309,7 +309,7 @@ class DataManagerInstrumentedIntTest: InstrumentedTestBase() {
         assertEquals("1d", updTranslationCard1Resp1.schedule.delay)
 
         assertTableContent(repo = repo, table = c, matchColumn = c.id, expectedRows = listOf(
-            listOf(c.id to card1Id, c.type to TR_TP, c.createdAt to time2)
+            listOf(c.id to card1Id, c.type to TR_TP, c.createdAt to time2, c.paused to 0, c.lastCheckedAt to time5)
         ))
         assertTableContent(repo = repo, table = c.ver, matchColumn = c.id, expectedRows = listOf())
 
@@ -346,8 +346,8 @@ class DataManagerInstrumentedIntTest: InstrumentedTestBase() {
         assertEquals(time8, createCard2Resp.schedule.nextAccessAt)
 
         assertTableContent(repo = repo, table = c, matchColumn = c.id, expectedRows = listOf(
-            listOf(c.id to card1Id, c.type to TR_TP, c.createdAt to time2),
-            listOf(c.id to card2Id, c.type to TR_TP, c.createdAt to time8),
+            listOf(c.id to card1Id, c.type to TR_TP, c.createdAt to time2, c.paused to 0, c.lastCheckedAt to time5),
+            listOf(c.id to card2Id, c.type to TR_TP, c.createdAt to time8, c.paused to 0, c.lastCheckedAt to time8),
         ))
         assertTableContent(repo = repo, table = c.ver, matchColumn = c.id, expectedRows = listOf())
 
@@ -399,8 +399,8 @@ class DataManagerInstrumentedIntTest: InstrumentedTestBase() {
         assertFalse(validateCard2Resp1.isCorrect)
 
         assertTableContent(repo = repo, table = c, matchColumn = c.id, expectedRows = listOf(
-            listOf(c.id to card1Id, c.type to TR_TP, c.createdAt to time2),
-            listOf(c.id to card2Id, c.type to TR_TP, c.createdAt to time8),
+            listOf(c.id to card1Id, c.type to TR_TP, c.createdAt to time2, c.paused to 0, c.lastCheckedAt to time5),
+            listOf(c.id to card2Id, c.type to TR_TP, c.createdAt to time8, c.paused to 0, c.lastCheckedAt to time11),
         ))
         assertTableContent(repo = repo, table = c.ver, matchColumn = c.id, expectedRows = listOf())
 
@@ -435,8 +435,8 @@ class DataManagerInstrumentedIntTest: InstrumentedTestBase() {
         assertEquals("5m", setDelayCard2Resp1.schedule.delay)
 
         assertTableContent(repo = repo, table = c, matchColumn = c.id, expectedRows = listOf(
-            listOf(c.id to card1Id, c.type to TR_TP, c.createdAt to time2),
-            listOf(c.id to card2Id, c.type to TR_TP, c.createdAt to time8),
+            listOf(c.id to card1Id, c.type to TR_TP, c.createdAt to time2, c.paused to 0, c.lastCheckedAt to time5),
+            listOf(c.id to card2Id, c.type to TR_TP, c.createdAt to time8, c.paused to 0, c.lastCheckedAt to time11),
         ))
         assertTableContent(repo = repo, table = c.ver, matchColumn = c.id, expectedRows = listOf())
 
@@ -482,8 +482,8 @@ class DataManagerInstrumentedIntTest: InstrumentedTestBase() {
         assertEquals("5m", updTextToTranslateCard2Resp1.schedule.delay)
 
         assertTableContent(repo = repo, table = c, matchColumn = c.id, expectedRows = listOf(
-            listOf(c.id to card1Id, c.type to TR_TP, c.createdAt to time2),
-            listOf(c.id to card2Id, c.type to TR_TP, c.createdAt to time8),
+            listOf(c.id to card1Id, c.type to TR_TP, c.createdAt to time2, c.paused to 0, c.lastCheckedAt to time5),
+            listOf(c.id to card2Id, c.type to TR_TP, c.createdAt to time8, c.paused to 0, c.lastCheckedAt to time11),
         ))
         assertTableContent(repo = repo, table = c.ver, matchColumn = c.id, expectedRows = listOf())
 
@@ -538,8 +538,8 @@ class DataManagerInstrumentedIntTest: InstrumentedTestBase() {
         assertTrue(validateCard2Resp2.isCorrect)
 
         assertTableContent(repo = repo, table = c, matchColumn = c.id, expectedRows = listOf(
-            listOf(c.id to card1Id, c.type to TR_TP, c.createdAt to time2),
-            listOf(c.id to card2Id, c.type to TR_TP, c.createdAt to time8),
+            listOf(c.id to card1Id, c.type to TR_TP, c.createdAt to time2, c.paused to 0, c.lastCheckedAt to time5),
+            listOf(c.id to card2Id, c.type to TR_TP, c.createdAt to time8, c.paused to 0, c.lastCheckedAt to time17),
         ))
         assertTableContent(repo = repo, table = c.ver, matchColumn = c.id, expectedRows = listOf())
 
@@ -577,8 +577,8 @@ class DataManagerInstrumentedIntTest: InstrumentedTestBase() {
         assertEquals("5m", setDelayCard2Resp2.schedule.delay)
 
         assertTableContent(repo = repo, table = c, matchColumn = c.id, expectedRows = listOf(
-            listOf(c.id to card1Id, c.type to TR_TP, c.createdAt to time2),
-            listOf(c.id to card2Id, c.type to TR_TP, c.createdAt to time8),
+            listOf(c.id to card1Id, c.type to TR_TP, c.createdAt to time2, c.paused to 0, c.lastCheckedAt to time5),
+            listOf(c.id to card2Id, c.type to TR_TP, c.createdAt to time8, c.paused to 0, c.lastCheckedAt to time17),
         ))
         assertTableContent(repo = repo, table = c.ver, matchColumn = c.id, expectedRows = listOf())
 
@@ -633,8 +633,8 @@ class DataManagerInstrumentedIntTest: InstrumentedTestBase() {
         assertEquals("1d", setDelayCard1Resp2.schedule.delay)
 
         assertTableContent(repo = repo, table = c, matchColumn = c.id, expectedRows = listOf(
-            listOf(c.id to card1Id, c.type to TR_TP, c.createdAt to time2),
-            listOf(c.id to card2Id, c.type to TR_TP, c.createdAt to time8),
+            listOf(c.id to card1Id, c.type to TR_TP, c.createdAt to time2, c.paused to 0, c.lastCheckedAt to time5),
+            listOf(c.id to card2Id, c.type to TR_TP, c.createdAt to time8, c.paused to 0, c.lastCheckedAt to time17),
         ))
         assertTableContent(repo = repo, table = c.ver, matchColumn = c.id, expectedRows = listOf())
 
@@ -681,8 +681,8 @@ class DataManagerInstrumentedIntTest: InstrumentedTestBase() {
         assertEquals("0s", setDelayCard1Resp3.schedule.delay)
 
         assertTableContent(repo = repo, table = c, matchColumn = c.id, expectedRows = listOf(
-            listOf(c.id to card1Id, c.type to TR_TP, c.createdAt to time2),
-            listOf(c.id to card2Id, c.type to TR_TP, c.createdAt to time8),
+            listOf(c.id to card1Id, c.type to TR_TP, c.createdAt to time2, c.paused to 0, c.lastCheckedAt to time5),
+            listOf(c.id to card2Id, c.type to TR_TP, c.createdAt to time8, c.paused to 0, c.lastCheckedAt to time17),
         ))
         assertTableContent(repo = repo, table = c.ver, matchColumn = c.id, expectedRows = listOf())
 
@@ -729,7 +729,7 @@ class DataManagerInstrumentedIntTest: InstrumentedTestBase() {
         assertTrue(deleteCard1Resp)
 
         assertTableContent(repo = repo, table = c, matchColumn = c.id, expectedRows = listOf(
-            listOf(c.id to card2Id, c.type to TR_TP, c.createdAt to time8),
+            listOf(c.id to card2Id, c.type to TR_TP, c.createdAt to time8, c.paused to 0, c.lastCheckedAt to time17),
         ))
         assertTableContent(repo = repo, table = c.ver, matchColumn = c.id, expectedRows = listOf(
             listOf(c.ver.timestamp to time25, c.id to card1Id, c.type to TR_TP, c.createdAt to time2),

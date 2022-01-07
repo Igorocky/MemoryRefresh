@@ -37,9 +37,86 @@ class ReadTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
     }
 
     @Test
-    fun TODO_readTranslateCardById_returns_correct_values_for_each_parameter() {
-        //consider both cases - paused=true and paused=false
-        TODO()
+    fun readTranslateCardById_returns_correct_values_for_each_parameter() {
+        //given
+        val tagId1 = createTag(tagId = 1, name = "t1")
+        val tagId2 = createTag(tagId = 2, name = "t2")
+        val tagId3 = createTag(tagId = 3, name = "t3")
+
+        val expectedCardId1 = 1L
+        val createTime1 = testClock.currentMillis()
+        val lastCheckedAt1 = createTime1 + 12664
+        val updatedAt1 = createTime1 + 55332
+        val delay1 = "88fgdfd"
+        val nextAccessInMillis1 = 376444L
+        val nextAccessAt1 = createTime1 + MILLIS_IN_MINUTE
+        val textToTranslate1 = "snsndfhg73456"
+        val translation1 = "wegndfg58"
+
+        val expectedCardId2 = 2L
+        val createTime2 = testClock.plus(2, ChronoUnit.HOURS)
+        val lastCheckedAt2 = createTime2 + 7756
+        val updatedAt2 = createTime2 + 88565
+        val delay2 = "467567hh"
+        val nextAccessInMillis2 = 667863L
+        val nextAccessAt2 = createTime2 + MILLIS_IN_HOUR
+        val textToTranslate2 = "dfjksd7253df"
+        val translation2 = "adfg67455"
+
+        insert(repo = repo, table = c, rows = listOf(
+            listOf(c.id to expectedCardId1, c.type to TR_TP, c.createdAt to createTime1, c.paused to 0, c.lastCheckedAt to lastCheckedAt1),
+            listOf(c.id to expectedCardId2, c.type to TR_TP, c.createdAt to createTime2, c.paused to 1, c.lastCheckedAt to lastCheckedAt2),
+        ))
+        insert(repo = repo, table = s, rows = listOf(
+            listOf(s.cardId to expectedCardId1, s.updatedAt to updatedAt1, s.delay to delay1, s.randomFactor to 1.0, s.nextAccessInMillis to nextAccessInMillis1, s.nextAccessAt to nextAccessAt1),
+            listOf(s.cardId to expectedCardId2, s.updatedAt to updatedAt2, s.delay to delay2, s.randomFactor to 1.0, s.nextAccessInMillis to nextAccessInMillis2, s.nextAccessAt to nextAccessAt2),
+        ))
+        insert(repo = repo, table = t, rows = listOf(
+            listOf(t.cardId to expectedCardId1, t.textToTranslate to textToTranslate1, t.translation to translation1),
+            listOf(t.cardId to expectedCardId2, t.textToTranslate to textToTranslate2, t.translation to translation2),
+        ))
+        insert(repo = repo, table = ctg, rows = listOf(
+            listOf(ctg.cardId to expectedCardId1, ctg.tagId to tagId1),
+            listOf(ctg.cardId to expectedCardId1, ctg.tagId to tagId2),
+            listOf(ctg.cardId to expectedCardId2, ctg.tagId to tagId2),
+            listOf(ctg.cardId to expectedCardId2, ctg.tagId to tagId3),
+        ))
+
+        //when
+        val readTime = testClock.plus(2, ChronoUnit.MINUTES)
+        val card1 = dm.readTranslateCardById(ReadTranslateCardByIdArgs(cardId = expectedCardId1)).data!!
+        val card2 = dm.readTranslateCardById(ReadTranslateCardByIdArgs(cardId = expectedCardId2)).data!!
+
+        //then
+        assertEquals(expectedCardId1, card1.id)
+        assertEquals(createTime1, card1.createdAt)
+        assertEquals(false, card1.paused)
+        assertEquals(setOf(tagId1, tagId2), card1.tagIds.toSet())
+        assertEquals(expectedCardId1, card1.schedule.cardId)
+        assertEquals(updatedAt1, card1.schedule.updatedAt)
+        assertEquals(delay1, card1.schedule.delay)
+        assertEquals(nextAccessInMillis1, card1.schedule.nextAccessInMillis)
+        assertEquals(nextAccessAt1, card1.schedule.nextAccessAt)
+        assertEquals(Utils.millisToDurationStr(readTime - lastCheckedAt1), card1.timeSinceLastCheck)
+        assertEquals("-", card1.activatesIn)
+        assertEquals( (readTime - nextAccessAt1) / (nextAccessInMillis1 * 1.0), card1.overdue, 0.000001)
+        assertEquals(textToTranslate1, card1.textToTranslate)
+        assertEquals(translation1, card1.translation)
+
+        assertEquals(expectedCardId2, card2.id)
+        assertEquals(createTime2, card2.createdAt)
+        assertEquals(true, card2.paused)
+        assertEquals(setOf(tagId3, tagId2), card2.tagIds.toSet())
+        assertEquals(expectedCardId2, card2.schedule.cardId)
+        assertEquals(updatedAt2, card2.schedule.updatedAt)
+        assertEquals(delay2, card2.schedule.delay)
+        assertEquals(nextAccessInMillis2, card2.schedule.nextAccessInMillis)
+        assertEquals(nextAccessAt2, card2.schedule.nextAccessAt)
+        assertEquals(Utils.millisToDurationStr(readTime - lastCheckedAt2), card2.timeSinceLastCheck)
+        assertEquals(Utils.millisToDurationStr(nextAccessAt2 - readTime), card2.activatesIn)
+        assertEquals( (readTime - nextAccessAt2) / (nextAccessInMillis2 * 1.0), card2.overdue, 0.000001)
+        assertEquals(textToTranslate2, card2.textToTranslate)
+        assertEquals(translation2, card2.translation)
     }
 
     @Test
@@ -53,7 +130,7 @@ class ReadTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
         val expectedCardId = 1L
         val baseTime = 27000
         insert(repo = repo, table = c, rows = listOf(
-            listOf(c.id to expectedCardId, c.type to TR_TP, c.createdAt to 0)
+            listOf(c.id to expectedCardId, c.type to TR_TP, c.createdAt to 0, c.lastCheckedAt to 0)
         ))
         insert(repo = repo, table = s, rows = listOf(
             listOf(s.cardId to expectedCardId, s.updatedAt to 0, s.delay to "1m", s.randomFactor to 1.0, s.nextAccessInMillis to 100, s.nextAccessAt to baseTime + 100)
@@ -79,7 +156,7 @@ class ReadTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
         val expectedCardId = 1L
         val baseTime = 27000
         insert(repo = repo, table = c, rows = listOf(
-            listOf(c.id to expectedCardId, c.type to TR_TP, c.createdAt to 0)
+            listOf(c.id to expectedCardId, c.type to TR_TP, c.createdAt to 0, c.lastCheckedAt to 0)
         ))
         insert(repo = repo, table = s, rows = listOf(
             listOf(s.cardId to expectedCardId, s.updatedAt to 0, s.delay to "1m", s.randomFactor to 1.0, s.nextAccessInMillis to 100, s.nextAccessAt to baseTime + 100)
@@ -110,7 +187,7 @@ class ReadTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
         val cardIdWithoutOverdue4 = 8L
         val baseTime = 1_000
         val timeElapsed = 27_000
-        fun createCardRecord(cardId: Long) = listOf(c.id to cardId, c.type to TR_TP, c.createdAt to 0)
+        fun createCardRecord(cardId: Long) = listOf(c.id to cardId, c.type to TR_TP, c.createdAt to 0, c.lastCheckedAt to 0)
         insert(repo = repo, table = c, rows = listOf(
             createCardRecord(cardId = cardIdWithoutOverdue1),
             createCardRecord(cardId = cardIdWithBigOverdue),
@@ -185,7 +262,7 @@ class ReadTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
         val expectedCardId = 1236L
         val baseTime = 1_000
         val timeElapsed = 27_000
-        fun createCardRecord(cardId: Long) = listOf(c.id to cardId, c.type to TR_TP, c.createdAt to 0)
+        fun createCardRecord(cardId: Long) = listOf(c.id to cardId, c.type to TR_TP, c.createdAt to 0, c.lastCheckedAt to 0)
         insert(repo = repo, table = c, rows = listOf(
             createCardRecord(cardId = expectedCardId),
         ))
@@ -217,7 +294,7 @@ class ReadTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
         val expectedCardId = 1236L
         val baseTime = 1_000
         val timeElapsed = 27_000
-        fun createCardRecord(cardId: Long) = listOf(c.id to cardId, c.type to TR_TP, c.createdAt to 0)
+        fun createCardRecord(cardId: Long) = listOf(c.id to cardId, c.type to TR_TP, c.createdAt to 0, c.lastCheckedAt to 0)
         insert(repo = repo, table = c, rows = listOf(
             createCardRecord(cardId = expectedCardId),
         ))
@@ -269,7 +346,7 @@ class ReadTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
         val cardIdWithoutOverdue4 = 8L
         val baseTime = 1_000
         val timeElapsed = 27_000
-        fun createCardRecord(cardId: Long) = listOf(c.id to cardId, c.type to TR_TP, c.createdAt to 0)
+        fun createCardRecord(cardId: Long) = listOf(c.id to cardId, c.type to TR_TP, c.createdAt to 0, c.lastCheckedAt to 0)
         insert(repo = repo, table = c, rows = listOf(
             createCardRecord(cardId = cardIdWithoutOverdue1),
             createCardRecord(cardId = cardIdWithBigOverdue),

@@ -165,10 +165,17 @@ class UpdateTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
         val textToTranslateAfterUpdate = "Y"
         val translationBeforeUpdate = "x"
         val translationAfterUpdate = "y"
+        val pausedBeforeUpdate = false
+        val pausedAfterUpdate = true
         val createTime = testClock.currentMillis()
         val cardId = dm.createTranslateCard(CreateTranslateCardArgs(
-            textToTranslate = textToTranslateBeforeUpdate, translation = translationBeforeUpdate, tagIds = setOf(tagId1, tagId2, tagId3, tagId4)
+            textToTranslate = textToTranslateBeforeUpdate, translation = translationBeforeUpdate, tagIds = setOf(tagId1, tagId2, tagId3, tagId4), paused = pausedBeforeUpdate
         )).data!!
+
+        assertTableContent(repo = repo, table = c, expectedRows = listOf(
+            listOf(c.id to cardId, c.paused to (if (pausedBeforeUpdate) 1 else 0)),
+        ))
+        assertTableContent(repo = repo, table = c.ver, expectedRows = listOf())
 
         assertTableContent(repo = repo, table = t, expectedRows = listOf(
             listOf(t.cardId to cardId, t.textToTranslate to textToTranslateBeforeUpdate, t.translation to translationBeforeUpdate),
@@ -189,15 +196,22 @@ class UpdateTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
 
         //when
         val updateTime = testClock.plus(4000)
+        assertTrue(pausedBeforeUpdate != pausedAfterUpdate)
         dm.updateTranslateCard(UpdateTranslateCardArgs(
             cardId = cardId,
             textToTranslate = textToTranslateAfterUpdate,
             translation = translationAfterUpdate,
             delay = "5m",
-            tagIds = setOf(tagId5,tagId6,tagId3,tagId4)
+            tagIds = setOf(tagId5,tagId6,tagId3,tagId4),
+            paused = pausedAfterUpdate
         ))
 
         //then
+        assertTableContent(repo = repo, table = c, expectedRows = listOf(
+            listOf(c.id to cardId, c.paused to (if (pausedAfterUpdate) 1 else 0)),
+        ))
+        assertTableContent(repo = repo, table = c.ver, expectedRows = listOf())
+
         assertTableContent(repo = repo, table = t, expectedRows = listOf(
             listOf(t.cardId to cardId, t.textToTranslate to textToTranslateAfterUpdate, t.translation to translationAfterUpdate),
         ))
@@ -221,25 +235,111 @@ class UpdateTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
     }
 
     @Test
-    fun TODO_updateTranslateCard_doesnt_modify_paused_flag_if_it_is_not_specified_in_the_request() {
-        //consider two cases - one for false and another for true
-        TODO()
+    fun updateTranslateCard_doesnt_modify_paused_flag_if_it_is_not_specified_in_the_request() {
+        //given
+        val textToTranslateBeforeUpdate = "X"
+        val textToTranslateAfterUpdate = "Y"
+        val translationBeforeUpdate = "x"
+        val cardId1 = dm.createTranslateCard(CreateTranslateCardArgs(
+            textToTranslate = textToTranslateBeforeUpdate, translation = translationBeforeUpdate, paused = true
+        )).data!!
+        val cardId2 = dm.createTranslateCard(CreateTranslateCardArgs(
+            textToTranslate = textToTranslateBeforeUpdate, translation = translationBeforeUpdate, paused = false
+        )).data!!
+
+        assertTableContent(repo = repo, table = c, expectedRows = listOf(
+            listOf(c.id to cardId1, c.paused to 1),
+            listOf(c.id to cardId2, c.paused to 0),
+        ))
+
+        assertTableContent(repo = repo, table = t, expectedRows = listOf(
+            listOf(t.cardId to cardId1, t.textToTranslate to textToTranslateBeforeUpdate, t.translation to translationBeforeUpdate),
+            listOf(t.cardId to cardId2, t.textToTranslate to textToTranslateBeforeUpdate, t.translation to translationBeforeUpdate),
+        ))
+        assertTableContent(repo = repo, table = t.ver, expectedRows = listOf())
+
+        //when
+        dm.updateTranslateCard(UpdateTranslateCardArgs(
+            cardId = cardId1,
+            textToTranslate = textToTranslateAfterUpdate
+        ))
+        dm.updateTranslateCard(UpdateTranslateCardArgs(
+            cardId = cardId2,
+            textToTranslate = textToTranslateAfterUpdate
+        ))
+
+        //then
+        assertTableContent(repo = repo, table = c, expectedRows = listOf(
+            listOf(c.id to cardId1, c.paused to 1),
+            listOf(c.id to cardId2, c.paused to 0),
+        ))
+        assertTableContent(repo = repo, table = c.ver, expectedRows = listOf())
+
+        assertTableContent(repo = repo, table = t, expectedRows = listOf(
+            listOf(t.cardId to cardId1, t.textToTranslate to textToTranslateAfterUpdate, t.translation to translationBeforeUpdate),
+            listOf(t.cardId to cardId2, t.textToTranslate to textToTranslateAfterUpdate, t.translation to translationBeforeUpdate),
+        ))
+        assertTableContent(repo = repo, table = t.ver, expectedRows = listOf(
+            listOf(t.cardId to cardId1, t.textToTranslate to textToTranslateBeforeUpdate, t.translation to translationBeforeUpdate),
+            listOf(t.cardId to cardId2, t.textToTranslate to textToTranslateBeforeUpdate, t.translation to translationBeforeUpdate),
+        ))
     }
 
     @Test
-    fun TODO_updateTranslateCard_modifies_paused_flag_from_false_to_true() {
-        TODO()
+    fun updateTranslateCard_modifies_paused_flag_from_false_to_true() {
+        //given
+        val textToTranslateBeforeUpdate = "X"
+        val translationBeforeUpdate = "x"
+        val pausedBeforeUpdate = false
+        val pausedAfterUpdate = true
+        val cardId = dm.createTranslateCard(CreateTranslateCardArgs(
+            textToTranslate = textToTranslateBeforeUpdate, translation = translationBeforeUpdate, paused = pausedBeforeUpdate
+        )).data!!
+
+        assertTableContent(repo = repo, table = c, expectedRows = listOf(
+            listOf(c.id to cardId, c.paused to 0),
+        ))
+
+        //when
+        dm.updateTranslateCard(UpdateTranslateCardArgs(
+            cardId = cardId,
+            paused = pausedAfterUpdate
+        ))
+
+        //then
+        assertTableContent(repo = repo, table = c, expectedRows = listOf(
+            listOf(c.id to cardId, c.paused to 1),
+        ))
+        assertTableContent(repo = repo, table = c.ver, expectedRows = listOf())
+
     }
 
     @Test
-    fun TODO_updateTranslateCard_modifies_paused_flag_from_true_to_false() {
-        TODO()
-    }
+    fun updateTranslateCard_modifies_paused_flag_from_true_to_false() {
+        //given
+        val textToTranslateBeforeUpdate = "X"
+        val translationBeforeUpdate = "x"
+        val pausedBeforeUpdate = true
+        val pausedAfterUpdate = false
+        val cardId = dm.createTranslateCard(CreateTranslateCardArgs(
+            textToTranslate = textToTranslateBeforeUpdate, translation = translationBeforeUpdate, paused = pausedBeforeUpdate
+        )).data!!
 
-    @Test
-    fun TODO_updateTranslateCard_doesnt_create_a_history_record_for_a_card_if_passed_paused_flag_is_same_as_current() {
-        //consider two cases - one for false and another for true
-        TODO()
+        assertTableContent(repo = repo, table = c, expectedRows = listOf(
+            listOf(c.id to cardId, c.paused to 1),
+        ))
+
+        //when
+        dm.updateTranslateCard(UpdateTranslateCardArgs(
+            cardId = cardId,
+            paused = pausedAfterUpdate
+        ))
+
+        //then
+        assertTableContent(repo = repo, table = c, expectedRows = listOf(
+            listOf(c.id to cardId, c.paused to 0),
+        ))
+        assertTableContent(repo = repo, table = c.ver, expectedRows = listOf())
     }
 
     @Test

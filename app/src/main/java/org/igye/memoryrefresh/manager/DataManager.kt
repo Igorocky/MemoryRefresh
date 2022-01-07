@@ -194,6 +194,7 @@ class DataManager(
             s.${s.nextAccessAt},
             c.${c.createdAt},
             c.${c.paused},
+            c.${c.lastCheckedAt},
             (? - s.${s.nextAccessAt} ) * 1.0 / (case when s.${s.nextAccessInMillis} = 0 then 1 else s.${s.nextAccessInMillis} end),
             (select group_concat(ctg.${ctg.tagId}) from $ctg ctg where ctg.${ctg.cardId} = c.${c.id}) as tagIds,
             s.${s.delay},
@@ -219,6 +220,7 @@ class DataManager(
                     id = cardId,
                     createdAt = it.getLong(),
                     paused = it.getLong() == 1L,
+                    timeSinceLastCheck = Utils.millisToDurationStr(currTime - it.getLong()),
                     overdue = it.getDouble(),
                     tagIds = (it.getStringOrNull()?:"").splitToSequence(",").filter { it.isNotBlank() }.map { it.toLong() }.toList(),
                     schedule = CardSchedule(
@@ -228,7 +230,6 @@ class DataManager(
                         nextAccessInMillis = it.getLong(),
                         nextAccessAt = nextAccessAt,
                     ),
-                    timeSinceLastCheck = Utils.millisToDurationStr(currTime - updatedAt),
                     activatesIn = if (nextAccessAt - currTime >= 0) Utils.millisToDurationStr(nextAccessAt - currTime) else "-",
                     textToTranslate = it.getString(),
                     translation = it.getString(),
@@ -392,6 +393,7 @@ class DataManager(
                     translation = userProvidedTranslation,
                     matched = translationIsCorrect
                 )
+                repo.cards.updateLastChecked(id = args.cardId, lastCheckedAt = clock.instant().toEpochMilli())
                 ValidateTranslateCardAnswerResp(
                     isCorrect = translationIsCorrect,
                     answer = expectedTranslation
@@ -472,7 +474,7 @@ class DataManager(
                     tagIds.forEach { repo.cardToTag.insert(cardId = cardId, tagId = it) }
                 }
                 if (paused != null && paused != existingCard.paused) {
-                    repo.cards.update(id = cardId, cardType = existingCard.type, paused = paused)
+                    repo.cards.updatePaused(id = cardId, paused = paused)
                 }
                 Unit
             }
@@ -484,6 +486,7 @@ class DataManager(
             c.${c.id},
             c.${c.type},
             c.${c.paused},
+            c.${c.lastCheckedAt},
             (select group_concat(ctg.${ctg.tagId}) from $ctg ctg where ctg.${ctg.cardId} = c.${c.id}) as tagIds,
             s.${s.updatedAt},
             s.${s.delay},
@@ -506,6 +509,7 @@ class DataManager(
                         id = cardId,
                         type = CardType.fromInt(it.getLong()),
                         paused = it.getLong() == 1L,
+                        lastCheckedAt = it.getLong(),
                         tagIds = (it.getStringOrNull()?:"").splitToSequence(",").filter { it.isNotBlank() }.map { it.toLong() }.toList(),
                         schedule = CardSchedule(
                             cardId = cardId,
@@ -615,6 +619,7 @@ class DataManager(
                 s.${s.nextAccessAt},
                 c.${c.createdAt},
                 c.${c.paused},
+                c.${c.lastCheckedAt},
                 $overdueFormula overdue,
                 c.tagIds,
                 s.${s.delay},
@@ -627,6 +632,7 @@ class DataManager(
                         c.${c.id},
                         c.${c.createdAt},
                         max(c.${c.paused}) ${c.paused},
+                        max(c.${c.lastCheckedAt}) ${c.lastCheckedAt},
                         group_concat(ctg.${ctg.tagId}) as tagIds
                     from $c c left join $ctg ctg on c.${c.id} = ctg.${ctg.cardId}
                         ${if (leastUsedTagId == null) "" else "inner join $ctg tg_incl on c.${c.id} = tg_incl.${ctg.cardId} and tg_incl.${ctg.tagId} = $leastUsedTagId"}
@@ -650,6 +656,7 @@ class DataManager(
                     id = cardId,
                     createdAt = it.getLong(),
                     paused = it.getLong() == 1L,
+                    timeSinceLastCheck = Utils.millisToDurationStr(currTime - it.getLong()),
                     overdue = it.getDouble(),
                     tagIds = (it.getStringOrNull()?:"").splitToSequence(",").filter { it.isNotBlank() }.map { it.toLong() }.toList(),
                     schedule = CardSchedule(
@@ -659,7 +666,6 @@ class DataManager(
                         nextAccessInMillis = it.getLong(),
                         nextAccessAt = nextAccessAt,
                     ),
-                    timeSinceLastCheck = Utils.millisToDurationStr(currTime - updatedAt),
                     activatesIn = if (nextAccessAt - currTime >= 0) Utils.millisToDurationStr(nextAccessAt - currTime) else "-",
                     textToTranslate = it.getString(),
                     translation = it.getString(),

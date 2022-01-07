@@ -91,7 +91,7 @@ open class InstrumentedTestBase {
 
     protected fun createTranslateCard(card: TranslateCard): Long {
         insert(repo = repo, table = c, rows = listOf(
-            listOf(c.id to card.id, c.createdAt to card.createdAt, c.type to TR_TP, c.paused to if (card.paused) 1 else 0)
+            listOf(c.id to card.id, c.createdAt to card.createdAt, c.type to TR_TP, c.paused to if (card.paused) 1 else 0, c.lastCheckedAt to card.timeSinceLastCheck.toLong())
         ))
         insert(repo = repo, table = s, rows = listOf(
             listOf(
@@ -118,6 +118,7 @@ open class InstrumentedTestBase {
         val createdAt = 1000 * cardId + 1
         val updatedAt = 10000 * cardId + 1
         val currTime = testClock.currentMillis()
+        val lastCheckedAt = currTime - Utils.MILLIS_IN_HOUR*cardId - Utils.MILLIS_IN_MINUTE*cardId
         val nextAccessInMillis = Utils.MILLIS_IN_HOUR * cardId + 2
         val modifiedCard = mapper(
             TranslateCard(
@@ -132,7 +133,7 @@ open class InstrumentedTestBase {
                     nextAccessInMillis = nextAccessInMillis,
                     nextAccessAt = updatedAt + nextAccessInMillis,
                 ),
-                timeSinceLastCheck = Utils.millisToDurationStr(currTime - updatedAt),
+                timeSinceLastCheck = lastCheckedAt.toString(),
                 activatesIn = "",
                 overdue = 0.0,
                 textToTranslate = "textToTranslate-" + cardId,
@@ -147,7 +148,9 @@ open class InstrumentedTestBase {
             activatesIn = Utils.millisToDurationStr(finalNextAccessAt - currTime)
         )
         createTranslateCard(finalCard)
-        return finalCard
+        return finalCard.copy(
+            timeSinceLastCheck = Utils.millisToDurationStr(currTime - lastCheckedAt)
+        )
     }
 
     protected fun assertTranslateCardsEqual(expected: TranslateCard, actual: TranslateCard) {
