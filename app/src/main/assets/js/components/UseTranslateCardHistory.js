@@ -54,7 +54,7 @@ function useTranslateCardHistory({cardId}) {
 
         })
 
-        return RE.table({className:'table-with-collapsed-borders'}, RE.tbody({},
+        return RE.table({className:'table-with-collapsed-borders gray'}, RE.tbody({},
             rows
         ))
     }

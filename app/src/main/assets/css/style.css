@@ -3,6 +3,10 @@
     border-collapse: collapse;
 }
 
-.table-with-collapsed-borders tr td {
+.table-with-collapsed-borders.gray tr td {
     border: solid 1px gray;
+}
+
+.table-with-collapsed-borders.lightgray tr td {
+    border: solid 1px lightgray;
 }

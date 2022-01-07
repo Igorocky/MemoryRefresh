@@ -315,12 +315,17 @@ function createFeBeBridgeForUiTestMode() {
         const numOfCards = 1000
         ints(1,numOfCards)
             .map(i=>randomSentence({wordsMinCnt:1, wordsMaxCnt:3, wordMinLength:1, wordMaxLength:5}))
-            .forEach(s=>mockedBeFunctions.createTranslateCard({
-                textToTranslate:s.toUpperCase(),
-                translation:s.toLowerCase(),
-                tagIds:getRandomTagIds(),
-                paused: randomInt(0,1) === 1
-            }))
+            .forEach(s=> {
+                if (randomInt(0,1) === 1) {
+                    s = s.replaceAll(' ', '\n')
+                }
+                mockedBeFunctions.createTranslateCard({
+                    textToTranslate: s.toUpperCase(),
+                    translation: s.toLowerCase(),
+                    tagIds: getRandomTagIds(),
+                    paused: randomInt(0, 1) === 1
+                })
+            })
     }
     fillDbWithMockData()
 

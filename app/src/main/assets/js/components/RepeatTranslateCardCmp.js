@@ -52,18 +52,30 @@ const RepeatTranslateCardCmp = ({allTags, allTagsMap, controlsContainer, cardToR
 
     function renderQuestion() {
         if (card) {
+            let question
+            if (card.textToTranslate.indexOf('\n') >= 0) {
+                question = multilineTextToTable({text:card.textToTranslate})
+            } else {
+                question = RE.div({}, card.textToTranslate)
+            }
             return RE.Container.col.top.left({},{},
                 RE.div({style:{fontWeight:'bold',marginBottom:'10px'}}, 'Translate:'),
-                RE.div({}, card.textToTranslate),
+                question
             )
         }
     }
 
     function renderExpectedTranslation() {
         if (answerFromBE) {
+            let expected
+            if (answerFromBE.indexOf('\n') >= 0) {
+                expected = multilineTextToTable({text:answerFromBE})
+            } else {
+                expected = RE.div({}, answerFromBE)
+            }
             return RE.Container.col.top.left({},{},
                 RE.div({style:{fontWeight:'bold',marginBottom:'10px'}}, 'Expected:'),
-                RE.div({}, answerFromBE),
+                expected
             )
         }
     }
