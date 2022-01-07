@@ -82,8 +82,8 @@ const ViewSelector = ({}) => {
                 {key:TAGS_VIEW, viewName:TAGS_VIEW, iconName:'sell'},
                 {key:CARDS_SEARCH_VIEW, viewName:CARDS_SEARCH_VIEW, iconName:'search'},
                 {key:BACKUPS_VIEW, viewName:BACKUPS_VIEW, iconName:'archive'},
-                {key:HTTP_SERVER_VIEW, viewName:HTTP_SERVER_VIEW, iconName:'reset_tv'},
-            ]
+                IS_IN_WEBVIEW?{key:HTTP_SERVER_VIEW, viewName:HTTP_SERVER_VIEW, iconName:'reset_tv'}:null,
+            ].filter(e=>hasValue(e))
         ]
         const buttons = [[
             {key:REPEAT_CARDS_VIEW, viewName:REPEAT_CARDS_VIEW, iconName:"published_with_changes"},

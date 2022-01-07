@@ -26,7 +26,7 @@ class CustomAssetsPathHandler(
                             "const ROOT_REACT_COMPONENT = $rootReactComponent"
                         )
                         .replaceFirst(
-                            "const IS_IN_WEBVIEW = false",
+                            "const IS_IN_WEBVIEW = true",
                             "const IS_IN_WEBVIEW = $isInWebview"
                         )
                         .toByteArray()
