@@ -134,8 +134,7 @@ const CardsSearchView = ({query,openView,setPageTitle,controlsContainer}) => {
                 iconButton({
                     iconName:'youtube_searched_for',
                     onClick: openFilter
-                }),
-                RE.span({style: {fontWeight:'bold'}}, 'Filters:')
+                })
             )),
             re(TranslateCardFilterCmp, {
                 allTags,
