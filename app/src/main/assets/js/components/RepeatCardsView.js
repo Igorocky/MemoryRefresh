@@ -14,7 +14,15 @@ const RepeatCardsView = ({query,openView,setPageTitle,controlsContainer, cycledM
     const [cardCounter, setCardCounter] = useState(0)
     const [cardUpdateCounter, setCardUpdateCounter] = useState(0)
     const [filter, setFilter] = useState({})
-    const filterInitialState = useMemo(() => query.filterFromLocalStor ? readFromLocalStorage(CARDS_FILTER_LOCAL_STOR_KEY, {}) : null, [])
+    const filterInitialState = useMemo(() => {
+        if (query.filterFromLocalStor) {
+            return readFromLocalStorage(CARDS_FILTER_LOCAL_STOR_KEY, {})
+        } else if (!cycledMode) {
+            return {}
+        } else {
+            return null
+        }
+    }, [])
     const [allCards, setAllCards] = useState(null)
     const [nextCardWillBeAvailableIn, setNextCardWillBeAvailableIn] = useState(null)
     const [errorLoadingCards, setErrorLoadingCards] = useState(null)
