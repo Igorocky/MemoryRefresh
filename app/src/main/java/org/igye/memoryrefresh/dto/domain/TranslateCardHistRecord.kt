@@ -1,9 +1,10 @@
 package org.igye.memoryrefresh.dto.domain
 
 data class TranslateCardHistRecord(
-    val recId: Long,
     val cardId: Long,
+    val verId: Long,
     val timestamp: Long,
-    val translation:String,
-    val isCorrect: Boolean,
+    val textToTranslate: String,
+    val translation: String,
+    val validationHistory: MutableList<TranslateCardValidationHistRecord>,
 )

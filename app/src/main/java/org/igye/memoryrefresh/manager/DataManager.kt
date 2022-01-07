@@ -244,20 +244,21 @@ class DataManager(
     }
 
     data class ReadTranslateCardHistoryArgs(val cardId:Long)
-    private val getTranslateCardHistoryQuery =
+    private val getValidationHistoryQuery =
         "select ${l.recId}, ${l.cardId}, ${l.timestamp}, ${l.translation}, ${l.matched} from $l where ${l.cardId} = ? order by ${l.timestamp} desc"
-    private val getTranslateCardHistoryQueryColumnNames = arrayOf(l.recId, l.cardId, l.timestamp, l.translation, l.matched)
+    private val getDataHistoryQuery =
+        "select ${t.ver.verId}, ${t.cardId}, ${t.ver.timestamp}, ${t.textToTranslate}, ${t.translation} from ${t.ver} where ${t.cardId} = ? order by ${t.ver.timestamp} desc"
     @BeMethod
     @Synchronized
     fun readTranslateCardHistory(args: ReadTranslateCardHistoryArgs): BeRespose<TranslateCardHistResp> {
         return getRepo().writableDatabase.doInTransaction {
-            val historyRecords = select(
-                rowsMax = 30,
-                query = getTranslateCardHistoryQuery,
-                args = arrayOf(args.cardId.toString()),
-                columnNames = getTranslateCardHistoryQueryColumnNames,
+            val card: TranslateCard = readTranslateCardById(ReadTranslateCardByIdArgs(cardId = args.cardId)).data!!
+            val cardIdArgs = arrayOf(args.cardId.toString())
+            val validationHistory: List<TranslateCardValidationHistRecord> = select(
+                query = getValidationHistoryQuery,
+                args = cardIdArgs,
                 rowMapper = {
-                    TranslateCardHistRecord(
+                    TranslateCardValidationHistRecord(
                         recId = it.getLong(),
                         cardId = it.getLong(),
                         timestamp = it.getLong(),
@@ -265,11 +266,24 @@ class DataManager(
                         isCorrect = it.getLong() == 1L,
                     )
                 }
+            ).rows
+            val dataHistory: ArrayList<TranslateCardHistRecord> = ArrayList(
+                select(
+                    query = getDataHistoryQuery,
+                    args = cardIdArgs,
+                    rowMapper = {
+                        TranslateCardHistRecord(
+                            verId = it.getLong(),
+                            cardId = it.getLong(),
+                            timestamp = it.getLong(),
+                            textToTranslate = it.getString(),
+                            translation = it.getString(),
+                            validationHistory = ArrayList()
+                        )
+                    }
+                ).rows
             )
-            TranslateCardHistResp(
-                historyRecords = historyRecords.rows,
-                isHistoryFull = historyRecords.allRawsRead
-            )
+            prepareTranslateCardHistResp(card, dataHistory, validationHistory)
         }.apply(toBeResponse(GET_TRANSLATE_CARD_HISTORY))
     }
 
@@ -654,6 +668,41 @@ class DataManager(
             }.rows
             ReadTranslateCardsByFilterResp(cards = result)
         }
+    }
+
+    private fun prepareTranslateCardHistResp(
+        card: TranslateCard,
+        dataHistory: ArrayList<TranslateCardHistRecord>,
+        validationHistory: List<TranslateCardValidationHistRecord>
+    ): TranslateCardHistResp {
+        dataHistory.add(0, TranslateCardHistRecord(
+            verId = -1,
+            cardId = card.id,
+            timestamp = if (dataHistory.isEmpty()) card.createdAt else dataHistory[0].timestamp,
+            textToTranslate = card.textToTranslate,
+            translation = card.translation,
+            validationHistory = ArrayList()
+        ))
+        for (i in 1 .. dataHistory.size-2) {
+            val dataHistRec = dataHistory.removeAt(i)
+            dataHistory.add(i, dataHistRec.copy(timestamp = dataHistory[i].timestamp))
+        }
+        if (dataHistory.isNotEmpty()) {
+            val lastDataHistRec = dataHistory.removeLast()
+            dataHistory.add(lastDataHistRec.copy(timestamp = card.createdAt))
+        }
+
+        var dataIdx = 0
+        for (validation in validationHistory) {
+            while (validation.timestamp < dataHistory[dataIdx].timestamp) {
+                dataIdx++
+            }
+            dataHistory[dataIdx].validationHistory.add(validation)
+        }
+        return TranslateCardHistResp(
+            isHistoryFull = true,
+            dataHistory = dataHistory
+        )
     }
 
 }

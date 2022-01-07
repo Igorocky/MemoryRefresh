@@ -1,7 +1,6 @@
 package org.igye.memoryrefresh.unit.instrumentation
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import org.igye.memoryrefresh.common.Utils
 import org.igye.memoryrefresh.common.Utils.MILLIS_IN_HOUR
 import org.igye.memoryrefresh.common.Utils.MILLIS_IN_MINUTE
 import org.igye.memoryrefresh.common.Utils.MILLIS_IN_SECOND
@@ -321,42 +320,395 @@ class ReadTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
     }
 
     @Test
-    fun getTranslateCardHistory_returns_history_of_a_translate_card() {
+    fun readTranslateCardHistory_when_there_are_few_data_and_validation_history_records() {
         //given
-        val baseTime = 1_000
-
-        testClock.setFixedTime(baseTime)
+        val createTime1 = testClock.currentMillis()
         val cardId = dm.createTranslateCard(CreateTranslateCardArgs(textToTranslate = "A", translation = "a")).data!!
 
-        val validationTime1 = testClock.plus(3, ChronoUnit.MINUTES)
+        val validationTime2 = testClock.plus(2, ChronoUnit.MINUTES)
         assertTrue(dm.validateTranslateCard(ValidateTranslateCardArgs(cardId = cardId, userProvidedTranslation = "a")).data!!.isCorrect)
 
-        val validationTime2 = testClock.plus(3, ChronoUnit.MINUTES)
-        assertFalse(dm.validateTranslateCard(ValidateTranslateCardArgs(cardId = cardId, userProvidedTranslation = "1")).data!!.isCorrect)
-
         val validationTime3 = testClock.plus(3, ChronoUnit.MINUTES)
+        assertFalse(dm.validateTranslateCard(ValidateTranslateCardArgs(cardId = cardId, userProvidedTranslation = "aa")).data!!.isCorrect)
+
+        val validationTime4 = testClock.plus(4, ChronoUnit.MINUTES)
+        assertTrue(dm.validateTranslateCard(ValidateTranslateCardArgs(cardId = cardId, userProvidedTranslation = "a")).data!!.isCorrect)
+
+        val updateTime5 = testClock.plus(5, ChronoUnit.MINUTES)
+        dm.updateTranslateCard(UpdateTranslateCardArgs(cardId = cardId, textToTranslate = "B", translation = "b"))
+
+        val validationTime6 = testClock.plus(6, ChronoUnit.MINUTES)
+        assertFalse(dm.validateTranslateCard(ValidateTranslateCardArgs(cardId = cardId, userProvidedTranslation = "bb")).data!!.isCorrect)
+
+        val validationTime7 = testClock.plus(7, ChronoUnit.MINUTES)
+        assertTrue(dm.validateTranslateCard(ValidateTranslateCardArgs(cardId = cardId, userProvidedTranslation = "b")).data!!.isCorrect)
+
+        val validationTime8 = testClock.plus(8, ChronoUnit.MINUTES)
+        assertFalse(dm.validateTranslateCard(ValidateTranslateCardArgs(cardId = cardId, userProvidedTranslation = "bb")).data!!.isCorrect)
+
+        val updateTime9 = testClock.plus(9, ChronoUnit.MINUTES)
+        dm.updateTranslateCard(UpdateTranslateCardArgs(cardId = cardId, textToTranslate = "C", translation = "c"))
+
+        val validationTime10 = testClock.plus(10, ChronoUnit.MINUTES)
+        assertFalse(dm.validateTranslateCard(ValidateTranslateCardArgs(cardId = cardId, userProvidedTranslation = "c-1")).data!!.isCorrect)
+
+        val validationTime11 = testClock.plus(11, ChronoUnit.MINUTES)
+        assertFalse(dm.validateTranslateCard(ValidateTranslateCardArgs(cardId = cardId, userProvidedTranslation = "c-2")).data!!.isCorrect)
+
+        val validationTime12 = testClock.plus(12, ChronoUnit.MINUTES)
+        assertFalse(dm.validateTranslateCard(ValidateTranslateCardArgs(cardId = cardId, userProvidedTranslation = "c-3")).data!!.isCorrect)
+
+        //when
+        val actualHistory = dm.readTranslateCardHistory(ReadTranslateCardHistoryArgs(cardId = cardId)).data!!
+
+        //then
+        assertEquals(3, actualHistory.dataHistory.size)
+
+        assertEquals(updateTime9, actualHistory.dataHistory[0].timestamp)
+        assertEquals("C", actualHistory.dataHistory[0].textToTranslate)
+        assertEquals("c", actualHistory.dataHistory[0].translation)
+        assertEquals(3, actualHistory.dataHistory[0].validationHistory.size)
+
+        assertEquals(validationTime12, actualHistory.dataHistory[0].validationHistory[0].timestamp)
+        assertEquals("c-3", actualHistory.dataHistory[0].validationHistory[0].translation)
+        assertFalse(actualHistory.dataHistory[0].validationHistory[0].isCorrect)
+
+        assertEquals(validationTime11, actualHistory.dataHistory[0].validationHistory[1].timestamp)
+        assertEquals("c-2", actualHistory.dataHistory[0].validationHistory[1].translation)
+        assertFalse(actualHistory.dataHistory[0].validationHistory[1].isCorrect)
+
+        assertEquals(validationTime10, actualHistory.dataHistory[0].validationHistory[2].timestamp)
+        assertEquals("c-1", actualHistory.dataHistory[0].validationHistory[2].translation)
+        assertFalse(actualHistory.dataHistory[0].validationHistory[2].isCorrect)
+
+        assertEquals(updateTime5, actualHistory.dataHistory[1].timestamp)
+        assertEquals("B", actualHistory.dataHistory[1].textToTranslate)
+        assertEquals("b", actualHistory.dataHistory[1].translation)
+        assertEquals(3, actualHistory.dataHistory[1].validationHistory.size)
+
+        assertEquals(validationTime8, actualHistory.dataHistory[1].validationHistory[0].timestamp)
+        assertEquals("bb", actualHistory.dataHistory[1].validationHistory[0].translation)
+        assertFalse(actualHistory.dataHistory[1].validationHistory[0].isCorrect)
+
+        assertEquals(validationTime7, actualHistory.dataHistory[1].validationHistory[1].timestamp)
+        assertEquals("b", actualHistory.dataHistory[1].validationHistory[1].translation)
+        assertTrue(actualHistory.dataHistory[1].validationHistory[1].isCorrect)
+
+        assertEquals(validationTime6, actualHistory.dataHistory[1].validationHistory[2].timestamp)
+        assertEquals("bb", actualHistory.dataHistory[1].validationHistory[2].translation)
+        assertFalse(actualHistory.dataHistory[1].validationHistory[2].isCorrect)
+
+        assertEquals(createTime1, actualHistory.dataHistory[2].timestamp)
+        assertEquals("A", actualHistory.dataHistory[2].textToTranslate)
+        assertEquals("a", actualHistory.dataHistory[2].translation)
+        assertEquals(3, actualHistory.dataHistory[2].validationHistory.size)
+
+        assertEquals(validationTime4, actualHistory.dataHistory[2].validationHistory[0].timestamp)
+        assertEquals("a", actualHistory.dataHistory[2].validationHistory[0].translation)
+        assertTrue(actualHistory.dataHistory[2].validationHistory[0].isCorrect)
+
+        assertEquals(validationTime3, actualHistory.dataHistory[2].validationHistory[1].timestamp)
+        assertEquals("aa", actualHistory.dataHistory[2].validationHistory[1].translation)
+        assertFalse(actualHistory.dataHistory[2].validationHistory[1].isCorrect)
+
+        assertEquals(validationTime2, actualHistory.dataHistory[2].validationHistory[2].timestamp)
+        assertEquals("a", actualHistory.dataHistory[2].validationHistory[2].translation)
+        assertTrue(actualHistory.dataHistory[2].validationHistory[2].isCorrect)
+    }
+
+    @Test
+    fun readTranslateCardHistory_when_there_are_no_data_changes_and_no_validation_at() {
+        //given
+        val createTime1 = testClock.currentMillis()
+        val cardId = dm.createTranslateCard(CreateTranslateCardArgs(textToTranslate = "A", translation = "a")).data!!
+
+        //when
+        val actualHistory = dm.readTranslateCardHistory(ReadTranslateCardHistoryArgs(cardId = cardId)).data!!
+
+        //then
+        assertEquals(1, actualHistory.dataHistory.size)
+
+        assertEquals(createTime1, actualHistory.dataHistory[0].timestamp)
+        assertEquals("A", actualHistory.dataHistory[0].textToTranslate)
+        assertEquals("a", actualHistory.dataHistory[0].translation)
+        assertEquals(0, actualHistory.dataHistory[0].validationHistory.size)
+    }
+
+    @Test
+    fun readTranslateCardHistory_when_there_are_no_data_changes_and_one_validation() {
+        //given
+        val createTime1 = testClock.currentMillis()
+        val cardId = dm.createTranslateCard(CreateTranslateCardArgs(textToTranslate = "A", translation = "a")).data!!
+
+        val validationTime2 = testClock.plus(2, ChronoUnit.MINUTES)
         assertTrue(dm.validateTranslateCard(ValidateTranslateCardArgs(cardId = cardId, userProvidedTranslation = "a")).data!!.isCorrect)
 
         //when
-        val actualHistory = dm.readTranslateCardHistory(ReadTranslateCardHistoryArgs(cardId = cardId)).data!!.historyRecords
+        val actualHistory = dm.readTranslateCardHistory(ReadTranslateCardHistoryArgs(cardId = cardId)).data!!
 
         //then
-        assertEquals(3, actualHistory.size)
+        assertEquals(1, actualHistory.dataHistory.size)
 
-        assertEquals(cardId, actualHistory[0].cardId)
-        assertEquals(validationTime3, actualHistory[0].timestamp)
-        assertEquals("a", actualHistory[0].translation)
-        assertEquals(true, actualHistory[0].isCorrect)
+        assertEquals(createTime1, actualHistory.dataHistory[0].timestamp)
+        assertEquals("A", actualHistory.dataHistory[0].textToTranslate)
+        assertEquals("a", actualHistory.dataHistory[0].translation)
+        assertEquals(1, actualHistory.dataHistory[0].validationHistory.size)
 
-        assertEquals(cardId, actualHistory[1].cardId)
-        assertEquals(validationTime2, actualHistory[1].timestamp)
-        assertEquals("1", actualHistory[1].translation)
-        assertEquals(false, actualHistory[1].isCorrect)
+        assertEquals(validationTime2, actualHistory.dataHistory[0].validationHistory[0].timestamp)
+        assertEquals("a", actualHistory.dataHistory[0].validationHistory[0].translation)
+        assertTrue(actualHistory.dataHistory[0].validationHistory[0].isCorrect)
+    }
 
-        assertEquals(cardId, actualHistory[2].cardId)
-        assertEquals(validationTime1, actualHistory[2].timestamp)
-        assertEquals("a", actualHistory[2].translation)
-        assertEquals(true, actualHistory[2].isCorrect)
+    @Test
+    fun readTranslateCardHistory_when_there_are_no_data_changes_and_two_validations() {
+        //given
+        val createTime1 = testClock.currentMillis()
+        val cardId = dm.createTranslateCard(CreateTranslateCardArgs(textToTranslate = "A", translation = "a")).data!!
+
+        val validationTime2 = testClock.plus(2, ChronoUnit.MINUTES)
+        assertTrue(dm.validateTranslateCard(ValidateTranslateCardArgs(cardId = cardId, userProvidedTranslation = "a")).data!!.isCorrect)
+
+        val validationTime3 = testClock.plus(3, ChronoUnit.MINUTES)
+        assertFalse(dm.validateTranslateCard(ValidateTranslateCardArgs(cardId = cardId, userProvidedTranslation = "aa")).data!!.isCorrect)
+
+        //when
+        val actualHistory = dm.readTranslateCardHistory(ReadTranslateCardHistoryArgs(cardId = cardId)).data!!
+
+        //then
+        assertEquals(1, actualHistory.dataHistory.size)
+
+        assertEquals(createTime1, actualHistory.dataHistory[0].timestamp)
+        assertEquals("A", actualHistory.dataHistory[0].textToTranslate)
+        assertEquals("a", actualHistory.dataHistory[0].translation)
+        assertEquals(2, actualHistory.dataHistory[0].validationHistory.size)
+
+        assertEquals(validationTime3, actualHistory.dataHistory[0].validationHistory[0].timestamp)
+        assertEquals("aa", actualHistory.dataHistory[0].validationHistory[0].translation)
+        assertFalse(actualHistory.dataHistory[0].validationHistory[0].isCorrect)
+
+        assertEquals(validationTime2, actualHistory.dataHistory[0].validationHistory[1].timestamp)
+        assertEquals("a", actualHistory.dataHistory[0].validationHistory[1].translation)
+        assertTrue(actualHistory.dataHistory[0].validationHistory[1].isCorrect)
+    }
+
+    @Test
+    fun readTranslateCardHistory_when_there_is_one_data_change_and_no_validations_at_all() {
+        //given
+        val createTime1 = testClock.currentMillis()
+        val cardId = dm.createTranslateCard(CreateTranslateCardArgs(textToTranslate = "A", translation = "a")).data!!
+
+        val updateTime5 = testClock.plus(5, ChronoUnit.MINUTES)
+        dm.updateTranslateCard(UpdateTranslateCardArgs(cardId = cardId, textToTranslate = "B", translation = "b"))
+
+        //when
+        val actualHistory = dm.readTranslateCardHistory(ReadTranslateCardHistoryArgs(cardId = cardId)).data!!
+
+        //then
+        assertEquals(2, actualHistory.dataHistory.size)
+
+        assertEquals(updateTime5, actualHistory.dataHistory[0].timestamp)
+        assertEquals("B", actualHistory.dataHistory[0].textToTranslate)
+        assertEquals("b", actualHistory.dataHistory[0].translation)
+        assertEquals(0, actualHistory.dataHistory[0].validationHistory.size)
+
+        assertEquals(createTime1, actualHistory.dataHistory[1].timestamp)
+        assertEquals("A", actualHistory.dataHistory[1].textToTranslate)
+        assertEquals("a", actualHistory.dataHistory[1].translation)
+        assertEquals(0, actualHistory.dataHistory[1].validationHistory.size)
+    }
+
+    @Test
+    fun readTranslateCardHistory_when_there_is_one_data_change_and_no_validations_for_first_data_change_and_one_validation_for_second_data_change() {
+        //given
+        val createTime1 = testClock.currentMillis()
+        val cardId = dm.createTranslateCard(CreateTranslateCardArgs(textToTranslate = "A", translation = "a")).data!!
+
+        val updateTime5 = testClock.plus(5, ChronoUnit.MINUTES)
+        dm.updateTranslateCard(UpdateTranslateCardArgs(cardId = cardId, textToTranslate = "B", translation = "b"))
+
+        val validationTime6 = testClock.plus(6, ChronoUnit.MINUTES)
+        assertFalse(dm.validateTranslateCard(ValidateTranslateCardArgs(cardId = cardId, userProvidedTranslation = "bb")).data!!.isCorrect)
+
+        //when
+        val actualHistory = dm.readTranslateCardHistory(ReadTranslateCardHistoryArgs(cardId = cardId)).data!!
+
+        //then
+        assertEquals(2, actualHistory.dataHistory.size)
+
+        assertEquals(updateTime5, actualHistory.dataHistory[0].timestamp)
+        assertEquals("B", actualHistory.dataHistory[0].textToTranslate)
+        assertEquals("b", actualHistory.dataHistory[0].translation)
+        assertEquals(1, actualHistory.dataHistory[0].validationHistory.size)
+
+        assertEquals(validationTime6, actualHistory.dataHistory[0].validationHistory[0].timestamp)
+        assertEquals("bb", actualHistory.dataHistory[0].validationHistory[0].translation)
+        assertFalse(actualHistory.dataHistory[0].validationHistory[0].isCorrect)
+
+        assertEquals(createTime1, actualHistory.dataHistory[1].timestamp)
+        assertEquals("A", actualHistory.dataHistory[1].textToTranslate)
+        assertEquals("a", actualHistory.dataHistory[1].translation)
+        assertEquals(0, actualHistory.dataHistory[1].validationHistory.size)
+    }
+
+    @Test
+    fun readTranslateCardHistory_when_there_is_one_data_change_and_no_validations_for_first_data_change_and_two_validations_for_second_data_change() {
+        //given
+        val createTime1 = testClock.currentMillis()
+        val cardId = dm.createTranslateCard(CreateTranslateCardArgs(textToTranslate = "A", translation = "a")).data!!
+
+        val updateTime5 = testClock.plus(5, ChronoUnit.MINUTES)
+        dm.updateTranslateCard(UpdateTranslateCardArgs(cardId = cardId, textToTranslate = "B", translation = "b"))
+
+        val validationTime6 = testClock.plus(6, ChronoUnit.MINUTES)
+        assertFalse(dm.validateTranslateCard(ValidateTranslateCardArgs(cardId = cardId, userProvidedTranslation = "bb")).data!!.isCorrect)
+
+        val validationTime7 = testClock.plus(7, ChronoUnit.MINUTES)
+        assertTrue(dm.validateTranslateCard(ValidateTranslateCardArgs(cardId = cardId, userProvidedTranslation = "b")).data!!.isCorrect)
+
+        //when
+        val actualHistory = dm.readTranslateCardHistory(ReadTranslateCardHistoryArgs(cardId = cardId)).data!!
+
+        //then
+        assertEquals(2, actualHistory.dataHistory.size)
+
+        assertEquals(updateTime5, actualHistory.dataHistory[0].timestamp)
+        assertEquals("B", actualHistory.dataHistory[0].textToTranslate)
+        assertEquals("b", actualHistory.dataHistory[0].translation)
+        assertEquals(2, actualHistory.dataHistory[0].validationHistory.size)
+
+        assertEquals(validationTime7, actualHistory.dataHistory[0].validationHistory[0].timestamp)
+        assertEquals("b", actualHistory.dataHistory[0].validationHistory[0].translation)
+        assertTrue(actualHistory.dataHistory[0].validationHistory[0].isCorrect)
+
+        assertEquals(validationTime6, actualHistory.dataHistory[0].validationHistory[1].timestamp)
+        assertEquals("bb", actualHistory.dataHistory[0].validationHistory[1].translation)
+        assertFalse(actualHistory.dataHistory[0].validationHistory[1].isCorrect)
+
+        assertEquals(createTime1, actualHistory.dataHistory[1].timestamp)
+        assertEquals("A", actualHistory.dataHistory[1].textToTranslate)
+        assertEquals("a", actualHistory.dataHistory[1].translation)
+        assertEquals(0, actualHistory.dataHistory[1].validationHistory.size)
+    }
+
+    @Test
+    fun readTranslateCardHistory_when_there_is_one_data_change_and_no_validations_for_second_data_change_and_one_validation_for_first_data_change() {
+        //given
+        val createTime1 = testClock.currentMillis()
+        val cardId = dm.createTranslateCard(CreateTranslateCardArgs(textToTranslate = "A", translation = "a")).data!!
+
+        val validationTime2 = testClock.plus(2, ChronoUnit.MINUTES)
+        assertTrue(dm.validateTranslateCard(ValidateTranslateCardArgs(cardId = cardId, userProvidedTranslation = "a")).data!!.isCorrect)
+
+        val updateTime5 = testClock.plus(5, ChronoUnit.MINUTES)
+        dm.updateTranslateCard(UpdateTranslateCardArgs(cardId = cardId, textToTranslate = "B", translation = "b"))
+
+        //when
+        val actualHistory = dm.readTranslateCardHistory(ReadTranslateCardHistoryArgs(cardId = cardId)).data!!
+
+        //then
+        assertEquals(2, actualHistory.dataHistory.size)
+
+        assertEquals(updateTime5, actualHistory.dataHistory[0].timestamp)
+        assertEquals("B", actualHistory.dataHistory[0].textToTranslate)
+        assertEquals("b", actualHistory.dataHistory[0].translation)
+        assertEquals(0, actualHistory.dataHistory[0].validationHistory.size)
+
+        assertEquals(createTime1, actualHistory.dataHistory[1].timestamp)
+        assertEquals("A", actualHistory.dataHistory[1].textToTranslate)
+        assertEquals("a", actualHistory.dataHistory[1].translation)
+        assertEquals(1, actualHistory.dataHistory[1].validationHistory.size)
+
+        assertEquals(validationTime2, actualHistory.dataHistory[1].validationHistory[0].timestamp)
+        assertEquals("a", actualHistory.dataHistory[1].validationHistory[0].translation)
+        assertTrue(actualHistory.dataHistory[1].validationHistory[0].isCorrect)
+    }
+
+    @Test
+    fun readTranslateCardHistory_when_there_is_one_data_change_and_no_validations_for_second_data_change_and_two_validations_for_first_data_change() {
+        //given
+        val createTime1 = testClock.currentMillis()
+        val cardId = dm.createTranslateCard(CreateTranslateCardArgs(textToTranslate = "A", translation = "a")).data!!
+
+        val validationTime2 = testClock.plus(2, ChronoUnit.MINUTES)
+        assertTrue(dm.validateTranslateCard(ValidateTranslateCardArgs(cardId = cardId, userProvidedTranslation = "a")).data!!.isCorrect)
+
+        val validationTime3 = testClock.plus(3, ChronoUnit.MINUTES)
+        assertFalse(dm.validateTranslateCard(ValidateTranslateCardArgs(cardId = cardId, userProvidedTranslation = "aa")).data!!.isCorrect)
+
+        val updateTime5 = testClock.plus(5, ChronoUnit.MINUTES)
+        dm.updateTranslateCard(UpdateTranslateCardArgs(cardId = cardId, textToTranslate = "B", translation = "b"))
+
+        //when
+        val actualHistory = dm.readTranslateCardHistory(ReadTranslateCardHistoryArgs(cardId = cardId)).data!!
+
+        //then
+        assertEquals(2, actualHistory.dataHistory.size)
+
+        assertEquals(updateTime5, actualHistory.dataHistory[0].timestamp)
+        assertEquals("B", actualHistory.dataHistory[0].textToTranslate)
+        assertEquals("b", actualHistory.dataHistory[0].translation)
+        assertEquals(0, actualHistory.dataHistory[0].validationHistory.size)
+
+        assertEquals(createTime1, actualHistory.dataHistory[1].timestamp)
+        assertEquals("A", actualHistory.dataHistory[1].textToTranslate)
+        assertEquals("a", actualHistory.dataHistory[1].translation)
+        assertEquals(2, actualHistory.dataHistory[1].validationHistory.size)
+
+        assertEquals(validationTime3, actualHistory.dataHistory[1].validationHistory[0].timestamp)
+        assertEquals("aa", actualHistory.dataHistory[1].validationHistory[0].translation)
+        assertFalse(actualHistory.dataHistory[1].validationHistory[0].isCorrect)
+
+        assertEquals(validationTime2, actualHistory.dataHistory[1].validationHistory[1].timestamp)
+        assertEquals("a", actualHistory.dataHistory[1].validationHistory[1].translation)
+        assertTrue(actualHistory.dataHistory[1].validationHistory[1].isCorrect)
+    }
+
+    @Test
+    fun readTranslateCardHistory_when_there_are_two_data_changes_and_no_validations_for_middle_data_change_and_one_validation_for_each_of_other_data_changes() {
+        //given
+        val createTime1 = testClock.currentMillis()
+        val cardId = dm.createTranslateCard(CreateTranslateCardArgs(textToTranslate = "A", translation = "a")).data!!
+
+        val validationTime2 = testClock.plus(2, ChronoUnit.MINUTES)
+        assertTrue(dm.validateTranslateCard(ValidateTranslateCardArgs(cardId = cardId, userProvidedTranslation = "a")).data!!.isCorrect)
+
+        val updateTime5 = testClock.plus(5, ChronoUnit.MINUTES)
+        dm.updateTranslateCard(UpdateTranslateCardArgs(cardId = cardId, textToTranslate = "B", translation = "b"))
+
+        val updateTime9 = testClock.plus(9, ChronoUnit.MINUTES)
+        dm.updateTranslateCard(UpdateTranslateCardArgs(cardId = cardId, textToTranslate = "C", translation = "c"))
+
+        val validationTime10 = testClock.plus(10, ChronoUnit.MINUTES)
+        assertFalse(dm.validateTranslateCard(ValidateTranslateCardArgs(cardId = cardId, userProvidedTranslation = "c-1")).data!!.isCorrect)
+
+        //when
+        val actualHistory = dm.readTranslateCardHistory(ReadTranslateCardHistoryArgs(cardId = cardId)).data!!
+
+        //then
+        assertEquals(3, actualHistory.dataHistory.size)
+
+        assertEquals(updateTime9, actualHistory.dataHistory[0].timestamp)
+        assertEquals("C", actualHistory.dataHistory[0].textToTranslate)
+        assertEquals("c", actualHistory.dataHistory[0].translation)
+        assertEquals(1, actualHistory.dataHistory[0].validationHistory.size)
+
+        assertEquals(validationTime10, actualHistory.dataHistory[0].validationHistory[0].timestamp)
+        assertEquals("c-1", actualHistory.dataHistory[0].validationHistory[0].translation)
+        assertFalse(actualHistory.dataHistory[0].validationHistory[0].isCorrect)
+
+        assertEquals(updateTime5, actualHistory.dataHistory[1].timestamp)
+        assertEquals("B", actualHistory.dataHistory[1].textToTranslate)
+        assertEquals("b", actualHistory.dataHistory[1].translation)
+        assertEquals(0, actualHistory.dataHistory[1].validationHistory.size)
+
+        assertEquals(createTime1, actualHistory.dataHistory[2].timestamp)
+        assertEquals("A", actualHistory.dataHistory[2].textToTranslate)
+        assertEquals("a", actualHistory.dataHistory[2].translation)
+        assertEquals(1, actualHistory.dataHistory[2].validationHistory.size)
+
+        assertEquals(validationTime2, actualHistory.dataHistory[2].validationHistory[0].timestamp)
+        assertEquals("a", actualHistory.dataHistory[2].validationHistory[0].translation)
+        assertTrue(actualHistory.dataHistory[2].validationHistory[0].isCorrect)
     }
 
     @Test

@@ -762,20 +762,28 @@ class DataManagerInstrumentedIntTest: InstrumentedTestBase() {
         ))
 
         //when: 26. request history for card2
-        val card2History = dm.readTranslateCardHistory(ReadTranslateCardHistoryArgs(cardId = card2Id)).data!!.historyRecords
+        val card2History = dm.readTranslateCardHistory(ReadTranslateCardHistoryArgs(cardId = card2Id)).data!!
 
         //then
-        assertEquals(2, card2History.size)
+        assertEquals(2, card2History.dataHistory.size)
 
-        assertEquals(card2Id, card2History[0].cardId)
-        assertEquals(time17, card2History[0].timestamp)
-        assertEquals("card2", card2History[0].translation)
-        assertEquals(true, card2History[0].isCorrect)
+        assertEquals(time14, card2History.dataHistory[0].timestamp)
+        assertEquals("karta2+", card2History.dataHistory[0].textToTranslate)
+        assertEquals("card2", card2History.dataHistory[0].translation)
+        assertEquals(1, card2History.dataHistory[0].validationHistory.size)
 
-        assertEquals(card2Id, card2History[1].cardId)
-        assertEquals(time11, card2History[1].timestamp)
-        assertEquals("card2-inc", card2History[1].translation)
-        assertEquals(false, card2History[1].isCorrect)
+        assertEquals(time17, card2History.dataHistory[0].validationHistory[0].timestamp)
+        assertEquals("card2", card2History.dataHistory[0].validationHistory[0].translation)
+        assertTrue(card2History.dataHistory[0].validationHistory[0].isCorrect)
+
+        assertEquals(time8, card2History.dataHistory[1].timestamp)
+        assertEquals("karta2", card2History.dataHistory[1].textToTranslate)
+        assertEquals("card2", card2History.dataHistory[1].translation)
+        assertEquals(1, card2History.dataHistory[1].validationHistory.size)
+
+        assertEquals(time11, card2History.dataHistory[1].validationHistory[0].timestamp)
+        assertEquals("card2-inc", card2History.dataHistory[1].validationHistory[0].translation)
+        assertFalse(card2History.dataHistory[1].validationHistory[0].isCorrect)
     }
 
     @Test
