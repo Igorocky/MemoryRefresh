@@ -184,7 +184,7 @@ const RepeatCardsView = ({query,openView,setPageTitle,controlsContainer, cycledM
             renderOpenSearchButton(),
             cycledMode
                 ?`${allCards?.length??0}: ${numberOfFullCycles}/${getNumberOfCompletedCardsInCycle(allCards)}`
-                :`Remains: ${allCards?.length??0}`
+                :`Cards: ${allCards?.length??0}`
         )),
         renderPageContent(),
         renderMessagePopup()
