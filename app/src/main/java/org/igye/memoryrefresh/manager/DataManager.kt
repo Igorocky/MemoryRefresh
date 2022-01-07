@@ -229,7 +229,7 @@ class DataManager(
                         nextAccessAt = nextAccessAt,
                     ),
                     timeSinceLastCheck = Utils.millisToDurationStr(currTime - updatedAt),
-                    activatesIn = Utils.millisToDurationStr(nextAccessAt - currTime),
+                    activatesIn = if (nextAccessAt - currTime >= 0) Utils.millisToDurationStr(nextAccessAt - currTime) else "-",
                     textToTranslate = it.getString(),
                     translation = it.getString(),
                 )
@@ -660,7 +660,7 @@ class DataManager(
                         nextAccessAt = nextAccessAt,
                     ),
                     timeSinceLastCheck = Utils.millisToDurationStr(currTime - updatedAt),
-                    activatesIn = Utils.millisToDurationStr(nextAccessAt - currTime),
+                    activatesIn = if (nextAccessAt - currTime >= 0) Utils.millisToDurationStr(nextAccessAt - currTime) else "-",
                     textToTranslate = it.getString(),
                     translation = it.getString(),
                 )

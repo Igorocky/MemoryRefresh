@@ -116,7 +116,7 @@ const EditTranslateCardForm = ({
             },
             onKeyUp: event => event.nativeEvent.keyCode == ESCAPE_KEY_CODE ? onCancel?.() : null,
         })),
-        RE.If(hasValue(activatesIn), () => RE.span({style:{marginTop:margin}}, `Becomes accessible in: ${activatesIn}`)),
+        RE.If(hasValue(activatesIn), () => RE.span({style:{marginTop:margin}}, activatesIn === '-' ? 'This card is accessible' : `Becomes accessible in: ${activatesIn}`)),
         RE.If(hasValue(tagIds), () => RE.Paper({style: {marginTop:margin}},re(TagSelector,{
             allTags,
             selectedTags: tagIds.map(tid => allTagsMap[tid]),
