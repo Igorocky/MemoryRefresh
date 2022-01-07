@@ -257,7 +257,7 @@ const inButtonCircularProgressStyle = {
 
 function buttonWithCircularProgress({variant, disabled, onClick, text, showProgress}) {
     return RE.div({style:{position: 'relative'}},
-        RE.Button({variant: variant??"contained", disabled, onClick}, text),
+        RE.Button({variant, disabled, onClick}, text),
         RE.If(showProgress,
             () => RE.CircularProgress({size:24, style: inButtonCircularProgressStyle})
         )

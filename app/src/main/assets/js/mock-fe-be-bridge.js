@@ -314,7 +314,7 @@ function createFeBeBridgeForUiTestMode() {
 
         const numOfCards = 1000
         ints(1,numOfCards)
-            .map(i=>randomSentence({wordsMinCnt:1, wordsMaxCnt:3, wordMinLength:1, wordMaxLength:5}))
+            .map(i=>randomSentence({wordsMinCnt:1, wordsMaxCnt:2, wordMinLength:1, wordMaxLength:1}))
             .forEach(s=> {
                 if (randomInt(0,1) === 1) {
                     s = s.replaceAll(' ', '\n')

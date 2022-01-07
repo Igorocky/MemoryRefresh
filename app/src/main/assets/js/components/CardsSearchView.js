@@ -20,6 +20,12 @@ const CardsSearchView = ({query,openView,setPageTitle,controlsContainer}) => {
     const [focusedCardId, setFocusedCardId] = useState(null)
     const [cardToEdit, setCardToEdit] = useState(null)
 
+    useEffect(() => {
+        if (hasValue(focusedCardId) && hasNoValue(cardToEdit)) {
+            document.getElementById(focusedCardId)?.scrollIntoView()
+        }
+    }, [cardToEdit])
+
     async function reloadCards({filter}) {
         setAllCards(null)
         const res = await be.readTranslateCardsByFilter(filter)
@@ -53,7 +59,7 @@ const CardsSearchView = ({query,openView,setPageTitle,controlsContainer}) => {
                         beginIdx: pageFirstItemIdx,
                         endIdx: pageLastItemIdx,
                         onObjectClicked: cardId => setFocusedCardId(prev => prev !== cardId ? cardId : null),
-                        renderObject: (card,idx) => RE.Paper({style:{backgroundColor:card.paused?'rgb(242, 242, 242)':'rgb(255, 249, 230)'}}, renderCard(card,idx))
+                        renderObject: (card,idx) => RE.Paper({id:card.id,style:{backgroundColor:card.paused?'rgb(242, 242, 242)':'rgb(255, 249, 230)'}}, renderCard(card,idx))
                     }),
                     RE.If(allCards.length > pageSize, () => renderPaginationControls({onPageChange: () => window.scrollTo(0, 0)})),
                 )

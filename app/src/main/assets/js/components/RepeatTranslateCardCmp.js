@@ -274,7 +274,7 @@ const RepeatTranslateCardCmp = ({allTags, allTagsMap, controlsContainer, cardToR
                     renderUserTranslation(),
                     renderValidateButton(),
                 ),
-                RE.If(hasValue(answerFromBE) && isUserInputCorrect(), () => RE.Container.col.top.left({},{style:{marginBottom:'5px'}},
+                RE.If(hasValue(answerFromBE) && isUserInputCorrect(), () => RE.Container.col.top.left({},{style:{marginBottom:'20px'}},
                     RE.Container.row.left.center({},{},
                         RE.IfNot(cycledMode, () => RE.span({style:{marginRight:'10px'}}, card.timeSinceLastCheck)),
                         renderDelay(),

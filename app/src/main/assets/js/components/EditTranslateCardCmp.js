@@ -12,6 +12,10 @@ const EditTranslateCardCmp = ({allTags, allTagsMap, card, reducedMode = false, o
 
     const {renderValidationHistory} = useTranslateCardHistory({cardId:card.id})
 
+    useEffect(() => {
+        window.scrollTo(0, 0)
+    }, [])
+
     function isModified({initialValue, currValue}) {
         if (Array.isArray(initialValue)) {
             return !arraysAreEqualAsSets(initialValue, currValue)
