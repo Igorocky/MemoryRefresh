@@ -37,6 +37,7 @@ abstract class WebViewViewModel(
         if (webView == null) {
             val webView = WebView(appContext)
             webView.settings.javaScriptEnabled = true
+            webView.settings.domStorageEnabled = true
             webView.webChromeClient = object : WebChromeClient() {
                 override fun onConsoleMessage(consoleMessage: ConsoleMessage): Boolean {
                     log.info(

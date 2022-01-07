@@ -125,6 +125,7 @@ const CardsSearchView = ({query,openView,setPageTitle,controlsContainer}) => {
         setCardToEdit(null)
         setIsFilterMode(true)
         setAllCards(null)
+        setFocusedCardId(null)
     }
 
     function renderFilter() {
