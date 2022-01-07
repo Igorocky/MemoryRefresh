@@ -184,7 +184,7 @@ const CardsSearchView = ({query,openView,setPageTitle,controlsContainer}) => {
     }
 
     return RE.Fragment({},
-        RE.If(controlsContainer?.current && !isFilterMode && allCards?.length, () => RE.Portal({container:controlsContainer.current},
+        RE.If(controlsContainer?.current && !isFilterMode && hasNoValue(cardToEdit) && allCards?.length, () => RE.Portal({container:controlsContainer.current},
             renderFastRepeatButton()
         )),
         renderPageContent(),

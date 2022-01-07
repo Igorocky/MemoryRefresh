@@ -10,6 +10,8 @@ const EditTranslateCardCmp = ({allTags, allTagsMap, card, reducedMode = false, o
     const [delay, setDelay] = useState(card.schedule.delay)
     const createdAt = useMemo(() => new Date(card.createdAt), [card.createdAt])
 
+    const {renderValidationHistory} = useTranslateCardHistory({cardId:card.id})
+
     function isModified({initialValue, currValue}) {
         if (Array.isArray(initialValue)) {
             return !arraysAreEqualAsSets(initialValue, currValue)
@@ -102,6 +104,7 @@ const EditTranslateCardCmp = ({allTags, allTagsMap, card, reducedMode = false, o
             onCancel: doCancel,
             onDelete: doDelete
         }),
+        renderValidationHistory(),
         renderMessagePopup()
     )
 }

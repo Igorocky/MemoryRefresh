@@ -141,6 +141,11 @@ function createFeBeBridgeForUiTestMode() {
         return okResponse({cards:CARDS.map(c => mockedBeFunctions.readTranslateCardById({cardId: c.id}).data)})
     }
 
+    mockedBeFunctions.readTranslateCardHistory = ({cardId}) => {
+        const history = {"dataHistory":[{"cardId":1,"textToTranslate":"C","timestamp":1641560590172,"translation":"c","validationHistory":[{"actualDelay":"12m 0s","cardId":1,"isCorrect":false,"recId":9,"timestamp":1641562570172,"translation":"c-3"},{"actualDelay":"11m 0s","cardId":1,"isCorrect":false,"recId":8,"timestamp":1641561850172,"translation":"c-2"},{"actualDelay":"19m 0s","cardId":1,"isCorrect":false,"recId":7,"timestamp":1641561190172,"translation":"c-1"}],"verId":-1},{"cardId":1,"textToTranslate":"B","timestamp":1641558790172,"translation":"b","validationHistory":[{"actualDelay":"8m 0s","cardId":1,"isCorrect":false,"recId":6,"timestamp":1641560050172,"translation":"bb"},{"actualDelay":"7m 0s","cardId":1,"isCorrect":true,"recId":5,"timestamp":1641559570172,"translation":"b"},{"actualDelay":"11m 0s","cardId":1,"isCorrect":false,"recId":4,"timestamp":1641559150172,"translation":"bb"}],"verId":2},{"cardId":1,"textToTranslate":"A","timestamp":1641557950172,"translation":"a","validationHistory":[{"actualDelay":"4m 0s","cardId":1,"isCorrect":true,"recId":3,"timestamp":1641558490172,"translation":"a"},{"actualDelay":"3m 0s","cardId":1,"isCorrect":false,"recId":2,"timestamp":1641558250172,"translation":"aa"},{"actualDelay":"","cardId":1,"isCorrect":true,"recId":1,"timestamp":1641558070172,"translation":"a"}],"verId":1}],"isHistoryFull":true}
+        return okResponse(history)
+    }
+
     let topCnt = 0
     mockedBeFunctions.selectTopOverdueTranslateCards = (filter) => {
         // return okResponse({

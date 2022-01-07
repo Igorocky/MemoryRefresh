@@ -1,13 +1,8 @@
-.tree-node:hover {
-    background-color: blanchedalmond;
-    cursor: pointer;
+
+.table-with-collapsed-borders {
+    border-collapse: collapse;
 }
 
-.selection-title:hover {
-    background-color: yellow;
-}
-
-.red-and-bold-on-hover:hover {
-    color: red;
-    font-weight: bold;
+.table-with-collapsed-borders tr td {
+    border: solid 1px gray;
 }
