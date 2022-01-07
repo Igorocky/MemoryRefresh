@@ -73,7 +73,7 @@ class Repository(
                 ALTER TABLE $cards ADD COLUMN ${cards.paused} integer not null check (${cards.paused} in (0,1)) default 0
         """.trimIndent())
         db.execSQL("""
-                ALTER TABLE $cards ADD COLUMN ${cards.lastCheckedAt} integer not null
+                ALTER TABLE $cards ADD COLUMN ${cards.lastCheckedAt} integer not null default 1641594003597
         """.trimIndent())
         tags.create(db)
         cardToTag.create(db)

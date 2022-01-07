@@ -20,7 +20,7 @@ class CardsTable(private val clock: Clock): TableWithVersioning(name = "CARDS") 
                     $type integer not null,
                     $createdAt integer not null,
                     $paused integer not null check ($paused in (0,1)) default 0,
-                    $lastCheckedAt integer not null
+                    $lastCheckedAt integer not null default 1641594003597
                 )
         """)
         db.execSQL("""
