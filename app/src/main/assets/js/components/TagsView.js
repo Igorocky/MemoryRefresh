@@ -36,7 +36,7 @@ const TagsView = ({query,openView,setPageTitle}) => {
                 beginIdx: 0,
                 endIdx: allTags.length-1,
                 onObjectClicked: tagId => editMode ? null : setFocusedTagId(prev => prev !== tagId ? tagId : null),
-                renderObject: tag => RE.Paper({}, renderTag(tag))
+                renderObject: tag => RE.Paper({style:{paddingTop:'10px', paddingBottom:'10px'}}, renderTag(tag))
             })
         }
     }
