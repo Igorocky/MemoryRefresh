@@ -19,6 +19,17 @@ const TagSelector = ({allTags, selectedTags, onTagSelected, onTagRemoved, label,
         )
     }
 
+    function getFilteredTags() {
+        if (allTags) {
+            let notSelectedTags = allTags.filter(t => !selectedTagIds.includes(t.id))
+            return filterText.length == 0 ? notSelectedTags : notSelectedTags.filter(tag => tag.name.toLowerCase().indexOf(filterText) >= 0)
+        } else {
+            return []
+        }
+    }
+
+    const filteredTags = getFilteredTags()
+
     function renderTagFilter() {
         if (allTags?.length) {
             return RE.TextField(
@@ -30,16 +41,24 @@ const TagSelector = ({allTags, selectedTags, onTagSelected, onTagRemoved, label,
                     autoFocus,
                     label,
                     onChange: event => setFilterText(event.nativeEvent.target.value.trim().toLowerCase()),
-                    value: filterText
+                    value: filterText,
+                    onKeyDown: event => {
+                        if (event.keyCode === ENTER_KEY_CODE && filteredTags.length === 1) {
+                            selectTag(filteredTags[0])
+                        }
+                    },
                 }
             )
         }
     }
 
+    function selectTag(tag) {
+        setFilterText('')
+        onTagSelected(tag)
+    }
+
     function renderFilteredTags() {
         if (allTags) {
-            let notSelectedTags = allTags.filter(t => !selectedTagIds.includes(t.id))
-            let filteredTags = filterText.length == 0 ? notSelectedTags : notSelectedTags.filter(tag => tag.name.toLowerCase().indexOf(filterText) >= 0)
             if (filteredTags.length == 0) {
                 if (filterText.length) {
                     return 'No tags match the search criteria'
@@ -55,8 +74,7 @@ const TagSelector = ({allTags, selectedTags, onTagSelected, onTagRemoved, label,
                         variant:'outlined',
                         size:'small',
                         onClick: () => {
-                            setFilterText('')
-                            onTagSelected(tag)
+                            selectTag(tag)
                         },
                         label: tag.name,
                     }))
