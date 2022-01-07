@@ -1,11 +1,13 @@
 "use strict";
 
 const EditTagCmp = ({tagId, tagName, tagNameTextFieldLabel, onSaved, onCanceled}) => {
-    const {renderMessagePopup, showError} = useMessagePopup()
+    const {renderMessagePopup, showError, showMessageWithProgress} = useMessagePopup()
     const [newTagName, setNewTagName] = useState(tagName)
 
     async function create() {
+        const closeProgressIndicator = showMessageWithProgress({text: 'Saving new tag...'})
         const res = await be.createTag({name:newTagName})
+        closeProgressIndicator()
         if (res.err) {
             showError(res.err)
         } else {
@@ -14,7 +16,9 @@ const EditTagCmp = ({tagId, tagName, tagNameTextFieldLabel, onSaved, onCanceled}
     }
 
     async function update() {
+        const closeProgressIndicator = showMessageWithProgress({text: 'Updating tag...'})
         const res = await be.updateTag({tagId,name:newTagName})
+        closeProgressIndicator()
         if (res.err) {
             showError(res.err)
         } else {

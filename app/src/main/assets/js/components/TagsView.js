@@ -1,7 +1,7 @@
 "use strict";
 
 const TagsView = ({query,openView,setPageTitle}) => {
-    const {renderMessagePopup, showMessage, confirmAction, showError} = useMessagePopup()
+    const {renderMessagePopup, showMessageWithProgress, confirmAction, showError} = useMessagePopup()
 
     const [allTags, setAllTags] = useState(null)
     const [errorLoadingTags, setErrorLoadingTags] = useState(null)
@@ -43,7 +43,9 @@ const TagsView = ({query,openView,setPageTitle}) => {
 
     async function deleteTag({tag}) {
         if (await confirmAction({text: `Delete tag '${tag.name}'?`, okBtnColor: 'secondary'})) {
+            const closeProgressIndicator = showMessageWithProgress({text: 'Deleting tag...'})
             const res = await be.deleteTag({tagId:tag.id})
+            closeProgressIndicator()
             if (res.err) {
                 showError(res.err)
             } else {

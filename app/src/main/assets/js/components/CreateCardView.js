@@ -1,7 +1,7 @@
 "use strict";
 
 const CreateCardView = ({query,openView,setPageTitle}) => {
-    const {renderMessagePopup, showMessage, showError} = useMessagePopup()
+    const {renderMessagePopup, showError, showMessageWithProgress} = useMessagePopup()
 
     const [allTags, setAllTags] = useState(null)
     const [allTagsMap, setAllTagsMap] = useState(null)
@@ -30,7 +30,9 @@ const CreateCardView = ({query,openView,setPageTitle}) => {
     }, [])
 
     async function createCard() {
+        const closeProgressIndicator = showMessageWithProgress({text: 'Saving new card...'})
         const res = await be.createTranslateCard({textToTranslate, translation, paused, tagIds})
+        closeProgressIndicator()
         if (res.err) {
             await showError(res.err)
         } else {

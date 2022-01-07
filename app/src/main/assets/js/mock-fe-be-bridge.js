@@ -68,7 +68,7 @@ function createFeBeBridgeForUiTestMode() {
 
     mockedBeFunctions.deleteTag = ({tagId}) => {
         // return errResponse(2,'Error while deleting a tag.')
-        if (CARDS_TO_TAGS.find(({cardId,tagId}) => tagId===tagId)) {
+        if (CARDS_TO_TAGS.find(ctg => tagId===ctg.tagId)) {
             return errResponse(222,'This tag is used by a card.')
         } else {
             removeIf(TAGS,t => t.id===tagId)
@@ -329,7 +329,7 @@ function createFeBeBridgeForUiTestMode() {
     }
     fillDbWithMockData()
 
-    function createBeFunction(funcName, delay) {
+    function createBeFunction(funcName, delay = 1000) {
         const beFunc = mockedBeFunctions[funcName]
         if (hasNoValue(beFunc)) {
             console.error(`mocked backend function is not defined - ${funcName}`)
