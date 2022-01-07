@@ -254,7 +254,7 @@ class DataManager(
         return getRepo().writableDatabase.doInTransaction {
             val card: TranslateCard = readTranslateCardById(ReadTranslateCardByIdArgs(cardId = args.cardId)).data!!
             val cardIdArgs = arrayOf(args.cardId.toString())
-            val validationHistory: List<TranslateCardValidationHistRecord> = select(
+            val validationHistory = ArrayList(select(
                 query = getValidationHistoryQuery,
                 args = cardIdArgs,
                 rowMapper = {
@@ -262,27 +262,26 @@ class DataManager(
                         recId = it.getLong(),
                         cardId = it.getLong(),
                         timestamp = it.getLong(),
+                        actualDelay = "",
                         translation = it.getString(),
                         isCorrect = it.getLong() == 1L,
                     )
                 }
-            ).rows
-            val dataHistory: ArrayList<TranslateCardHistRecord> = ArrayList(
-                select(
-                    query = getDataHistoryQuery,
-                    args = cardIdArgs,
-                    rowMapper = {
-                        TranslateCardHistRecord(
-                            verId = it.getLong(),
-                            cardId = it.getLong(),
-                            timestamp = it.getLong(),
-                            textToTranslate = it.getString(),
-                            translation = it.getString(),
-                            validationHistory = ArrayList()
-                        )
-                    }
-                ).rows
-            )
+            ).rows)
+            val dataHistory: ArrayList<TranslateCardHistRecord> = ArrayList(select(
+                query = getDataHistoryQuery,
+                args = cardIdArgs,
+                rowMapper = {
+                    TranslateCardHistRecord(
+                        verId = it.getLong(),
+                        cardId = it.getLong(),
+                        timestamp = it.getLong(),
+                        textToTranslate = it.getString(),
+                        translation = it.getString(),
+                        validationHistory = ArrayList()
+                    )
+                }
+            ).rows)
             prepareTranslateCardHistResp(card, dataHistory, validationHistory)
         }.apply(toBeResponse(GET_TRANSLATE_CARD_HISTORY))
     }
@@ -672,8 +671,8 @@ class DataManager(
 
     private fun prepareTranslateCardHistResp(
         card: TranslateCard,
-        dataHistory: ArrayList<TranslateCardHistRecord>,
-        validationHistory: List<TranslateCardValidationHistRecord>
+        dataHistory: MutableList<TranslateCardHistRecord>,
+        validationHistory: MutableList<TranslateCardValidationHistRecord>
     ): TranslateCardHistResp {
         dataHistory.add(0, TranslateCardHistRecord(
             verId = -1,
@@ -690,6 +689,15 @@ class DataManager(
         if (dataHistory.isNotEmpty()) {
             val lastDataHistRec = dataHistory.removeLast()
             dataHistory.add(lastDataHistRec.copy(timestamp = card.createdAt))
+        }
+        for (i in 0 .. validationHistory.size-2) {
+            val validationRec = validationHistory.removeAt(i)
+            validationHistory.add(
+                i,
+                validationRec.copy(
+                    actualDelay = Utils.millisToDurationStr(validationRec.timestamp - validationHistory[i].timestamp)
+                )
+            )
         }
 
         var dataIdx = 0

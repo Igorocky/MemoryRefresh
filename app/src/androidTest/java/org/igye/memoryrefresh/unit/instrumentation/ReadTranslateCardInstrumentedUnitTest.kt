@@ -1,6 +1,7 @@
 package org.igye.memoryrefresh.unit.instrumentation
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import org.igye.memoryrefresh.common.Utils
 import org.igye.memoryrefresh.common.Utils.MILLIS_IN_HOUR
 import org.igye.memoryrefresh.common.Utils.MILLIS_IN_MINUTE
 import org.igye.memoryrefresh.common.Utils.MILLIS_IN_SECOND
@@ -370,14 +371,17 @@ class ReadTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
         assertEquals(3, actualHistory.dataHistory[0].validationHistory.size)
 
         assertEquals(validationTime12, actualHistory.dataHistory[0].validationHistory[0].timestamp)
+        assertEquals(Utils.millisToDurationStr(validationTime12 - validationTime11), actualHistory.dataHistory[0].validationHistory[0].actualDelay)
         assertEquals("c-3", actualHistory.dataHistory[0].validationHistory[0].translation)
         assertFalse(actualHistory.dataHistory[0].validationHistory[0].isCorrect)
 
         assertEquals(validationTime11, actualHistory.dataHistory[0].validationHistory[1].timestamp)
+        assertEquals(Utils.millisToDurationStr(validationTime11 - validationTime10), actualHistory.dataHistory[0].validationHistory[1].actualDelay)
         assertEquals("c-2", actualHistory.dataHistory[0].validationHistory[1].translation)
         assertFalse(actualHistory.dataHistory[0].validationHistory[1].isCorrect)
 
         assertEquals(validationTime10, actualHistory.dataHistory[0].validationHistory[2].timestamp)
+        assertEquals(Utils.millisToDurationStr(validationTime10 - validationTime8), actualHistory.dataHistory[0].validationHistory[2].actualDelay)
         assertEquals("c-1", actualHistory.dataHistory[0].validationHistory[2].translation)
         assertFalse(actualHistory.dataHistory[0].validationHistory[2].isCorrect)
 
@@ -387,14 +391,17 @@ class ReadTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
         assertEquals(3, actualHistory.dataHistory[1].validationHistory.size)
 
         assertEquals(validationTime8, actualHistory.dataHistory[1].validationHistory[0].timestamp)
+        assertEquals(Utils.millisToDurationStr(validationTime8 - validationTime7), actualHistory.dataHistory[1].validationHistory[0].actualDelay)
         assertEquals("bb", actualHistory.dataHistory[1].validationHistory[0].translation)
         assertFalse(actualHistory.dataHistory[1].validationHistory[0].isCorrect)
 
         assertEquals(validationTime7, actualHistory.dataHistory[1].validationHistory[1].timestamp)
+        assertEquals(Utils.millisToDurationStr(validationTime7 - validationTime6), actualHistory.dataHistory[1].validationHistory[1].actualDelay)
         assertEquals("b", actualHistory.dataHistory[1].validationHistory[1].translation)
         assertTrue(actualHistory.dataHistory[1].validationHistory[1].isCorrect)
 
         assertEquals(validationTime6, actualHistory.dataHistory[1].validationHistory[2].timestamp)
+        assertEquals(Utils.millisToDurationStr(validationTime6 - validationTime4), actualHistory.dataHistory[1].validationHistory[2].actualDelay)
         assertEquals("bb", actualHistory.dataHistory[1].validationHistory[2].translation)
         assertFalse(actualHistory.dataHistory[1].validationHistory[2].isCorrect)
 
@@ -404,14 +411,17 @@ class ReadTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
         assertEquals(3, actualHistory.dataHistory[2].validationHistory.size)
 
         assertEquals(validationTime4, actualHistory.dataHistory[2].validationHistory[0].timestamp)
+        assertEquals(Utils.millisToDurationStr(validationTime4 - validationTime3), actualHistory.dataHistory[2].validationHistory[0].actualDelay)
         assertEquals("a", actualHistory.dataHistory[2].validationHistory[0].translation)
         assertTrue(actualHistory.dataHistory[2].validationHistory[0].isCorrect)
 
         assertEquals(validationTime3, actualHistory.dataHistory[2].validationHistory[1].timestamp)
+        assertEquals(Utils.millisToDurationStr(validationTime3 - validationTime2), actualHistory.dataHistory[2].validationHistory[1].actualDelay)
         assertEquals("aa", actualHistory.dataHistory[2].validationHistory[1].translation)
         assertFalse(actualHistory.dataHistory[2].validationHistory[1].isCorrect)
 
         assertEquals(validationTime2, actualHistory.dataHistory[2].validationHistory[2].timestamp)
+        assertEquals("", actualHistory.dataHistory[2].validationHistory[2].actualDelay)
         assertEquals("a", actualHistory.dataHistory[2].validationHistory[2].translation)
         assertTrue(actualHistory.dataHistory[2].validationHistory[2].isCorrect)
     }
