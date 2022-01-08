@@ -24,6 +24,14 @@ function useTranslateCardHistory({cardId, tabIndex}) {
         return timeStr.substring(0,idx)
     }
 
+    function renderCardText(text) {
+        if (text.indexOf('\n') >= 0) {
+            return multilineTextToTable({text})
+        } else {
+            return text
+        }
+    }
+
     function renderHistoryTable() {
         const rows = []
         validationHistory.dataHistory.forEach(dataRec => {
@@ -38,7 +46,7 @@ function useTranslateCardHistory({cardId, tabIndex}) {
                     RE.td({}, timestampToStr(validationRec.timestamp))
                 ))
                 rows.push(RE.tr({key:validationRec.recId+'-v2', style:{backgroundColor:bgColor}},
-                    RE.td({colSpan:2}, validationRec.translation),
+                    RE.td({colSpan:2}, renderCardText(validationRec.translation)),
                 ))
             })
             const dataRecBackgroundColor = '#dedede'
@@ -46,10 +54,10 @@ function useTranslateCardHistory({cardId, tabIndex}) {
                 RE.td({colSpan:3},timestampToStr(dataRec.timestamp))
             ))
             rows.push(RE.tr({key:dataRec.verId+'-2', style:{backgroundColor: dataRecBackgroundColor}},
-                RE.td({colSpan:3},dataRec.textToTranslate)
+                RE.td({colSpan:3},renderCardText(dataRec.textToTranslate))
             ))
             rows.push(RE.tr({key:dataRec.verId+'-3', style:{backgroundColor: dataRecBackgroundColor}},
-                RE.td({colSpan:3},dataRec.translation)
+                RE.td({colSpan:3},renderCardText(dataRec.translation))
             ))
 
         })
