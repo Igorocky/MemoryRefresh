@@ -99,6 +99,19 @@ const EditTranslateCardForm = ({
                 label:"Paused"
             })
         )),
+        RE.If(hasValue(tagIds), () => RE.Paper({style: {marginTop:margin}},re(TagSelector,{
+            allTags,
+            selectedTags: tagIds.map(tid => allTagsMap[tid]),
+            onTagRemoved:tag=>{
+                tagIdsOnChange(tagIds.filter(tid=>tid!=tag.id))
+            },
+            onTagSelected:tag=>{
+                tagIdsOnChange([...tagIds,tag.id])
+            },
+            label: 'Tags',
+            color:'primary',
+            selectedTagsBgColor:tagIdsBgColor
+        }))),
         RE.If(hasValue(delay), () => RE.TextField({
             autoCorrect: 'off', autoCapitalize: 'off', spellCheck: 'false',
             value: delay,
@@ -118,19 +131,6 @@ const EditTranslateCardForm = ({
             onKeyUp: event => event.nativeEvent.keyCode == ESCAPE_KEY_CODE ? onCancel?.() : null,
         })),
         RE.If(hasValue(activatesIn), () => RE.span({style:{marginTop:margin}}, activatesIn === '-' ? 'This card is accessible' : `Becomes accessible in: ${activatesIn}`)),
-        RE.If(hasValue(tagIds), () => RE.Paper({style: {marginTop:margin}},re(TagSelector,{
-            allTags,
-            selectedTags: tagIds.map(tid => allTagsMap[tid]),
-            onTagRemoved:tag=>{
-                tagIdsOnChange(tagIds.filter(tid=>tid!=tag.id))
-            },
-            onTagSelected:tag=>{
-                tagIdsOnChange([...tagIds,tag.id])
-            },
-            label: 'Tags',
-            color:'primary',
-            selectedTagsBgColor:tagIdsBgColor
-        }))),
         RE.If(hasValue(createdAt), () => RE.div({style: {marginTop:margin}}, `Created: ${createdAt}`)),
         renderButtons(),
     )
