@@ -199,7 +199,7 @@ const TranslateCardFilterCmp = ({
                                 setTagsToInclude([])
                             }}
                         ),
-                        RE.span({style:{paddingRight:'10px'}, onClick: () => setFocusedFilter(null)}, 'Tags to include:')
+                        RE.span({style:{paddingRight:'10px'}, onClick: () => setFocusedFilter(null)}, 'Include:')
                     ),
                     re(TagSelector,{
                         allTags: remainingTags,
@@ -240,7 +240,7 @@ const TranslateCardFilterCmp = ({
                                 setTagsToExclude([])
                             }
                         }),
-                        RE.span({style:{paddingRight:'10px'}, onClick: () => setFocusedFilter(null)}, 'Tags to exclude:')
+                        RE.span({style:{paddingRight:'10px'}, onClick: () => setFocusedFilter(null)}, 'Exclude:')
                     ),
                     re(TagSelector,{
                         allTags: remainingTags,
