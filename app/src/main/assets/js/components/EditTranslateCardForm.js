@@ -55,12 +55,6 @@ const EditTranslateCardForm = ({
 
     return RE.Container.col.top.left({}, {},
         renderButtons(),
-        RE.If(hasValue(paused), () => RE.FormGroup({style:{backgroundColor:pausedBgColor, marginTop:'20px'}},
-            RE.FormControlLabel({
-                control: RE.Checkbox({checked: paused, onChange: event => pausedOnChange(event.target.checked)}),
-                label:"Paused"
-            })
-        )),
         RE.If(hasValue(textToTranslate), () => RE.TextField({
             id: textToTranslateId,
             autoCorrect: 'off', autoCapitalize: 'off', spellCheck: 'false',
@@ -99,6 +93,12 @@ const EditTranslateCardForm = ({
             },
             onKeyUp: event => event.nativeEvent.keyCode == ESCAPE_KEY_CODE ? onCancel?.() : null,
         })),
+        RE.If(hasValue(paused), () => RE.FormGroup({style:{backgroundColor:pausedBgColor, marginTop:'20px'}},
+            RE.FormControlLabel({
+                control: RE.Checkbox({checked: paused, onChange: event => pausedOnChange(event.target.checked)}),
+                label:"Paused"
+            })
+        )),
         RE.If(hasValue(delay), () => RE.TextField({
             autoCorrect: 'off', autoCapitalize: 'off', spellCheck: 'false',
             value: delay,
