@@ -86,9 +86,7 @@ const CardsSearchView = ({query,openView,setPageTitle,controlsContainer}) => {
     }
 
     function renderCardText(text) {
-        if (IS_IN_WEBVIEW) {
-            return truncateToMaxLength(30,text)
-        } else if (text.indexOf('\n') >= 0) {
+        if (text.indexOf('\n') >= 0) {
             return multilineTextToTable({text})
         } else {
             return text
