@@ -88,8 +88,17 @@ const CardsSearchView = ({query,openView,setPageTitle,controlsContainer}) => {
         return text.substring(0,maxLength) + (text.length > maxLength ? '...' : '')
     }
 
+    function renderCardText(text) {
+        if (IS_IN_WEBVIEW) {
+            return truncateToMaxLength(30,text)
+        } else if (text.indexOf('\n') >= 0) {
+            return multilineTextToTable({text})
+        } else {
+            return text
+        }
+    }
+
     function renderCard(card,idx) {
-        const maxTextLength = 30
         const cardElem = RE.Fragment({},
             RE.div(
                 {style:{borderBottom:'solid 1px lightgrey', padding:'3px'}},
@@ -101,11 +110,11 @@ const CardsSearchView = ({query,openView,setPageTitle,controlsContainer}) => {
             ),
             RE.div(
                 {style:{borderBottom:'solid 1px lightgrey', padding:'3px'}},
-                RE.span({style:{color:card.paused?'grey':'black'}},truncateToMaxLength(maxTextLength,card.textToTranslate))
+                RE.span({style:{color:card.paused?'grey':'black'}},renderCardText(card.textToTranslate))
             ),
             RE.div(
                 {},
-                RE.span({style:{color:card.paused?'grey':'black', padding:'3px'}},truncateToMaxLength(maxTextLength,card.translation))
+                RE.span({style:{color:card.paused?'grey':'black', padding:'3px'}},renderCardText(card.translation))
             ),
         )
         if (focusedCardId === card.id) {
