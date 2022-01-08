@@ -51,11 +51,8 @@ const CardsSearchView = ({query,openView,setPageTitle,controlsContainer}) => {
             } else if (allCards.length == 0) {
                 return 'There are no cards matching the search criteria.'
             } else {
-                return RE.Container.col.top.left({},{style:{marginBottom: '5px'}},
-                    RE.Container.row.left.center({},{},
-                        RE.span({style: {fontWeight:'bold'}}, `Cards found (${allCards.length})`),
-                        RE.If(allCards.length > pageSize, () => renderPaginationControls({})),
-                    ),
+                return RE.Container.col.top.left({},{style:{marginTop: '10px'}},
+                    RE.If(allCards.length > pageSize, () => renderPaginationControls({})),
                     re(ListOfObjectsCmp,{
                         objects: allCards,
                         beginIdx: pageFirstItemIdx,
@@ -138,25 +135,17 @@ const CardsSearchView = ({query,openView,setPageTitle,controlsContainer}) => {
     }
 
     function renderFilter() {
-        return RE.Container.col.top.left({},{},
-            RE.IfNot(isFilterMode, () => RE.Fragment({},
-                iconButton({
-                    iconName:'youtube_searched_for',
-                    onClick: openFilter
-                })
-            )),
-            re(TranslateCardFilterCmp, {
-                allTags,
-                allTagsMap,
-                stateRef: filterStateRef,
-                onSubmit: filter => {
-                    setIsFilterMode(false)
-                    reloadCards({filter})
-                },
-                minimized: !isFilterMode,
-                cardUpdateCounter
-            })
-        )
+        return re(TranslateCardFilterCmp, {
+            allTags,
+            allTagsMap,
+            stateRef: filterStateRef,
+            onSubmit: filter => {
+                setIsFilterMode(false)
+                reloadCards({filter})
+            },
+            minimized: !isFilterMode,
+            cardUpdateCounter
+        })
     }
 
     function renderFastRepeatButton() {
@@ -209,8 +198,12 @@ const CardsSearchView = ({query,openView,setPageTitle,controlsContainer}) => {
     }
 
     return RE.Fragment({},
-        RE.If(controlsContainer?.current && !isFilterMode && hasNoValue(cardToEdit) && allCards?.length, () => RE.Portal({container:controlsContainer.current},
-            renderFastRepeatButton()
+        RE.If(controlsContainer?.current, () => RE.Portal({container:controlsContainer.current},
+            RE.If(!isFilterMode && hasValue(allCards), () => RE.span({style:{marginLeft:'5px'}}, allCards.length)),
+            RE.IfNot(isFilterMode, () => RE.Fragment({},
+                iconButton({iconName:'youtube_searched_for', onClick: openFilter})
+            )),
+            RE.If(!isFilterMode && hasNoValue(cardToEdit) && allCards?.length, () => renderFastRepeatButton())
         )),
         renderPageContent(),
         renderMessagePopup()
