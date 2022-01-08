@@ -181,10 +181,12 @@ const RepeatCardsView = ({query,openView,setPageTitle,controlsContainer, cycledM
 
     return RE.Fragment({},
         RE.If(controlsContainer?.current && hasValue(allCards), () => RE.Portal({container:controlsContainer.current},
-            renderOpenSearchButton(),
-            cycledMode
-                ?`${allCards?.length??0}: ${numberOfFullCycles}/${getNumberOfCompletedCardsInCycle(allCards)}`
-                :`Cards: ${allCards?.length??0}`
+            RE.span({style:{marginLeft:'5px'}},
+                cycledMode
+                    ?`${allCards?.length??0}: ${numberOfFullCycles}/${getNumberOfCompletedCardsInCycle(allCards)}`
+                    :`${allCards?.length??0}`
+            ),
+            renderOpenSearchButton()
         )),
         renderPageContent(),
         renderMessagePopup()
