@@ -18,7 +18,7 @@ const EditTagForm = ({name,tagNameTextFieldLabel = '',onNameChange,onSave,onCanc
             size:'small',
             label:tagNameTextFieldLabel,
             onChange: event => {
-                onNameChange(event.nativeEvent.target.value.trim())
+                onNameChange(event.nativeEvent.target.value)
             },
             onKeyDown: event =>
                 event.nativeEvent.keyCode == 13 ? onSave()
