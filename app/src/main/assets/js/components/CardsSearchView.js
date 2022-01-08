@@ -197,7 +197,7 @@ const CardsSearchView = ({query,openView,setPageTitle,controlsContainer}) => {
 
     return RE.Fragment({},
         RE.If(controlsContainer?.current, () => RE.Portal({container:controlsContainer.current},
-            RE.If(!isFilterMode && hasValue(allCards), () => RE.span({style:{marginLeft:'10px'}}, allCards.length)),
+            RE.If(!isFilterMode && hasValue(allCards), () => RE.span({style:{marginLeft:'15px'}}, allCards.length)),
             RE.IfNot(isFilterMode, () => RE.Fragment({},
                 iconButton({iconName:'youtube_searched_for', onClick: openFilter})
             )),
