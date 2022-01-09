@@ -86,11 +86,23 @@ class UtilsTest {
 
     @Test
     fun multiplyDelay_returns_expected_results() {
-        Assert.assertEquals("1d 12h", multiplyDelay("1d", "x1.5"))
-        Assert.assertEquals("1s", multiplyDelay("1s", "x1.5"))
+        Assert.assertEquals("1s", multiplyDelay("0s", "x1.5"))
+        Assert.assertEquals("2s", multiplyDelay("1s", "x1.5"))
         Assert.assertEquals("2s", multiplyDelay("1s", "x2"))
         Assert.assertEquals("3s", multiplyDelay("1s", "x3"))
-        Assert.assertEquals("9d 14h", multiplyDelay("8d", "x1.2"))
+        Assert.assertEquals("2d", multiplyDelay("1d", "x1.5"))
+        Assert.assertEquals("9d", multiplyDelay("8d", "x1.2"))
+
+        Assert.assertEquals("9d", multiplyDelay("8d", "x1.1"))
+        Assert.assertEquals("9d", multiplyDelay("8d", "x1.2"))
+        Assert.assertEquals("10d", multiplyDelay("8d", "x1.3"))
+        Assert.assertEquals("11d", multiplyDelay("8d", "x1.4"))
+        Assert.assertEquals("12d", multiplyDelay("8d", "x1.5"))
+        Assert.assertEquals("12d", multiplyDelay("8d", "x1.6"))
+        Assert.assertEquals("13d", multiplyDelay("8d", "x1.7"))
+        Assert.assertEquals("14d", multiplyDelay("8d", "x1.8"))
+        Assert.assertEquals("15d", multiplyDelay("8d", "x1.9"))
+        Assert.assertEquals("16d", multiplyDelay("8d", "x2"))
     }
 
     private fun instantToMillis(inst: Instant): Long = inst.toEpochMilli()

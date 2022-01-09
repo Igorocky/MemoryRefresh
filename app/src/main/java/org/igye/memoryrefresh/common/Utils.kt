@@ -198,7 +198,12 @@ object Utils {
         val baseMillis = delayStrToMillis(base)
         val bd = delayCoefToBigDeciaml(coef)
         val newMillis = BigDecimal(baseMillis).multiply(bd).setScale(0, RoundingMode.HALF_UP).toLong()
-        return millisToDurationStr(newMillis)
+        val result = millisToDurationStr(newMillis).split(" ")[0]
+        if (result == base) {
+            return (result.substring(0,result.length-1).toLong()+1).toString() + result.substring(result.length-1,result.length)
+        } else {
+            return result
+        }
     }
 
     fun <T> toBeResponse(errCode: ErrorCode): (Try<T>) -> BeRespose<T> = {
