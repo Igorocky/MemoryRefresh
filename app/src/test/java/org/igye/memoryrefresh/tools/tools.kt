@@ -37,6 +37,7 @@ object Tools {
         changeNamesFromReleaseToDev()
         val newDevVersion = getCurrVersionName()
         commit("Increase version from ${releaseVersion} to ${newDevVersion}")
+        println("Done.")
     }
 
     private fun changeNamesFromDevToRelease() {
