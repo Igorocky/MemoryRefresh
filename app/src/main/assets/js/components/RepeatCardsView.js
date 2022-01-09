@@ -34,6 +34,8 @@ const RepeatCardsView = ({query,openView,setPageTitle,controlsContainer, cycledM
         setCardCounter(prev => prev+1)
     }
 
+    const {say, renderTextReaderConfig, setTextToSay} = useTextReader()
+
     async function reloadCards({filter}) {
         setAllCards(null)
         setCardToRepeat(null)
@@ -112,6 +114,7 @@ const RepeatCardsView = ({query,openView,setPageTitle,controlsContainer, cycledM
                     cardToRepeat,
                     delayCoefs,
                     updateDelayCoefs,
+                    say, renderTextReaderConfig, setTextToSay,
                     onCardWasUpdated: () => {
                         setCardUpdateCounter(prev => prev + 1)
                     },

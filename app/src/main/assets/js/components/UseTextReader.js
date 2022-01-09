@@ -12,10 +12,12 @@ const useTextReader = () => {
     const [textToSay, setTextToSay] = useState('')
 
     useEffect(() => {
-        window.speechSynthesis.onvoiceschanged = () => {
-            const voiceObj = getVoiceObj(voiceUri)
-            setVoiceObj(voiceObj)
-            setVoiceUri(voiceObj?.voiceURI??null)
+        if (window.speechSynthesis) {
+            window.speechSynthesis.onvoiceschanged = () => {
+                const voiceObj = getVoiceObj(voiceUri)
+                setVoiceObj(voiceObj)
+                setVoiceUri(voiceObj?.voiceURI??null)
+            }
         }
     }, [])
 
@@ -31,8 +33,8 @@ const useTextReader = () => {
     }
 
     function getVoiceObj(voiceUri) {
-        const voices = window.speechSynthesis.getVoices()
-        if (voices.length) {
+        const voices = window.speechSynthesis?.getVoices()
+        if (voices?.length) {
             return voices.find(voice => voice.voiceURI === voiceUri || hasNoValue(voiceUri) && voice.default)
         }
     }

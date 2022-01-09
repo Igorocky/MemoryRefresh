@@ -1,7 +1,8 @@
 "use strict";
 
 const RepeatTranslateCardCmp = ({allTags, allTagsMap, controlsContainer, cardToRepeat, onCardWasDeleted, onCardWasUpdated, onDone, cycledMode,
-                                    delayCoefs, updateDelayCoefs}) => {
+                                    delayCoefs, updateDelayCoefs,
+                                    say, renderTextReaderConfig, setTextToSay}) => {
     const USER_INPUT_TEXT_FIELD = 'user-input'
     const CARD_DELAY_TEXT_FIELD = 'card-delay'
 
@@ -24,7 +25,6 @@ const RepeatTranslateCardCmp = ({allTags, allTagsMap, controlsContainer, cardToR
 
     const {renderValidationHistory} = useTranslateCardHistory({cardId:cardToRepeat.id,tabIndex:3})
 
-    const {say, renderTextReaderConfig, setTextToSay} = useTextReader()
     const [textReaderConfigOpened, setTextReaderConfigOpened] = useState(false)
 
     useEffect(() => {
@@ -80,7 +80,7 @@ const RepeatTranslateCardCmp = ({allTags, allTagsMap, controlsContainer, cardToR
             return RE.Container.col.top.left({},{},
                 RE.div({style:{fontWeight:'bold',marginBottom:'10px'}}, 'Expected:',),
                 expected,
-                RE.Container.row.left.center({},{},
+                RE.If(window.speechSynthesis, () => RE.Container.row.left.center({},{},
                     iconButton({
                         iconName:'equalizer', onClick: () => {
                             if (!textReaderConfigOpened) {
@@ -90,7 +90,7 @@ const RepeatTranslateCardCmp = ({allTags, allTagsMap, controlsContainer, cardToR
                         }
                     }),
                     iconButton({iconName:'volume_up', onClick: () => say(answerFromBE)}),
-                ),
+                )),
                 RE.If(textReaderConfigOpened, renderTextReaderConfig)
             )
         }
