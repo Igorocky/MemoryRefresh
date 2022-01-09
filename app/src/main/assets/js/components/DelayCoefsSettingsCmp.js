@@ -18,7 +18,6 @@ const DelayCoefsSettingsCmp = ({coefs, onOk, onCancel}) => {
             inputProps: {size:8},
             onChange: event => {
                 const newText = event.nativeEvent.target.value.trim()
-                console.log('newText', newText)
                 if (newText === '' || FLOATING_NUMBER_REGEX.test(newText)) {
                     onChange(newText)
                 }

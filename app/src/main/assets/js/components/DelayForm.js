@@ -42,7 +42,6 @@ const DelayForm = ({initialDelay, delay, delayOnChange, onSubmit, delayTextField
             onChange: event => {
                 const newText = event.nativeEvent.target.value.trim()
                 const {delayAmount: newDelayAmount, delayUnit: newDelayUnit} = parseDelayStr(newText)
-                console.log('newDelayAmount', newDelayAmount)
                 if (newDelayAmount) {
                     delayOnChange(newDelayAmount + (newDelayUnit??delayUnit))
                 } else {
