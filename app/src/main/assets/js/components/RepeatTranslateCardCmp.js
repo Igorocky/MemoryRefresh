@@ -24,6 +24,9 @@ const RepeatTranslateCardCmp = ({allTags, allTagsMap, controlsContainer, cardToR
 
     const {renderValidationHistory} = useTranslateCardHistory({cardId:cardToRepeat.id,tabIndex:3})
 
+    const {say, renderTextReaderConfig, setTextToSay} = useTextReader()
+    const [textReaderConfigOpened, setTextReaderConfigOpened] = useState(false)
+
     useEffect(() => {
         if (autoFocusDelay && delayTextField.current) {
             const delayInput = document.getElementById(CARD_DELAY_TEXT_FIELD)
@@ -75,8 +78,20 @@ const RepeatTranslateCardCmp = ({allTags, allTagsMap, controlsContainer, cardToR
                 expected = RE.div({}, answerFromBE)
             }
             return RE.Container.col.top.left({},{},
-                RE.div({style:{fontWeight:'bold',marginBottom:'10px'}}, 'Expected:'),
-                expected
+                RE.div({style:{fontWeight:'bold',marginBottom:'10px'}}, 'Expected:',),
+                expected,
+                RE.Container.row.left.center({},{},
+                    iconButton({
+                        iconName:'equalizer', onClick: () => {
+                            if (!textReaderConfigOpened) {
+                                setTextToSay(answerFromBE)
+                            }
+                            setTextReaderConfigOpened(prev => !prev)
+                        }
+                    }),
+                    iconButton({iconName:'volume_up', onClick: () => say(answerFromBE)}),
+                ),
+                RE.If(textReaderConfigOpened, renderTextReaderConfig)
             )
         }
     }
@@ -166,7 +181,8 @@ const RepeatTranslateCardCmp = ({allTags, allTagsMap, controlsContainer, cardToR
                 delayTextFieldId:CARD_DELAY_TEXT_FIELD,
                 delayTextFieldTabIndex:2,
                 updateDelayRequestIsInProgress,
-                onSubmit: updateSchedule
+                onSubmit: updateSchedule,
+                onF9: () => say(answerFromBE)
             })
         }
     }

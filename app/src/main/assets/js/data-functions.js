@@ -13,6 +13,7 @@ const F1_KEY_CODE = 112
 const F2_KEY_CODE = 113
 const F3_KEY_CODE = 114
 const F4_KEY_CODE = 115
+const F9_KEY_CODE = 120
 
 function hasValue(variable) {
     return variable !== undefined && variable !== null

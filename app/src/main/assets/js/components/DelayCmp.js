@@ -4,7 +4,7 @@ const DelayCmp = ({
                       actualDelay, initialDelay, delay, delayOnChange,
                       coefs, coefsOnChange,
                       delayTextFieldRef, delayTextFieldId, delayTextFieldTabIndex, updateDelayRequestIsInProgress,
-                      onSubmit}) => {
+                      onSubmit, onF9}) => {
     const {renderMessagePopup, showDialog} = useMessagePopup()
 
     function renderChangeInfo() {
@@ -71,9 +71,9 @@ const DelayCmp = ({
         } else if (keyCode === F3_KEY_CODE) {
             event.preventDefault();
             idx = 2
-        } else if (keyCode === F4_KEY_CODE) {
+        } else if (keyCode === F9_KEY_CODE) {
             event.preventDefault();
-            idx = 3
+            onF9?.()
         }
         if (hasValue(idx) && coefs[idx] !== '') {
             toggleCoef(idx)
