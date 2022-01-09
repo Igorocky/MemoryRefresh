@@ -340,14 +340,14 @@ class UpdateTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
 
         //when
         val updateTime = testClock.plus(34676)
-        dm.updateTranslateCard(UpdateTranslateCardArgs(cardId = cardId, delay = "x1.3"))
+        dm.updateTranslateCard(UpdateTranslateCardArgs(cardId = cardId, delay = "x2.5"))
 
         //then
         val rnd2 = repo.readableDatabase.select("select ${s.randomFactor} from $s where ${s.cardId} = $cardId") { it.getDouble() }.rows[0]
-        val expectedDelayMillis = Utils.delayStrToMillis(millisToDurationStr((1.3*4.0*Utils.MILLIS_IN_DAY).toLong()))
+        val expectedDelayMillis = 10*Utils.MILLIS_IN_DAY
         assertTableContent(repo = repo, table = s, expectedRows = listOf(
             listOf(s.cardId to cardId, s.updatedAt to updateTime, s.randomFactor to rnd2,
-                s.delay to millisToDurationStr(expectedDelayMillis),
+                s.delay to "10d",
                 s.nextAccessInMillis to (expectedDelayMillis*rnd2).toLong(),
                 s.nextAccessAt to updateTime+(expectedDelayMillis*rnd2).toLong()),
         ))
