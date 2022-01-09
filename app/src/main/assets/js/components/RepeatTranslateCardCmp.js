@@ -125,6 +125,8 @@ const RepeatTranslateCardCmp = ({allTags, allTagsMap, controlsContainer, cardToR
                     } else if (hasValue(answerFromBE)) {
                         toggleShowAnswerButton()
                     }
+                } else if (event.keyCode === F9_KEY_CODE && hasValue(answerFromBE)) {
+                    say(answerFromBE)
                 }
             },
         })
