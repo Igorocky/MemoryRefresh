@@ -1,6 +1,9 @@
 package org.igye.memoryrefresh.unit.instrumentation
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import org.igye.memoryrefresh.common.Utils
+import org.igye.memoryrefresh.common.Utils.millisToDurationStr
+import org.igye.memoryrefresh.database.select
 import org.igye.memoryrefresh.manager.DataManager.*
 import org.igye.memoryrefresh.testutils.InstrumentedTestBase
 import org.junit.Assert.*
@@ -314,6 +317,45 @@ class UpdateTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
         assertTableContent(repo = repo, table = ctg, expectedRows = listOf(
             listOf(ctg.cardId to cardId, ctg.tagId to tagId1),
             listOf(ctg.cardId to cardId, ctg.tagId to tagId2),
+        ))
+    }
+
+    @Test
+    fun updateTranslateCard_updates_schedule_correctly_if_new_delay_was_specified_in_a_form_of_a_coefficient() {
+        //given
+        val createTime = testClock.currentMillis()
+        val cardId = dm.createTranslateCard(CreateTranslateCardArgs(textToTranslate = "X", translation = "x")).data!!
+        val preUpdateTime = testClock.plus(457465)
+        dm.updateTranslateCard(UpdateTranslateCardArgs(cardId = cardId, delay = "4d"))
+        val rnd1 = repo.readableDatabase.select("select ${s.randomFactor} from $s where ${s.cardId} = $cardId") { it.getDouble() }.rows[0]
+
+        assertTableContent(repo = repo, table = s, expectedRows = listOf(
+            listOf(s.cardId to cardId, s.updatedAt to preUpdateTime, s.delay to "4d",
+                s.nextAccessInMillis to (rnd1*4*Utils.MILLIS_IN_DAY).toLong(), s.nextAccessAt to preUpdateTime+(rnd1*4*Utils.MILLIS_IN_DAY).toLong()),
+        ))
+        assertTableContent(repo = repo, table = s.ver, expectedRows = listOf(
+            listOf(s.cardId to cardId, s.updatedAt to createTime, s.delay to "1s",
+                s.nextAccessInMillis to 1000, s.nextAccessAt to createTime+1000),
+        ))
+
+        //when
+        val updateTime = testClock.plus(34676)
+        dm.updateTranslateCard(UpdateTranslateCardArgs(cardId = cardId, delay = "x1.3"))
+
+        //then
+        val rnd2 = repo.readableDatabase.select("select ${s.randomFactor} from $s where ${s.cardId} = $cardId") { it.getDouble() }.rows[0]
+        val expectedDelayMillis = Utils.delayStrToMillis(millisToDurationStr((1.3*4.0*Utils.MILLIS_IN_DAY).toLong()))
+        assertTableContent(repo = repo, table = s, expectedRows = listOf(
+            listOf(s.cardId to cardId, s.updatedAt to updateTime, s.randomFactor to rnd2,
+                s.delay to millisToDurationStr(expectedDelayMillis),
+                s.nextAccessInMillis to (expectedDelayMillis*rnd2).toLong(),
+                s.nextAccessAt to updateTime+(expectedDelayMillis*rnd2).toLong()),
+        ))
+        assertTableContent(repo = repo, table = s.ver, expectedRows = listOf(
+            listOf(s.cardId to cardId, s.updatedAt to createTime, s.delay to "1s",
+                s.nextAccessInMillis to 1000, s.nextAccessAt to createTime+1000),
+            listOf(s.cardId to cardId, s.updatedAt to preUpdateTime, s.delay to "4d",
+                s.nextAccessInMillis to (rnd1*4*Utils.MILLIS_IN_DAY).toLong(), s.nextAccessAt to preUpdateTime+(rnd1*4*Utils.MILLIS_IN_DAY).toLong()),
         ))
     }
 

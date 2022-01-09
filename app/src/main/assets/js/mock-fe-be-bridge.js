@@ -92,7 +92,7 @@ function createFeBeBridgeForUiTestMode() {
                 schedule: {
                     cardId: id,
                     updatedAt: new Date().getTime(),
-                    delay: '3h',
+                    delay: '3h 45m',
                     nextAccessInMillis: 0,
                     nextAccessAt: new Date().getTime()
                 },

@@ -3,6 +3,7 @@ package org.igye.memoryrefresh.manager
 import android.database.sqlite.SQLiteConstraintException
 import org.igye.memoryrefresh.ErrorCode.*
 import org.igye.memoryrefresh.common.*
+import org.igye.memoryrefresh.common.Utils.multiplyDelay
 import org.igye.memoryrefresh.common.Utils.toBeResponse
 import org.igye.memoryrefresh.database.*
 import org.igye.memoryrefresh.dto.common.BeErr
@@ -469,14 +470,19 @@ class DataManager(
                 throw MemoryRefreshException(errCode = UPDATE_CARD_DELAY_IS_EMPTY, msg = "Delay should not be empty.")
             }
             if (recalculateDelay || newDelay != existingCard.schedule.delay) {
+                val finalDelay = if (newDelay.startsWith("x")) {
+                    multiplyDelay(existingCard.schedule.delay, newDelay)
+                } else {
+                    newDelay
+                }
                 val randomFactor = 0.85 + Random.nextDouble(from = 0.0, until = 0.30001)
-                val nextAccessInMillis = (Utils.delayStrToMillis(newDelay) * randomFactor).toLong()
+                val nextAccessInMillis = (Utils.delayStrToMillis(finalDelay) * randomFactor).toLong()
                 val timestamp = clock.instant().toEpochMilli()
                 val nextAccessAt = timestamp + nextAccessInMillis
                 repo.cardsSchedule.update(
                     timestamp = timestamp,
                     cardId = cardId,
-                    delay = newDelay,
+                    delay = finalDelay,
                     randomFactor = randomFactor,
                     nextAccessInMillis = nextAccessInMillis,
                     nextAccessAt = nextAccessAt

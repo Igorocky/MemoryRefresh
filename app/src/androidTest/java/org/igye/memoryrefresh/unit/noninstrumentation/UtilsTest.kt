@@ -6,6 +6,7 @@ import org.igye.memoryrefresh.common.Utils.MILLIS_IN_MONTH
 import org.igye.memoryrefresh.common.Utils.correctDelayCoefIfNeeded
 import org.igye.memoryrefresh.common.Utils.delayStrToMillis
 import org.igye.memoryrefresh.common.Utils.millisToDurationStr
+import org.igye.memoryrefresh.common.Utils.multiplyDelay
 import org.junit.Assert
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -60,6 +61,7 @@ class UtilsTest {
         Assert.assertEquals(MILLIS_IN_DAY*10, delayStrToMillis("10d"))
         Assert.assertEquals(MILLIS_IN_MONTH, delayStrToMillis("1M"))
         Assert.assertEquals(MILLIS_IN_MONTH*3, delayStrToMillis("3M"))
+        Assert.assertEquals(MILLIS_IN_MONTH*3+ MILLIS_IN_DAY*16+ MILLIS_IN_HOUR*11, delayStrToMillis("3M 16d 11h"))
     }
 
     @Test
@@ -79,6 +81,16 @@ class UtilsTest {
         Assert.assertEquals("x14.3", correctDelayCoefIfNeeded("x14.31"))
         Assert.assertEquals("x14.4", correctDelayCoefIfNeeded("x14.35"))
         Assert.assertEquals("x14.3", correctDelayCoefIfNeeded("x14.313455"))
+        Assert.assertEquals("x0.3", correctDelayCoefIfNeeded("x0.31"))
+    }
+
+    @Test
+    fun multiplyDelay_returns_expected_results() {
+        Assert.assertEquals("1d 12h", multiplyDelay("1d", "x1.5"))
+        Assert.assertEquals("1s", multiplyDelay("1s", "x1.5"))
+        Assert.assertEquals("2s", multiplyDelay("1s", "x2"))
+        Assert.assertEquals("3s", multiplyDelay("1s", "x3"))
+        Assert.assertEquals("9d 14h", multiplyDelay("8d", "x1.2"))
     }
 
     private fun instantToMillis(inst: Instant): Long = inst.toEpochMilli()

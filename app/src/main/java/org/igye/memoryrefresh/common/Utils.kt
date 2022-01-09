@@ -141,8 +141,12 @@ object Utils {
         return sb.toString()
     }
 
-    private val attemptDelayPattern = Pattern.compile("^(\\d+)(M|d|h|m|s)$")
     fun delayStrToMillis(pauseDuration: String): Long {
+        return pauseDuration.split(" ").asSequence().map { delayStrToMillisInner(it) }.sum()
+    }
+
+    private val attemptDelayPattern = Pattern.compile("^(\\d+)(M|d|h|m|s)$")
+    private fun delayStrToMillisInner(pauseDuration: String): Long {
         val matcher = attemptDelayPattern.matcher(pauseDuration)
         if (!matcher.matches()) {
             throw MemoryRefreshException(
@@ -166,19 +170,35 @@ object Utils {
     }
 
     private val delayCoefPattern = Pattern.compile("^(?:x(\\d+)(?:\\.(\\d*))?)?$")
-    fun correctDelayCoefIfNeeded(coef: String): String {
+    private fun delayCoefToBigDeciaml(coef: String): BigDecimal? {
         val matcher = delayCoefPattern.matcher(coef)
         if (!matcher.matches()) {
-            return ""
+            return null
         }
         val integerPart = matcher.group(1)
         val rationalPart = matcher.group(2)
         if (integerPart == null) {
-            return ""
+            return null
         }
-        return "x" + BigDecimal(
+        return BigDecimal(
             "$integerPart.${if (rationalPart == null || rationalPart == "") "0" else rationalPart}"
-        ).setScale(if (rationalPart == null || rationalPart == "") 0 else 1, RoundingMode.HALF_UP).toString()
+        ).setScale(if (rationalPart == null || rationalPart == "") 0 else 1, RoundingMode.HALF_UP)
+    }
+
+    fun correctDelayCoefIfNeeded(coef: String): String {
+        val bd = delayCoefToBigDeciaml(coef)
+        if (bd == null) {
+            return ""
+        } else {
+            return "x" + bd
+        }
+    }
+
+    fun multiplyDelay(base:String, coef:String): String {
+        val baseMillis = delayStrToMillis(base)
+        val bd = delayCoefToBigDeciaml(coef)
+        val newMillis = BigDecimal(baseMillis).multiply(bd).setScale(0, RoundingMode.HALF_UP).toLong()
+        return millisToDurationStr(newMillis)
     }
 
     fun <T> toBeResponse(errCode: ErrorCode): (Try<T>) -> BeRespose<T> = {
