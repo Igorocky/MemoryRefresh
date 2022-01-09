@@ -4,7 +4,8 @@ const ALL_DELAY_UNITS = ['Seconds', 'Minutes', 'Hours', 'Days', 'Months',]
 const ALL_DELAY_UNITS_SHORT = ['s', 'm', 'h', 'd', 'M',]
 const DELAY_REGEX = /^(\d+)(s|m|h|d|M)?$/
 
-const DelayForm = ({initialDelay, delay, delayOnChange, onSubmit, delayTextFieldRef, delayTextFieldId, delayTextFieldTabIndex, updateDelayRequestIsInProgress, onKeyDown}) => {
+const DelayForm = ({initialDelay, delay, delayOnChange, onSubmit, onKeyDown, result,
+                       delayTextFieldRef, delayTextFieldId, delayTextFieldTabIndex, updateDelayRequestIsInProgress}) => {
 
     function parseDelayStr(text) {
         const delayParseRes = DELAY_REGEX.exec(text)
@@ -37,7 +38,7 @@ const DelayForm = ({initialDelay, delay, delayOnChange, onSubmit, delayTextField
             variant: 'outlined',
             multiline: false,
             maxRows: 1,
-            inputProps: {size:6, tabIndex:delayTextFieldTabIndex},
+            inputProps: {size:3, tabIndex:delayTextFieldTabIndex},
             color: hasValue(delayAmount)?'primary':'secondary',
             onChange: event => {
                 const newText = event.nativeEvent.target.value.trim()
@@ -68,6 +69,7 @@ const DelayForm = ({initialDelay, delay, delayOnChange, onSubmit, delayTextField
                 ALL_DELAY_UNITS.map((unitDispName,idx) => RE.MenuItem({key:idx, value:ALL_DELAY_UNITS_SHORT[idx]}, ALL_DELAY_UNITS[idx]))
             )
         ),
+        RE.span({style:{fontSize: '15px', fontFamily:'monospace', fontWeight:'bold'}}, result),
         renderSubmitButton()
     )
 }

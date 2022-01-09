@@ -8,11 +8,11 @@ const DelayCmp = ({
     const {renderMessagePopup, showDialog} = useMessagePopup()
 
     function renderChangeInfo() {
-        return RE.Container.row.left.center({},{style:{marginRight:'20px', fontSize: '15px'}},
+        return RE.Container.row.left.center({},{style:{marginRight:'20px', fontSize: '15px', color:'gray'}},
             RE.span({style:{}}, `[${actualDelay}]`),
             RE.span({style:{}}, initialDelay),
             RE.span({style:{}}, '\u{02192}'),
-            RE.span({style:{fontSize: '18px', fontFamily:'monospace', fontWeight:'bold'}}, delay),
+            RE.span({style:{fontSize: '15px', fontFamily:'monospace', fontWeight:'bold'}}, delay),
         )
     }
 
@@ -59,7 +59,28 @@ const DelayCmp = ({
         })
     }
 
-    return RE.Container.col.top.left({},{style:{marginBottom:'20px'}},
+    function delayFormOnKeyDown(event) {
+        const keyCode = event.keyCode
+        let idx
+        if (keyCode === F1_KEY_CODE) {
+            event.preventDefault();
+            idx = 0
+        } else if (keyCode === F2_KEY_CODE) {
+            event.preventDefault();
+            idx = 1
+        } else if (keyCode === F3_KEY_CODE) {
+            event.preventDefault();
+            idx = 2
+        } else if (keyCode === F4_KEY_CODE) {
+            event.preventDefault();
+            idx = 3
+        }
+        if (hasValue(idx) && coefs[idx] !== '') {
+            toggleCoef(idx)
+        }
+    }
+
+    return RE.Container.col.top.left({},{style:{marginBottom:'15px'}},
         renderChangeInfo(),
         renderCoefs(),
         re(DelayForm, {
@@ -68,26 +89,8 @@ const DelayCmp = ({
             delayOnChange,
             delayTextFieldRef, delayTextFieldId, delayTextFieldTabIndex, updateDelayRequestIsInProgress,
             onSubmit,
-            onKeyDown: event => {
-                const keyCode = event.keyCode
-                let idx
-                if (keyCode === F1_KEY_CODE) {
-                    event.preventDefault();
-                    idx = 0
-                } else if (keyCode === F2_KEY_CODE) {
-                    event.preventDefault();
-                    idx = 1
-                } else if (keyCode === F3_KEY_CODE) {
-                    event.preventDefault();
-                    idx = 2
-                } else if (keyCode === F4_KEY_CODE) {
-                    event.preventDefault();
-                    idx = 3
-                }
-                if (hasValue(idx) && coefs[idx] !== '') {
-                    toggleCoef(idx)
-                }
-            }
+            onKeyDown: delayFormOnKeyDown,
+            result:delay,
         }),
         renderMessagePopup()
     )
