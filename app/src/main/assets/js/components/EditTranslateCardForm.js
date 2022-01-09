@@ -73,7 +73,15 @@ const EditTranslateCardForm = ({
                     textToTranslateOnChange(newText)
                 }
             },
-            onKeyUp: event => event.nativeEvent.keyCode == ESCAPE_KEY_CODE ? onCancel?.() : null,
+            onKeyUp: event => {
+                if (event.ctrlKey && event.keyCode === ENTER_KEY_CODE) {
+                    if (!saveDisabled) {
+                        onSave?.()
+                    }
+                } else if (event.nativeEvent.keyCode == ESCAPE_KEY_CODE) {
+                    onCancel?.()
+                }
+            },
         })),
         RE.If(hasValue(translation), () => RE.TextField({
             autoCorrect: 'off', autoCapitalize: 'off', spellCheck: 'false',
@@ -91,7 +99,15 @@ const EditTranslateCardForm = ({
                     translationOnChange(newText)
                 }
             },
-            onKeyUp: event => event.nativeEvent.keyCode == ESCAPE_KEY_CODE ? onCancel?.() : null,
+            onKeyUp: event => {
+                if (event.ctrlKey && event.keyCode === ENTER_KEY_CODE) {
+                    if (!saveDisabled) {
+                        onSave?.()
+                    }
+                } else if (event.nativeEvent.keyCode == ESCAPE_KEY_CODE) {
+                    onCancel?.()
+                }
+            },
         })),
         RE.If(hasValue(paused), () => RE.FormGroup({style:{backgroundColor:pausedBgColor, marginTop:'20px'}},
             RE.FormControlLabel({
