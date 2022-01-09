@@ -8,11 +8,11 @@ const DelayCmp = ({
     const {renderMessagePopup, showDialog} = useMessagePopup()
 
     function renderChangeInfo() {
-        return RE.Container.row.left.center({},{style:{marginRight:'20px', fontSize: '18px', fontFamily:'monospace'}},
-            RE.span({}, `[${actualDelay}]`),
-            RE.span({}, initialDelay),
-            RE.span({style:{fontSize:'25px'}}, '\u{02192}'),
-            RE.span({style:{fontWeight:'bold'}}, delay),
+        return RE.Container.row.left.center({},{style:{marginRight:'20px', fontSize: '15px'}},
+            RE.span({style:{}}, `[${actualDelay}]`),
+            RE.span({style:{}}, initialDelay),
+            RE.span({style:{}}, '\u{02192}'),
+            RE.span({style:{fontSize: '18px', fontFamily:'monospace', fontWeight:'bold'}}, delay),
         )
     }
 

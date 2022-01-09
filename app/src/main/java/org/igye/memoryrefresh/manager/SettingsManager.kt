@@ -82,7 +82,7 @@ class SettingsManager(
     @Synchronized
     fun readDelayCoefs(): BeRespose<List<String>> {
         return BeRespose(ErrorCode.READ_DELAY_COEFS) {
-            getApplicationSettings().delayCoefs
+            getApplicationSettings().delayCoefs?:listOf("x1.2","x1.5","x2","x3")
         }
     }
 
