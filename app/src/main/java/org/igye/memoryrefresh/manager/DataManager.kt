@@ -51,7 +51,7 @@ class DataManager(
                 }
             ) {
                 val repo = getRepo()
-                repo.writableDatabase.doInTransactionEx {
+                repo.writableDatabase.doInTransaction {
                     tagsStat.tagsCouldChange()
                     repo.tags.insert(name = name)
                 }
@@ -127,7 +127,7 @@ class DataManager(
                 }
             ) {
                 val repo = getRepo()
-                repo.writableDatabase.doInTransactionEx {
+                repo.writableDatabase.doInTransaction {
                     repo.tags.update(id = args.tagId, name = newName)
                     Tag(
                         id = args.tagId,
@@ -155,7 +155,7 @@ class DataManager(
             }
         ) {
             val repo = getRepo()
-            repo.writableDatabase.doInTransactionEx {
+            repo.writableDatabase.doInTransaction {
                 repo.tags.delete(id = args.tagId)
             }
         }
@@ -180,7 +180,7 @@ class DataManager(
             tagsStat.tagsCouldChange()
             val repo = getRepo()
             return BeRespose(SAVE_NEW_TRANSLATE_CARD_EXCEPTION) {
-                repo.writableDatabase.doInTransactionEx {
+                repo.writableDatabase.doInTransaction {
                     val cardId = createCard(cardType = CardType.TRANSLATION, tagIds = args.tagIds, paused = args.paused)
                     repo.translationCards.insert(cardId = cardId, textToTranslate = textToTranslate, translation = translation)
                     cardId
@@ -214,7 +214,7 @@ class DataManager(
     @Synchronized
     fun readTranslateCardById(args: ReadTranslateCardByIdArgs): BeRespose<TranslateCard> {
         return BeRespose(READ_TRANSLATE_CARD_BY_ID) {
-            getRepo().readableDatabase.doInTransactionEx {
+            getRepo().readableDatabase.doInTransaction {
                 val currTime = clock.instant().toEpochMilli()
                 select(query = readTranslateCardByIdQuery, args = arrayOf(currTime.toString(), args.cardId.toString())){
                     val cardId = it.getLong()
@@ -260,7 +260,7 @@ class DataManager(
     @Synchronized
     fun readTranslateCardHistory(args: ReadTranslateCardHistoryArgs): BeRespose<TranslateCardHistResp> {
         return BeRespose(GET_TRANSLATE_CARD_HISTORY) {
-            getRepo().writableDatabase.doInTransactionEx {
+            getRepo().writableDatabase.doInTransaction {
                 val card: TranslateCard = readTranslateCardById(ReadTranslateCardByIdArgs(cardId = args.cardId)).data!!
                 val cardIdArgs = arrayOf(args.cardId.toString())
                 val validationHistory = ArrayList(select(
@@ -356,7 +356,7 @@ class DataManager(
     fun updateTranslateCard(args: UpdateTranslateCardArgs): BeRespose<Unit> {
         return BeRespose(UPDATE_TRANSLATE_CARD_EXCEPTION) {
             val repo = getRepo()
-            repo.writableDatabase.doInTransactionEx {
+            repo.writableDatabase.doInTransaction {
                 updateCard(cardId = args.cardId, delay = args.delay, recalculateDelay = args.recalculateDelay, tagIds = args.tagIds, paused = args.paused)
                 val (existingTextToTranslate: String, existingTranslation: String) = select(
                     query = updateTranslateCardQuery,
@@ -391,7 +391,7 @@ class DataManager(
         } else {
             return BeRespose(VALIDATE_TRANSLATE_CARD_EXCEPTION) {
                 val repo = getRepo()
-                repo.writableDatabase.doInTransactionEx {
+                repo.writableDatabase.doInTransaction {
                     val expectedTranslation = select(
                         query = validateTranslateCardQuery,
                         args = arrayOf(args.cardId.toString()),
@@ -420,7 +420,7 @@ class DataManager(
     fun deleteTranslateCard(args: DeleteTranslateCardArgs): BeRespose<Unit> {
         return BeRespose(DELETE_TRANSLATE_CARD_EXCEPTION) {
             val repo = getRepo()
-            repo.writableDatabase.doInTransactionEx {
+            repo.writableDatabase.doInTransaction {
                 repo.translationCards.delete(cardId = args.cardId)
                 deleteCard(cardId = args.cardId)
             }
@@ -432,7 +432,7 @@ class DataManager(
     @Synchronized
     private fun deleteCard(cardId: Long) {
         val repo = getRepo()
-        repo.writableDatabase.doInTransactionEx {
+        repo.writableDatabase.doInTransaction {
             repo.cardToTag.delete(cardId = cardId)
             tagsStat.tagsCouldChange()
             repo.cardsSchedule.delete(cardId = cardId)
@@ -444,7 +444,7 @@ class DataManager(
     private fun createCard(cardType: CardType, paused: Boolean, tagIds: Set<Long>): Long {
         tagsStat.tagsCouldChange()
         val repo = getRepo()
-        return repo.writableDatabase.doInTransactionEx {
+        return repo.writableDatabase.doInTransaction {
             val currTime = clock.instant().toEpochMilli()
             val cardId = repo.cards.insert(cardType = cardType, paused = paused)
             repo.cardsSchedule.insert(cardId = cardId, timestamp = currTime, delay = "0s", randomFactor = 1.0, nextAccessInMillis = 0, nextAccessAt = currTime)
@@ -462,7 +462,7 @@ class DataManager(
         recalculateDelay: Boolean
     ) {
         val repo = getRepo()
-        repo.writableDatabase.doInTransactionEx {
+        repo.writableDatabase.doInTransaction {
             val existingCard = readCardById(cardId = cardId)
             val newDelay = delay?.trim()?:existingCard.schedule.delay
             if (newDelay.isEmpty()) {
@@ -510,7 +510,7 @@ class DataManager(
     """.trimIndent()
     @Synchronized
     private fun readCardById(cardId: Long): Card {
-        return getRepo().readableDatabase.doInTransactionEx {
+        return getRepo().readableDatabase.doInTransaction {
             select(
                 query = readCardByIdQuery,
                 args = arrayOf(cardId.toString()),
@@ -657,7 +657,7 @@ class DataManager(
             $rowNumLimit
         """.trimIndent()
 
-        return getRepo().readableDatabase.doInTransactionEx {
+        return getRepo().readableDatabase.doInTransaction {
             val currTime = clock.instant().toEpochMilli()
             val result = select(query = query, args = queryArgs.toTypedArray()) {
                 val cardId = it.getLong()
