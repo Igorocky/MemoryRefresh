@@ -183,7 +183,7 @@ class UpdateTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
         assertTableContent(repo = repo, table = t.ver, expectedRows = listOf())
 
         assertTableContent(repo = repo, table = s, expectedRows = listOf(
-            listOf(s.cardId to cardId, s.updatedAt to createTime, s.delay to "0s"),
+            listOf(s.cardId to cardId, s.updatedAt to createTime, s.delay to "1s"),
         ))
         assertTableContent(repo = repo, table = s.ver, expectedRows = listOf())
 
@@ -223,7 +223,7 @@ class UpdateTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
             listOf(s.cardId to cardId, s.updatedAt to updateTime, s.delay to "5m"),
         ))
         assertTableContent(repo = repo, table = s.ver, expectedRows = listOf(
-            listOf(s.cardId to cardId, s.ver.timestamp to updateTime, s.cardId to cardId, s.updatedAt to createTime, s.delay to "0s"),
+            listOf(s.cardId to cardId, s.ver.timestamp to updateTime, s.cardId to cardId, s.updatedAt to createTime, s.delay to "1s"),
         ))
 
         assertTableContent(repo = repo, table = ctg, expectedRows = listOf(
@@ -264,7 +264,7 @@ class UpdateTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
             listOf(s.cardId to cardId, s.updatedAt to preUpdateTime, s.delay to delayBeforeUpdate),
         ))
         assertTableContent(repo = repo, table = s.ver, expectedRows = listOf(
-            listOf(s.cardId to cardId, s.updatedAt to createTime, s.delay to "0s"),
+            listOf(s.cardId to cardId, s.updatedAt to createTime, s.delay to "1s"),
         ))
 
         assertTableContent(repo = repo, table = t, expectedRows = listOf(
@@ -303,7 +303,7 @@ class UpdateTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
             listOf(s.cardId to cardId, s.updatedAt to preUpdateTime, s.delay to delayBeforeUpdate),
         ))
         assertTableContent(repo = repo, table = s.ver, expectedRows = listOf(
-            listOf(s.cardId to cardId, s.updatedAt to createTime, s.delay to "0s"),
+            listOf(s.cardId to cardId, s.updatedAt to createTime, s.delay to "1s"),
         ))
 
         assertTableContent(repo = repo, table = t, expectedRows = listOf(

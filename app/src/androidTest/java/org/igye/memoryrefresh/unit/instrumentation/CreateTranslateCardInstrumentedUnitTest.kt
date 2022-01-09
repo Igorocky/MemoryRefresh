@@ -26,9 +26,9 @@ class CreateTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
         //then
         assertEquals(expectedTextToTranslate, translateCard.textToTranslate)
         assertEquals(expectedTranslation, translateCard.translation)
-        assertEquals("0s", translateCard.schedule.delay)
-        assertEquals(0, translateCard.schedule.nextAccessInMillis)
-        assertEquals(time1, translateCard.schedule.nextAccessAt)
+        assertEquals("1s", translateCard.schedule.delay)
+        assertEquals(1000, translateCard.schedule.nextAccessInMillis)
+        assertEquals(time1+1000, translateCard.schedule.nextAccessAt)
 
         assertTableContent(repo = repo, table = c, matchColumn = c.id, expectedRows = listOf(
             listOf(c.id to translateCard.id, c.type to TR_TP, c.createdAt to time1, c.paused to 0)
@@ -44,7 +44,7 @@ class CreateTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
         assertTableContent(repo = repo, table = t.ver, expectedRows = listOf())
 
         assertTableContent(repo = repo, table = s, matchColumn = s.cardId, expectedRows = listOf(
-            listOf(s.cardId to translateCard.id, s.delay to "0s", s.nextAccessInMillis to 0L, s.nextAccessAt to time1)
+            listOf(s.cardId to translateCard.id, s.delay to "1s", s.nextAccessInMillis to 1000L, s.nextAccessAt to time1+1000)
         ))
         assertTableContent(repo = repo, table = s.ver, expectedRows = listOf())
 
@@ -73,9 +73,9 @@ class CreateTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
         //then
         assertEquals(expectedTextToTranslate, translateCard.textToTranslate)
         assertEquals(expectedTranslation, translateCard.translation)
-        assertEquals("0s", translateCard.schedule.delay)
-        assertEquals(0, translateCard.schedule.nextAccessInMillis)
-        assertEquals(time1, translateCard.schedule.nextAccessAt)
+        assertEquals("1s", translateCard.schedule.delay)
+        assertEquals(1000, translateCard.schedule.nextAccessInMillis)
+        assertEquals(time1+1000, translateCard.schedule.nextAccessAt)
 
         assertTableContent(repo = repo, table = c, matchColumn = c.id, expectedRows = listOf(
             listOf(c.id to translateCard.id, c.type to TR_TP, c.createdAt to time1)
@@ -97,7 +97,7 @@ class CreateTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
         assertTableContent(repo = repo, table = t.ver, expectedRows = listOf())
 
         assertTableContent(repo = repo, table = s, matchColumn = s.cardId, expectedRows = listOf(
-            listOf(s.cardId to translateCard.id, s.delay to "0s", s.nextAccessInMillis to 0L, s.nextAccessAt to time1)
+            listOf(s.cardId to translateCard.id, s.delay to "1s", s.nextAccessInMillis to 1000L, s.nextAccessAt to time1+1000)
         ))
         assertTableContent(repo = repo, table = s.ver, expectedRows = listOf())
 

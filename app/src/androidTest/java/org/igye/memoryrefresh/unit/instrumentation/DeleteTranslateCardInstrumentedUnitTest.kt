@@ -40,7 +40,7 @@ class DeleteTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
 
         assertTableContent(repo = repo, table = s, matchColumn = s.cardId, expectedRows = listOf())
         assertTableContent(repo = repo, table = s.ver, expectedRows = listOf(
-            listOf(s.ver.timestamp to timeDeleted, s.cardId to cardId, s.delay to "0s", s.nextAccessInMillis to 0L, s.nextAccessAt to timeCreated)
+            listOf(s.ver.timestamp to timeDeleted, s.cardId to cardId, s.delay to "1s", s.nextAccessInMillis to 1000L, s.nextAccessAt to timeCreated+1000)
         ))
 
         assertTableContent(repo = repo, table = l, expectedRows = listOf())
@@ -84,10 +84,10 @@ class DeleteTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
         ))
 
         assertTableContent(repo = repo, table = s, matchColumn = s.cardId, expectedRows = listOf(
-            listOf(s.cardId to cardId2, s.updatedAt to timeCreated2, s.delay to "0s", s.nextAccessInMillis to 0L, s.nextAccessAt to timeCreated2)
+            listOf(s.cardId to cardId2, s.updatedAt to timeCreated2, s.delay to "1s", s.nextAccessInMillis to 1000L, s.nextAccessAt to timeCreated2+1000)
         ))
         assertTableContent(repo = repo, table = s.ver, expectedRows = listOf(
-            listOf(s.ver.timestamp to timeDeleted1, s.cardId to cardId1, s.updatedAt to timeCreated1, s.delay to "0s", s.nextAccessInMillis to 0L, s.nextAccessAt to timeCreated1)
+            listOf(s.ver.timestamp to timeDeleted1, s.cardId to cardId1, s.updatedAt to timeCreated1, s.delay to "1s", s.nextAccessInMillis to 1000L, s.nextAccessAt to timeCreated1+1000)
         ))
 
         assertTableContent(repo = repo, table = l, expectedRows = listOf())
