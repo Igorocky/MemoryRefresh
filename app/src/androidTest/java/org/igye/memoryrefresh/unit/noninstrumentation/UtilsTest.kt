@@ -3,6 +3,7 @@ package org.igye.memoryrefresh.unit.noninstrumentation
 import org.igye.memoryrefresh.common.Utils.MILLIS_IN_DAY
 import org.igye.memoryrefresh.common.Utils.MILLIS_IN_HOUR
 import org.igye.memoryrefresh.common.Utils.MILLIS_IN_MONTH
+import org.igye.memoryrefresh.common.Utils.correctDelayCoefIfNeeded
 import org.igye.memoryrefresh.common.Utils.delayStrToMillis
 import org.igye.memoryrefresh.common.Utils.millisToDurationStr
 import org.junit.Assert
@@ -59,6 +60,25 @@ class UtilsTest {
         Assert.assertEquals(MILLIS_IN_DAY*10, delayStrToMillis("10d"))
         Assert.assertEquals(MILLIS_IN_MONTH, delayStrToMillis("1M"))
         Assert.assertEquals(MILLIS_IN_MONTH*3, delayStrToMillis("3M"))
+    }
+
+    @Test
+    fun correctDelayCoefIfNeeded_returns_expected_results() {
+        Assert.assertEquals("", correctDelayCoefIfNeeded(""))
+        Assert.assertEquals("", correctDelayCoefIfNeeded("x"))
+        Assert.assertEquals("", correctDelayCoefIfNeeded("v"))
+        Assert.assertEquals("", correctDelayCoefIfNeeded("1"))
+        Assert.assertEquals("", correctDelayCoefIfNeeded("1."))
+        Assert.assertEquals("", correctDelayCoefIfNeeded("1.3"))
+        Assert.assertEquals("", correctDelayCoefIfNeeded("."))
+        Assert.assertEquals("", correctDelayCoefIfNeeded(".3"))
+        Assert.assertEquals("x1", correctDelayCoefIfNeeded("x1"))
+        Assert.assertEquals("x14", correctDelayCoefIfNeeded("x14"))
+        Assert.assertEquals("x14", correctDelayCoefIfNeeded("x14."))
+        Assert.assertEquals("x14.3", correctDelayCoefIfNeeded("x14.3"))
+        Assert.assertEquals("x14.3", correctDelayCoefIfNeeded("x14.31"))
+        Assert.assertEquals("x14.4", correctDelayCoefIfNeeded("x14.35"))
+        Assert.assertEquals("x14.3", correctDelayCoefIfNeeded("x14.313455"))
     }
 
     private fun instantToMillis(inst: Instant): Long = inst.toEpochMilli()

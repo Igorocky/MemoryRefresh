@@ -447,7 +447,7 @@ class DataManager(
         return repo.writableDatabase.doInTransaction {
             val currTime = clock.instant().toEpochMilli()
             val cardId = repo.cards.insert(cardType = cardType, paused = paused)
-            repo.cardsSchedule.insert(cardId = cardId, timestamp = currTime, delay = "0s", randomFactor = 1.0, nextAccessInMillis = 0, nextAccessAt = currTime)
+            repo.cardsSchedule.insert(cardId = cardId, timestamp = currTime, delay = "1s", randomFactor = 1.0, nextAccessInMillis = 1000, nextAccessAt = currTime+1000)
             tagIds.forEach { repo.cardToTag.insert(cardId = cardId, tagId = it) }
             cardId
         }

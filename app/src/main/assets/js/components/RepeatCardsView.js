@@ -8,6 +8,7 @@ const RepeatCardsView = ({query,openView,setPageTitle,controlsContainer, cycledM
     const [isFilterMode, setIsFilterMode] = useState(true)
 
     const {allTags, allTagsMap, errorLoadingTags} = useTags()
+    const {coefs:delayCoefs, errorLoadingCoefs, updateCoefs:updateDelayCoefs} = useDelayCoefs({onError:showError, showMessageWithProgress})
 
     const {getNextCardId, countCard, numberOfFullCycles, getNumberOfCompletedCardsInCycle, resetCardCounts} = useCardCounts()
 
@@ -109,6 +110,8 @@ const RepeatCardsView = ({query,openView,setPageTitle,controlsContainer, cycledM
                     allTags,
                     allTagsMap,
                     cardToRepeat,
+                    delayCoefs,
+                    updateDelayCoefs,
                     onCardWasUpdated: () => {
                         setCardUpdateCounter(prev => prev + 1)
                     },
@@ -169,8 +172,14 @@ const RepeatCardsView = ({query,openView,setPageTitle,controlsContainer, cycledM
                 `An error occurred during loading of tags: [${errorLoadingTags.code}] - ${errorLoadingTags.msg}`,
                 renderRefreshButton()
             )
+        } else if (errorLoadingCoefs) {
+            return RE.Container.col.top.left({},{},
+                `An error occurred during loading of delay coefficients: [${errorLoadingCoefs.code}] - ${errorLoadingCoefs.msg}`,
+            )
         } else if (hasNoValue(allTags) || hasNoValue(allTagsMap)) {
             return 'Loading tags...'
+        } else if (hasNoValue(delayCoefs)) {
+            return 'Loading delay coefficients...'
         } else {
             return RE.Container.col.top.left({style: {marginTop:'5px'}},{style: {marginBottom:'5px'}},
                 renderFilter(),

@@ -88,7 +88,7 @@ function useMessagePopup() {
         })
     }
 
-    async function showDialog({title, contentRenderer, cancelBtnText, cancelBtnResult = null}) {
+    async function showDialog({title, contentRenderer, cancelBtnText, cancelBtnResult = null, okBtnText = null, okBtnColor = null, okBtnResult = null}) {
         return new Promise(resolve => {
             setDialogOpened(true)
             setTitle(title)
@@ -104,9 +104,12 @@ function useMessagePopup() {
                 setDialogOpened(false)
                 resolve(cancelBtnResult)
             })
-            setOkBtnText(null)
-            setOkBtnColor(null)
-            setOnOk(null)
+            setOkBtnText(okBtnText)
+            setOkBtnColor(okBtnColor)
+            setOnOk(() => () => {
+                setDialogOpened(false)
+                resolve(okBtnResult)
+            })
             setShowProgress(false)
             setAdditionalActionsRenderer(() => null)
         })

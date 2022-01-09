@@ -8,6 +8,8 @@ import org.igye.memoryrefresh.database.Table
 import org.igye.memoryrefresh.dto.common.BeErr
 import org.igye.memoryrefresh.dto.common.BeRespose
 import java.io.File
+import java.math.BigDecimal
+import java.math.RoundingMode
 import java.net.InetAddress
 import java.net.NetworkInterface
 import java.time.temporal.ChronoUnit
@@ -161,6 +163,22 @@ object Utils {
             unit = "d"
         }
         return getChronoUnit(unit).getDuration().getSeconds() * amount * 1000
+    }
+
+    private val delayCoefPattern = Pattern.compile("^(?:x(\\d+)(?:\\.(\\d*))?)?$")
+    fun correctDelayCoefIfNeeded(coef: String): String {
+        val matcher = delayCoefPattern.matcher(coef)
+        if (!matcher.matches()) {
+            return ""
+        }
+        val integerPart = matcher.group(1)
+        val rationalPart = matcher.group(2)
+        if (integerPart == null) {
+            return ""
+        }
+        return "x" + BigDecimal(
+            "$integerPart.${if (rationalPart == null || rationalPart == "") "0" else rationalPart}"
+        ).setScale(if (rationalPart == null || rationalPart == "") 0 else 1, RoundingMode.HALF_UP).toString()
     }
 
     fun <T> toBeResponse(errCode: ErrorCode): (Try<T>) -> BeRespose<T> = {

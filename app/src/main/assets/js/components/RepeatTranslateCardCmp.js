@@ -1,6 +1,7 @@
 "use strict";
 
-const RepeatTranslateCardCmp = ({allTags, allTagsMap, controlsContainer, cardToRepeat, onCardWasDeleted, onCardWasUpdated, onDone, cycledMode}) => {
+const RepeatTranslateCardCmp = ({allTags, allTagsMap, controlsContainer, cardToRepeat, onCardWasDeleted, onCardWasUpdated, onDone, cycledMode,
+                                    delayCoefs, updateDelayCoefs}) => {
     const USER_INPUT_TEXT_FIELD = 'user-input'
     const CARD_DELAY_TEXT_FIELD = 'card-delay'
 
@@ -154,24 +155,18 @@ const RepeatTranslateCardCmp = ({allTags, allTagsMap, controlsContainer, cardToR
         if (cycledMode) {
             return RE.Button({ref: delayTextField, id: CARD_DELAY_TEXT_FIELD, tabIndex:2, onClick: proceedToNextCard}, 'Next')
         } else {
-            return RE.TextField({
-                ref: delayTextField,
-                id: CARD_DELAY_TEXT_FIELD,
-                autoCorrect: 'off', autoCapitalize: 'off', spellCheck: 'false',
-                value: delay??'',
-                label: 'Delay',
-                variant: 'outlined',
-                multiline: false,
-                maxRows: 10,
-                size: 'small',
-                inputProps: {size:8, tabIndex:2},
-                onChange: event => {
-                    const newText = event.nativeEvent.target.value
-                    if (newText !== delay) {
-                        setDelay(newText)
-                    }
-                },
-                onKeyUp: event => (event.keyCode === ENTER_KEY_CODE) ? updateSchedule() : null,
+            return re(DelayCmp,{
+                actualDelay: card.timeSinceLastCheck,
+                initialDelay:card?.schedule?.delay??'',
+                delay:delay??'',
+                delayOnChange: newDelay => setDelay(newDelay),
+                coefs:delayCoefs,
+                coefsOnChange:updateDelayCoefs,
+                delayTextFieldRef:delayTextField,
+                delayTextFieldId:CARD_DELAY_TEXT_FIELD,
+                delayTextFieldTabIndex:2,
+                updateDelayRequestIsInProgress,
+                onSubmit: updateSchedule
             })
         }
     }
@@ -230,18 +225,6 @@ const RepeatTranslateCardCmp = ({allTags, allTagsMap, controlsContainer, cardToR
         }
     }
 
-    function renderNextButton() {
-        if (updateDelayRequestIsInProgress) {
-            return RE.span({}, RE.CircularProgress({size:24, style: {marginLeft: '5px'}}))
-        } else {
-            return iconButton({
-                iconName: 'done',
-                onClick: updateSchedule,
-                iconStyle: {color: 'blue'}
-            })
-        }
-    }
-
     function renderEditButton() {
         return iconButton({iconName:'edit', onClick: () => setEditMode(true)})
     }
@@ -274,12 +257,8 @@ const RepeatTranslateCardCmp = ({allTags, allTagsMap, controlsContainer, cardToR
                     renderUserTranslation(),
                     renderValidateButton(),
                 ),
-                RE.If(hasValue(answerFromBE) && isUserInputCorrect(), () => RE.Container.col.top.left({},{style:{marginBottom:'20px'}},
-                    RE.Container.row.left.center({},{},
-                        RE.IfNot(cycledMode, () => RE.span({style:{marginRight:'10px'}}, card.timeSinceLastCheck)),
-                        renderDelay(),
-                        RE.IfNot(cycledMode, () => renderNextButton()),
-                    ),
+                RE.If(hasValue(answerFromBE) && isUserInputCorrect(), () => RE.Container.col.top.left({},{},
+                    renderDelay(),
                     renderValidationHistory()
                 )),
             )

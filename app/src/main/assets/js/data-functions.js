@@ -9,6 +9,10 @@ const PAGE_DOWN_KEY_CODE = 34
 const PAGE_UP_KEY_CODE = 33
 const ENTER_KEY_CODE = 13
 const ESCAPE_KEY_CODE = 27
+const F1_KEY_CODE = 112
+const F2_KEY_CODE = 113
+const F3_KEY_CODE = 114
+const F4_KEY_CODE = 115
 
 function hasValue(variable) {
     return variable !== undefined && variable !== null

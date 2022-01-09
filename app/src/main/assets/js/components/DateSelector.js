@@ -1,19 +1,6 @@
 'use strict';
 
-const ALL_MONTHS = [
-    'January',
-    'February',
-    'March',
-    'April',
-    'May',
-    'June',
-    'July',
-    'August',
-    'September',
-    'October',
-    'November',
-    'December',
-]
+const ALL_MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December',]
 
 const DateSelector = ({selectedDate, onDateSelected, minimized = false}) => {
 

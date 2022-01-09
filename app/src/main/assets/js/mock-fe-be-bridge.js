@@ -92,7 +92,7 @@ function createFeBeBridgeForUiTestMode() {
                 schedule: {
                     cardId: id,
                     updatedAt: new Date().getTime(),
-                    delay: '0m',
+                    delay: '3h',
                     nextAccessInMillis: 0,
                     nextAccessAt: new Date().getTime()
                 },
@@ -235,6 +235,17 @@ function createFeBeBridgeForUiTestMode() {
         return okResponse(true)
     }
 
+    const DELAY_COEFS = ['x1.2','x1.5','x2','x3']
+    mockedBeFunctions.readDelayCoefs = () => {
+        return okResponse([...DELAY_COEFS])
+    }
+
+    mockedBeFunctions.updateDelayCoefs = ({newCoefs}) => {
+        DELAY_COEFS.splice(0,DELAY_COEFS.length)
+        DELAY_COEFS.push(...newCoefs)
+        return okResponse([...DELAY_COEFS])
+    }
+
     mockedBeFunctions.doBackup = () => {
         return okResponse({name:'new-backup-' + new Date(), size:4335})
     }
@@ -323,11 +334,11 @@ function createFeBeBridgeForUiTestMode() {
 
         const numOfCards = 1000
         ints(1,numOfCards)
-            .map(i=>randomSentence({wordsMinCnt:1, wordsMaxCnt:2, wordMinLength:1, wordMaxLength:1}))
+            .map(i=>randomSentence({wordsMinCnt:1, wordsMaxCnt:1, wordMinLength:1, wordMaxLength:1}))
             .forEach(s=> {
-                if (randomInt(0,1) === 1) {
-                    s = s.replaceAll(' ', '\n')
-                }
+                // if (randomInt(0,1) === 1) {
+                //     s = s.replaceAll(' ', '\n')
+                // }
                 mockedBeFunctions.createTranslateCard({
                     textToTranslate: s.toUpperCase(),
                     translation: s.toLowerCase(),

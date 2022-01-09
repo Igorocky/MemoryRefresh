@@ -35,7 +35,7 @@ class AppContainer(
     val httpsServerManager = HttpsServerManager(
         appContext = context,
         settingsManager = settingsManager,
-        javascriptInterface = listOf(dataManager, repositoryManager)
+        javascriptInterface = listOf(dataManager, repositoryManager, settingsManager)
     )
 
     fun createNewRepo(): Repository {
@@ -66,6 +66,7 @@ class AppContainer(
     private fun createMainActivityViewModel(): MainActivityViewModel {
         return MainActivityViewModel(
             appContext = context,
+            settingsManager = settingsManager,
             dataManager = dataManager,
             repositoryManager = repositoryManager,
             httpsServerManager = httpsServerManager,

@@ -29,5 +29,7 @@ const be = {
     validateTranslateCard: createBeFunction('validateTranslateCard'),
     updateTranslateCard: createBeFunction('updateTranslateCard'),
     deleteTranslateCard: createBeFunction('deleteTranslateCard'),
+    readDelayCoefs: createBeFunction('readDelayCoefs'),
+    updateDelayCoefs: createBeFunction('updateDelayCoefs'),
 }
 
