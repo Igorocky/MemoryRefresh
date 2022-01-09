@@ -235,6 +235,89 @@ class UpdateTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
     }
 
     @Test
+    fun updateTranslateCard_returns_an_error_and_doesnt_update_parameters_if_incorrect_delay_was_specified() {
+        //given
+        val tagId1 = dm.createTag(CreateTagArgs(name = "A")).data!!
+        val tagId2 = dm.createTag(CreateTagArgs(name = "B")).data!!
+        val tagId3 = dm.createTag(CreateTagArgs(name = "C")).data!!
+        val textToTranslateBeforeUpdate = "X"
+        val textToTranslateAfterUpdate = "Y"
+        val translationBeforeUpdate = "x"
+        val translationAfterUpdate = "y"
+        val pausedBeforeUpdate = false
+        val pausedAfterUpdate = true
+        val delayBeforeUpdate = "5m"
+        val delayAfterUpdate = "77"
+        val createTime = testClock.currentMillis()
+        val cardId = dm.createTranslateCard(CreateTranslateCardArgs(
+            textToTranslate = textToTranslateBeforeUpdate, translation = translationBeforeUpdate, tagIds = setOf(tagId1, tagId2), paused = pausedBeforeUpdate
+        )).data!!
+        val preUpdateTime = testClock.plus(457465)
+        dm.updateTranslateCard(UpdateTranslateCardArgs(cardId = cardId, delay = delayBeforeUpdate));
+
+        assertTableContent(repo = repo, table = c, expectedRows = listOf(
+            listOf(c.id to cardId, c.paused to (if (pausedBeforeUpdate) 1 else 0)),
+        ))
+        assertTableContent(repo = repo, table = c.ver, expectedRows = listOf())
+
+        assertTableContent(repo = repo, table = s, expectedRows = listOf(
+            listOf(s.cardId to cardId, s.updatedAt to preUpdateTime, s.delay to delayBeforeUpdate),
+        ))
+        assertTableContent(repo = repo, table = s.ver, expectedRows = listOf(
+            listOf(s.cardId to cardId, s.updatedAt to createTime, s.delay to "0s"),
+        ))
+
+        assertTableContent(repo = repo, table = t, expectedRows = listOf(
+            listOf(t.cardId to cardId, t.textToTranslate to textToTranslateBeforeUpdate, t.translation to translationBeforeUpdate),
+        ))
+        assertTableContent(repo = repo, table = t.ver, expectedRows = listOf())
+
+        assertTableContent(repo = repo, table = ctg, expectedRows = listOf(
+            listOf(ctg.cardId to cardId, ctg.tagId to tagId1),
+            listOf(ctg.cardId to cardId, ctg.tagId to tagId2),
+        ))
+
+        //when
+        val updateTime = testClock.plus(4000)
+        val err = dm.updateTranslateCard(
+            UpdateTranslateCardArgs(
+                cardId = cardId,
+                textToTranslate = textToTranslateAfterUpdate,
+                translation = translationAfterUpdate,
+                delay = "123",
+                tagIds = setOf(tagId2, tagId3),
+                paused = pausedAfterUpdate
+            )
+        ).err!!
+
+        //then
+        assertEquals(17, err.code)
+        assertEquals("Pause duration '123' is in incorrect format.", err.msg)
+
+        assertTableContent(repo = repo, table = c, expectedRows = listOf(
+            listOf(c.id to cardId, c.paused to (if (pausedBeforeUpdate) 1 else 0)),
+        ))
+        assertTableContent(repo = repo, table = c.ver, expectedRows = listOf())
+
+        assertTableContent(repo = repo, table = s, expectedRows = listOf(
+            listOf(s.cardId to cardId, s.updatedAt to preUpdateTime, s.delay to delayBeforeUpdate),
+        ))
+        assertTableContent(repo = repo, table = s.ver, expectedRows = listOf(
+            listOf(s.cardId to cardId, s.updatedAt to createTime, s.delay to "0s"),
+        ))
+
+        assertTableContent(repo = repo, table = t, expectedRows = listOf(
+            listOf(t.cardId to cardId, t.textToTranslate to textToTranslateBeforeUpdate, t.translation to translationBeforeUpdate),
+        ))
+        assertTableContent(repo = repo, table = t.ver, expectedRows = listOf())
+
+        assertTableContent(repo = repo, table = ctg, expectedRows = listOf(
+            listOf(ctg.cardId to cardId, ctg.tagId to tagId1),
+            listOf(ctg.cardId to cardId, ctg.tagId to tagId2),
+        ))
+    }
+
+    @Test
     fun updateTranslateCard_doesnt_modify_paused_flag_if_it_is_not_specified_in_the_request() {
         //given
         val textToTranslateBeforeUpdate = "X"

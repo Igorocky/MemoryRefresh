@@ -6,6 +6,10 @@ import androidx.core.database.getLongOrNull
 import androidx.core.database.getStringOrNull
 import org.igye.memoryrefresh.common.Try
 
+fun <T> SQLiteDatabase.doInTransactionEx(body: SQLiteDatabase.() -> T): T {
+    return doInTransactionTry { Try { body() } }.get()
+}
+
 fun <T> SQLiteDatabase.doInTransaction(body: SQLiteDatabase.() -> T): Try<T> {
     return doInTransactionTry { Try { body() } }
 }

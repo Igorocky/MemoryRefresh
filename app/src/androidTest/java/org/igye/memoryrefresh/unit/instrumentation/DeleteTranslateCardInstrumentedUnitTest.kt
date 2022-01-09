@@ -4,8 +4,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import org.igye.memoryrefresh.manager.DataManager.CreateTranslateCardArgs
 import org.igye.memoryrefresh.manager.DataManager.DeleteTranslateCardArgs
 import org.igye.memoryrefresh.testutils.InstrumentedTestBase
-import org.junit.Assert.assertNotEquals
-import org.junit.Assert.assertTrue
+import org.junit.Assert.*
 import org.junit.Test
 import org.junit.runner.RunWith
 
@@ -27,7 +26,7 @@ class DeleteTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
         val deleteTranslateCardResp = dm.deleteTranslateCard(DeleteTranslateCardArgs(cardId = cardId))
 
         //then
-        assertTrue(deleteTranslateCardResp.data!!)
+        assertNotNull(deleteTranslateCardResp.data!!)
 
         assertTableContent(repo = repo, table = c, matchColumn = c.id, expectedRows = listOf())
         assertTableContent(repo = repo, table = c.ver, expectedRows = listOf(

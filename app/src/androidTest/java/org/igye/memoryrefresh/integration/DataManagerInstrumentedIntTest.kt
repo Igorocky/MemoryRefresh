@@ -726,7 +726,7 @@ class DataManagerInstrumentedIntTest: InstrumentedTestBase() {
         val deleteCard1Resp = deleteTranslateCard.data!!
 
         //then
-        assertTrue(deleteCard1Resp)
+        assertNotNull(deleteCard1Resp)
 
         assertTableContent(repo = repo, table = c, matchColumn = c.id, expectedRows = listOf(
             listOf(c.id to card2Id, c.type to TR_TP, c.createdAt to time8, c.paused to 0, c.lastCheckedAt to time17),

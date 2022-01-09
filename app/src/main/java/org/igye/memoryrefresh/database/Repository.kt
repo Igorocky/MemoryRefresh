@@ -181,7 +181,7 @@ class Repository(
             //1. If foreign key constraints are enabled, disable them using PRAGMA foreign_keys=OFF.
             db.execSQL("PRAGMA foreign_keys=OFF")
             //2. Start a transaction.
-            db.doInTransaction {
+            db.doInTransactionEx {
                 //3. Remember the format of all indexes, triggers, and views associated with table X.
                 // This information will be needed in step 8 below. One way to do this is to run a query like
                 // the following: SELECT type, sql FROM sqlite_schema WHERE tbl_name='X'.
