@@ -30,11 +30,6 @@ const DelayCmp = ({
         }
     }
 
-    function toggleCoef(idx) {
-        const coef = coefs[idx]
-        delay !== coef ? delayOnChange(coef) : delayOnChange(initialDelay)
-    }
-
     function renderCoefs() {
         return re(KeyPad, {
             componentKey: "controlButtons",
@@ -61,25 +56,14 @@ const DelayCmp = ({
 
     function delayFormOnKeyDown(event) {
         const keyCode = event.keyCode
-        let idx
-        if (keyCode === F1_KEY_CODE) {
-            event.preventDefault();
-            idx = 0
-        } else if (keyCode === F2_KEY_CODE) {
-            event.preventDefault();
-            idx = 1
-        } else if (keyCode === F3_KEY_CODE) {
-            event.preventDefault();
-            idx = 2
-        } else if (keyCode === F4_KEY_CODE) {
-            event.preventDefault();
-            idx = 3
-        } else if (keyCode === F9_KEY_CODE) {
+        if (keyCode === F9_KEY_CODE) {
             event.preventDefault();
             onF9?.()
-        }
-        if (hasValue(idx) && coefs[idx] !== '') {
-            toggleCoef(idx)
+        } else {
+            const newDelay = getDelayCoefByKeyCode({event, coefs, currDelay:delay, initialDelay})
+            if (hasValue(newDelay)) {
+                delayOnChange(newDelay)
+            }
         }
     }
 

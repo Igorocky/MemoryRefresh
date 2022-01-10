@@ -118,6 +118,17 @@ const RepeatTranslateCardCmp = ({allTags, allTagsMap, controlsContainer, cardToR
             onChange: event => {
                 onUserInputChange({newUserInput:event.nativeEvent.target.value})
             },
+            onKeyDown: event => {
+                if (event.keyCode === F9_KEY_CODE && hasValue(answerFromBE)) {
+                    event.preventDefault();
+                    say(answerFromBE)
+                } else {
+                    const newDelay = getDelayCoefByKeyCode({event, coefs:delayCoefs, currDelay:delay, initialDelay:card?.schedule?.delay??''})
+                    if (hasValue(newDelay)) {
+                        setDelay(newDelay)
+                    }
+                }
+            },
             onKeyUp: event => {
                 if (event.ctrlKey && event.keyCode === ENTER_KEY_CODE) {
                     if (!event.shiftKey) {
@@ -125,9 +136,8 @@ const RepeatTranslateCardCmp = ({allTags, allTagsMap, controlsContainer, cardToR
                     } else if (hasValue(answerFromBE)) {
                         toggleShowAnswerButton()
                     }
-                } else if (event.keyCode === F9_KEY_CODE && hasValue(answerFromBE)) {
-                    event.preventDefault();
-                    say(answerFromBE)
+                } else if (event.altKey && event.keyCode === ENTER_KEY_CODE) {
+                    updateSchedule()
                 }
             },
         })
