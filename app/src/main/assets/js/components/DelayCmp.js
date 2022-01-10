@@ -30,6 +30,11 @@ const DelayCmp = ({
         }
     }
 
+    function toggleCoef(idx) {
+        const coef = coefs[idx]
+        delay !== coef ? delayOnChange(coef) : delayOnChange(initialDelay)
+    }
+
     function renderCoefs() {
         return re(KeyPad, {
             componentKey: "controlButtons",
