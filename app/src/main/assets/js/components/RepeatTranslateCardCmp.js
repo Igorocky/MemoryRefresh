@@ -126,6 +126,7 @@ const RepeatTranslateCardCmp = ({allTags, allTagsMap, controlsContainer, cardToR
                         toggleShowAnswerButton()
                     }
                 } else if (event.keyCode === F9_KEY_CODE && hasValue(answerFromBE)) {
+                    event.preventDefault();
                     say(answerFromBE)
                 }
             },
@@ -170,7 +171,18 @@ const RepeatTranslateCardCmp = ({allTags, allTagsMap, controlsContainer, cardToR
 
     function renderDelay() {
         if (cycledMode) {
-            return RE.Button({ref: delayTextField, id: CARD_DELAY_TEXT_FIELD, tabIndex:2, onClick: proceedToNextCard}, 'Next')
+            return RE.Button({
+                ref: delayTextField,
+                id: CARD_DELAY_TEXT_FIELD,
+                tabIndex:2,
+                onClick: proceedToNextCard,
+                onKeyUp: event => {
+                    if (event.keyCode === F9_KEY_CODE) {
+                        event.preventDefault();
+                        say(answerFromBE)
+                    }
+                }
+            }, 'Next')
         } else {
             return re(DelayCmp,{
                 actualDelay: card.timeSinceLastCheck,
