@@ -6,7 +6,7 @@ const useTextReader = () => {
 
     const [voiceUri, setVoiceUri] = useStateFromLocalStorageString({key:TEXT_READER_SETTINGS_LOCAL_STORAGE_KEY+'.voiceUri', defaultValue:null, nullable:true})
     const [voiceObj, setVoiceObj] = useState(null)
-    const [rate, setRate] = useStateFromLocalStorageNumber({key:TEXT_READER_SETTINGS_LOCAL_STORAGE_KEY+'.rate', min: 0.1, max: 10, defaultValue:1})
+    const [rate, setRate] = useStateFromLocalStorageNumber({key:TEXT_READER_SETTINGS_LOCAL_STORAGE_KEY+'.rate', min: 0.1, max: 10, defaultValue:0.8})
     const [pitch, setPitch] = useStateFromLocalStorageNumber({key:TEXT_READER_SETTINGS_LOCAL_STORAGE_KEY+'.pitch', min: 0, max: 2, defaultValue:1})
     const [volume, setVolume] = useStateFromLocalStorageNumber({key:TEXT_READER_SETTINGS_LOCAL_STORAGE_KEY+'.volume', min: 0, max: 1, defaultValue:1})
     const [textToSay, setTextToSay] = useState('')
