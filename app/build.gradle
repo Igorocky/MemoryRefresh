@@ -8,11 +8,11 @@ android {
     buildToolsVersion "30.0.2"
 
     defaultConfig {
-        applicationId "org.igye.memoryrefresh"
+        applicationId "org.igye.memoryrefresh.dev"
         minSdkVersion 26
         targetSdkVersion 30
-        versionCode 2004
-        versionName "2.4"
+        versionCode 2005
+        versionName "2.5"
         archivesBaseName = "memoryrefresh-$versionName"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
