@@ -7,8 +7,7 @@ const DelayCoefsSettingsCmp = ({coefs, onOk, onCancel}) => {
     const [newCoefs, setNewCoefs] = useState(coefs)
 
     function renderCoefTextField({value, label, onChange}) {
-        return RE.TextField({
-            autoCorrect: 'off', autoCapitalize: 'off', spellCheck: 'false',
+        return textField({
             value,
             label,
             variant: 'outlined',

@@ -379,8 +379,7 @@ const TranslateCardFilterCmp = ({
                         RE.span({style:{paddingRight:'10px'}, onClick: () => setFocusedFilter(null)}, 'Native text contains:')
                     ),
                     RE.If(minimized, () => RE.span({style:{padding:'5px', color:'blue'}}, `"${nativeTextContains}"`)),
-                    RE.IfNot(minimized, () => RE.TextField({
-                        autoCorrect: 'off', autoCapitalize: 'off', spellCheck: 'false',
+                    RE.IfNot(minimized, () => textField({
                         value: nativeTextContains,
                         label: 'Native text contains',
                         variant: 'outlined',
@@ -459,8 +458,7 @@ const TranslateCardFilterCmp = ({
                         RE.span({style:{paddingRight:'10px'}, onClick: () => setFocusedFilter(null)}, 'Foreign text contains:')
                     ),
                     RE.If(minimized, () => RE.span({style:{padding:'5px', color:'blue'}}, `"${foreignTextContains}"`)),
-                    RE.IfNot(minimized, () => RE.TextField({
-                        autoCorrect: 'off', autoCapitalize: 'off', spellCheck: 'false',
+                    RE.IfNot(minimized, () => textField({
                         value: foreignTextContains,
                         label: 'Foreign text contains',
                         variant: 'outlined',

@@ -25,8 +25,7 @@ const IntRangeSelector = ({selectedMin = null, selectedMax = null, onMinSelected
         )
     } else {
         return RE.Container.row.left.center({},{style:{margin:'5px'}},
-            RE.TextField({
-                autoCorrect: 'off', autoCapitalize: 'off', spellCheck: 'false',
+            textField({
                 value: getSelectedMin(),
                 label: 'Min',
                 variant: 'outlined',
@@ -42,8 +41,7 @@ const IntRangeSelector = ({selectedMin = null, selectedMax = null, onMinSelected
                     }
                 },
             }),
-            RE.TextField({
-                autoCorrect: 'off', autoCapitalize: 'off', spellCheck: 'false',
+            textField({
                 value: getSelectedMax(),
                 label: 'Max',
                 variant: 'outlined',

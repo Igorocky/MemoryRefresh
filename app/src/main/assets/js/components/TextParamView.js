@@ -69,8 +69,7 @@ const TextParamView = ({paramName,paramValue,editable = true,onSave,validator,is
     }
 
     return RE.Container.row.left.center({},{},
-        RE.TextField({
-            autoCorrect: 'off', autoCapitalize: 'off', spellCheck:'false',
+        textField({
             label:paramName,
             value:getValue(),
             type:getTextFieldType(),

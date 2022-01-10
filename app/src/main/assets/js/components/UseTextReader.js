@@ -90,8 +90,7 @@ const useTextReader = () => {
     }
 
     function renderUserText() {
-        return RE.TextField({
-            autoCorrect: 'off', autoCapitalize: 'off', spellCheck: 'false',
+        return textField({
             value: textToSay,
             label: 'Text to say',
             variant: 'outlined',

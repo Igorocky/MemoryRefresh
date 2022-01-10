@@ -3,9 +3,8 @@
 //curIdx + pageNumShift = currPageNum
 function Pagination({numOfPages,curIdx,onChange,pageNumShift=1,onlyArrowButtons=false}) {
     return RE.Container.row.left.center({},{style: {marginRight:'15px'}},
-        RE.IfNot(onlyArrowButtons, () => RE.TextField(
+        RE.IfNot(onlyArrowButtons, () => textField(
             {
-                autoCorrect: 'off', autoCapitalize: 'off', spellCheck: 'false',
                 variant: 'outlined', label: 'Page',
                 style: {width: 80},
                 size: 'small',

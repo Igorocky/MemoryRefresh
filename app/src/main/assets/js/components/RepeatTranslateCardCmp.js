@@ -103,9 +103,8 @@ const RepeatTranslateCardCmp = ({allTags, allTagsMap, controlsContainer, cardToR
     }
 
     function renderUserTranslation() {
-        return RE.TextField({
+        return textField({
             id: USER_INPUT_TEXT_FIELD,
-            autoCorrect: 'off', autoCapitalize: 'off', spellCheck: 'false',
             autoFocus: true,
             value: userInput,
             label: 'Translation',

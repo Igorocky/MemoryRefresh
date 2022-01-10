@@ -29,10 +29,9 @@ const DelayForm = ({initialDelay, delay, delayOnChange, onSubmit, onKeyDown, res
     }
 
     return RE.Container.row.left.center({},{style:{marginRight:'10px'}},
-        RE.TextField({
+        textField({
             ref: delayTextFieldRef,
             id: delayTextFieldId,
-            autoCorrect: 'off', autoCapitalize: 'off', spellCheck: 'false',
             value: delayAmount??delay,
             label: 'Delay',
             variant: 'outlined',

@@ -32,9 +32,8 @@ const TagSelector = ({allTags, selectedTags, onTagSelected, onTagRemoved, label,
 
     function renderTagFilter() {
         if (allTags?.length) {
-            return RE.TextField(
+            return textField(
                 {
-                    autoCorrect:'off', autoCapitalize:'none', spellCheck:'false',
                     variant: 'outlined',
                     style: {width: 200},
                     size: 'small',

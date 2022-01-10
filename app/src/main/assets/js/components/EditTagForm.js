@@ -10,8 +10,7 @@ const EditTagForm = ({name,tagNameTextFieldLabel = '',onNameChange,onSave,onCanc
     }
 
     return RE.Container.row.left.center({},{},
-        RE.TextField({
-            autoCorrect: 'off', autoCapitalize: 'off', spellCheck: 'false',
+        textField({
             value:name,
             variant:'outlined',
             autoFocus:true,

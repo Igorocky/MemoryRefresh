@@ -55,9 +55,8 @@ const EditTranslateCardForm = ({
 
     return RE.Container.col.top.left({}, {},
         renderButtons(),
-        RE.If(hasValue(textToTranslate), () => RE.TextField({
+        RE.If(hasValue(textToTranslate), () => textField({
             id: textToTranslateId,
-            autoCorrect: 'off', autoCapitalize: 'off', spellCheck: 'false',
             value: textToTranslate,
             label: 'Native text',
             variant: 'outlined',
@@ -83,8 +82,7 @@ const EditTranslateCardForm = ({
                 }
             },
         })),
-        RE.If(hasValue(translation), () => RE.TextField({
-            autoCorrect: 'off', autoCapitalize: 'off', spellCheck: 'false',
+        RE.If(hasValue(translation), () => textField({
             value: translation,
             label: 'Foreign text',
             variant: 'outlined',
@@ -128,8 +126,7 @@ const EditTranslateCardForm = ({
             color:'primary',
             selectedTagsBgColor:tagIdsBgColor
         }))),
-        RE.If(hasValue(delay), () => RE.TextField({
-            autoCorrect: 'off', autoCapitalize: 'off', spellCheck: 'false',
+        RE.If(hasValue(delay), () => textField({
             value: delay,
             label: 'Delay',
             variant: 'outlined',

@@ -246,6 +246,16 @@ function iconButton({iconName,onClick,disabled,iconStyle}) {
     )
 }
 
+function textField(attrs) {
+    return RE.TextField({
+        autoCorrect: 'off',
+        autoCapitalize: 'off',
+        spellCheck: 'false',
+        autoComplete: 'off',
+        ...attrs
+    })
+}
+
 const inButtonCircularProgressStyle = {
     color: MuiColors.green[500],
     position: 'absolute',
