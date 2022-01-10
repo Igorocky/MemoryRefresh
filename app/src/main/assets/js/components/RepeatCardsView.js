@@ -166,7 +166,7 @@ const RepeatCardsView = ({query,openView,setPageTitle,controlsContainer, cycledM
     }
 
     function renderOpenSearchButton() {
-        return iconButton({iconName:'youtube_searched_for', onClick: openFilter})
+        return iconButton({iconName:'filter_alt', onClick: openFilter})
     }
 
     function renderPageContent() {

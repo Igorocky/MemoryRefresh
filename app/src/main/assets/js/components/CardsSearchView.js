@@ -199,7 +199,7 @@ const CardsSearchView = ({query,openView,setPageTitle,controlsContainer}) => {
         RE.If(controlsContainer?.current, () => RE.Portal({container:controlsContainer.current},
             RE.If(!isFilterMode && hasValue(allCards), () => RE.span({style:{marginLeft:'15px'}}, allCards.length)),
             RE.IfNot(isFilterMode, () => RE.Fragment({},
-                iconButton({iconName:'youtube_searched_for', onClick: openFilter})
+                iconButton({iconName:'filter_alt', onClick: openFilter})
             )),
             RE.If(!isFilterMode && hasNoValue(cardToEdit) && allCards?.length, () => renderFastRepeatButton())
         )),
