@@ -196,7 +196,7 @@ const RepeatCardsView = ({query,openView,setPageTitle,controlsContainer, cycledM
             RE.span({style:{marginLeft:'15px'}},
                 cycledMode
                     ?`${allCards?.length??0}: ${numberOfFullCycles}/${getNumberOfCompletedCardsInCycle(allCards)}`
-                    :`${allCards?.length??0}`
+                    :null
             ),
             renderOpenSearchButton()
         )),
