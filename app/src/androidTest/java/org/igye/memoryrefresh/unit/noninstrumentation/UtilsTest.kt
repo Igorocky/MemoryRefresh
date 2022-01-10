@@ -103,6 +103,15 @@ class UtilsTest {
         Assert.assertEquals("14d", multiplyDelay("8d", "x1.8"))
         Assert.assertEquals("15d", multiplyDelay("8d", "x1.9"))
         Assert.assertEquals("16d", multiplyDelay("8d", "x2"))
+
+        Assert.assertEquals("4s", multiplyDelay("5s", "x0.9"))
+        Assert.assertEquals("3s", multiplyDelay("4s", "x0.9"))
+        Assert.assertEquals("2s", multiplyDelay("3s", "x0.9"))
+        Assert.assertEquals("1s", multiplyDelay("2s", "x0.9"))
+        Assert.assertEquals("1s", multiplyDelay("1s", "x0.9"))
+
+        Assert.assertEquals("54m", multiplyDelay("1h", "x0.9"))
+        Assert.assertEquals("48m", multiplyDelay("54m", "x0.9"))
     }
 
     private fun instantToMillis(inst: Instant): Long = inst.toEpochMilli()

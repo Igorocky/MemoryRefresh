@@ -71,6 +71,9 @@ const DelayCmp = ({
         } else if (keyCode === F3_KEY_CODE) {
             event.preventDefault();
             idx = 2
+        } else if (keyCode === F4_KEY_CODE) {
+            event.preventDefault();
+            idx = 3
         } else if (keyCode === F9_KEY_CODE) {
             event.preventDefault();
             onF9?.()
