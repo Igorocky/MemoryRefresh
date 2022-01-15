@@ -302,6 +302,7 @@ class DataManager(
         val tagIdsToExclude: Set<Long>? = null,
         val translationLengthLessThan: Long? = null,
         val translationLengthGreaterThan: Long? = null,
+        val rowsLimit: Long = 6,
     )
     @BeMethod
     @Synchronized
@@ -315,7 +316,7 @@ class DataManager(
             translationLengthGreaterThan = args.translationLengthGreaterThan,
             sortBy = TranslateCardSortBy.OVERDUE,
             sortDir = SortDirection.DESC,
-            rowsLimit = 20
+            rowsLimit = args.rowsLimit
         )
         return BeRespose(READ_TOP_OVERDUE_TRANSLATE_CARDS) {
             val overdueCards = readTranslateCardsByFilterInner(filterArgs).cards
