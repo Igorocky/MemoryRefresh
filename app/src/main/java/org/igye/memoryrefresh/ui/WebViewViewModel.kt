@@ -12,6 +12,7 @@ import com.google.gson.Gson
 import org.igye.memoryrefresh.ErrorCode.BACKEND_METHOD_WAS_NOT_FOUND
 import org.igye.memoryrefresh.LoggerImpl
 import org.igye.memoryrefresh.common.Utils
+import org.igye.memoryrefresh.config.AppContainer
 import org.igye.memoryrefresh.dto.common.BeErr
 import org.igye.memoryrefresh.dto.common.BeRespose
 import java.util.concurrent.ExecutorService
@@ -57,14 +58,14 @@ abstract class WebViewViewModel(
                         isInWebview = true
                     )
                 )
-                .addPathHandler("/res/", WebViewAssetLoader.ResourcesPathHandler(appContext))
+//                .addPathHandler("/res/", WebViewAssetLoader.ResourcesPathHandler(appContext))
                 .build()
             webView.webViewClient = LocalContentWebViewClient(assetLoader)
             beMethods = Utils.createMethodMap(
                 if (javascriptInterface.contains(this)) javascriptInterface else (javascriptInterface + this)
             )
             webView.addJavascriptInterface(this, "BE")
-            webView.loadUrl("https://appassets.androidplatform.net/assets/index.html")
+            webView.loadUrl("https://appassets.androidplatform.net/assets/${AppContainer.appVersionUrlPrefix}/index.html")
             this.webView = webView
         }
         return this.webView!!

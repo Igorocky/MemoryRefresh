@@ -25,34 +25,47 @@ object Tools {
     private val DEV_APP_BACKGROUND_COLOR = "<body style=\"background-color: #d5f5e6\">"
     private val RELEASE_APP_BACKGROUND_COLOR = "<body>"
 
+    private val indexHtmlFilePath = "./app/src/main/assets/index.html"
+
     fun release() {
         checkWorkingDirectory()
-        changeNamesFromDevToRelease()
         val releaseVersion = getCurrVersionName()
+        changeNamesFromDevToRelease(releaseVersion)
         val tagName = "Release-$releaseVersion"
         commit(tagName)
         buildProject()
         tag(tagName)
         incProjectVersion()
-        changeNamesFromReleaseToDev()
+        changeNamesFromReleaseToDev(releaseVersion)
         val newDevVersion = getCurrVersionName()
         commit("Increase version from ${releaseVersion} to ${newDevVersion}")
         println("Done.")
     }
 
-    private fun changeNamesFromDevToRelease() {
+    private fun changeNamesFromDevToRelease(releaseVersion: String) {
         changeApplicationId(DEV_APP_ID, RELEASE_APP_ID)
         changeApplicationName(DEV_APP_NAME, RELEASE_APP_NAME)
         changeFileProviderName(DEV_FILE_PROVIDER_NAME, RELEASE_FILE_PROVIDER_NAME)
         changeAppBackgroundColor(DEV_APP_BACKGROUND_COLOR, RELEASE_APP_BACKGROUND_COLOR)
-        // TODO: 12/24/2021 change js versions from development to production-min
+        changeApplicationVersionInAppContainer(releaseVersion, isRelease = true)
     }
 
-    private fun changeNamesFromReleaseToDev() {
+    private fun changeNamesFromReleaseToDev(releaseVersion: String) {
         changeApplicationId(RELEASE_APP_ID, DEV_APP_ID)
         changeApplicationName(RELEASE_APP_NAME, DEV_APP_NAME)
         changeFileProviderName(RELEASE_FILE_PROVIDER_NAME, DEV_FILE_PROVIDER_NAME)
         changeAppBackgroundColor(RELEASE_APP_BACKGROUND_COLOR, DEV_APP_BACKGROUND_COLOR)
+        changeApplicationVersionInAppContainer(releaseVersion, isRelease = false)
+    }
+
+    private fun changeApplicationVersionInAppContainer(releaseVersion:String, isRelease:Boolean) {
+        val oldVersion = if (isRelease) "1.0" else releaseVersion
+        val newVersion = if (isRelease) releaseVersion else "1.0"
+        replaceSubstringInFile(
+            file = File("./app/src/main/java/org/igye/memoryrefresh/config/AppContainer.kt"),
+            oldValue = "private val appVersion = \"$oldVersion\"",
+            newValue = "private val appVersion = \"$newVersion\""
+        )
     }
 
     private fun changeApplicationId(from:String, to:String) {
@@ -69,7 +82,7 @@ object Tools {
     }
 
     private fun changeAppBackgroundColor(from:String, to:String) {
-        replaceSubstringInFile(File("./app/src/main/assets/index.html"), from, to)
+        replaceSubstringInFile(File(indexHtmlFilePath), from, to)
     }
 
     private fun checkWorkingDirectory() {

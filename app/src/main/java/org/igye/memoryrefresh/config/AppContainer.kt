@@ -19,6 +19,11 @@ class AppContainer(
     val context: Context,
     val dbName: String = "memory-refresh-db"
 ) {
+    companion object {
+        private val appVersion = "1.0"
+        val appVersionUrlPrefix = "v$appVersion"
+    }
+
     val clock = Clock.systemDefaultZone()
     val beThreadPool: ExecutorService = Executors.newFixedThreadPool(4)
 

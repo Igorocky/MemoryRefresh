@@ -4,6 +4,7 @@ import android.content.Context
 import android.database.sqlite.SQLiteStatement
 import com.google.gson.Gson
 import org.igye.memoryrefresh.ErrorCode
+import org.igye.memoryrefresh.config.AppContainer
 import org.igye.memoryrefresh.database.Table
 import org.igye.memoryrefresh.dto.common.BeErr
 import org.igye.memoryrefresh.dto.common.BeRespose
@@ -243,6 +244,17 @@ object Utils {
             )
         } else {
             return count
+        }
+    }
+
+    private val prefix1 = AppContainer.appVersionUrlPrefix
+    private val prefix2 = "/" + prefix1
+    private val prefixLengthToRemove = prefix1.length+1
+    fun extractUltimatePath(path: String): String {
+        return if (path.startsWith(prefix1) || path.startsWith(prefix2)) {
+            path.substring(prefixLengthToRemove)
+        } else {
+            path
         }
     }
 

@@ -3,6 +3,7 @@ package org.igye.memoryrefresh.ui
 import android.content.Context
 import android.webkit.WebResourceResponse
 import androidx.webkit.WebViewAssetLoader
+import org.igye.memoryrefresh.common.Utils
 import java.io.ByteArrayInputStream
 
 class CustomAssetsPathHandler(
@@ -13,8 +14,9 @@ class CustomAssetsPathHandler(
 ) : WebViewAssetLoader.PathHandler {
     private val delegate = WebViewAssetLoader.AssetsPathHandler(appContext)
     override fun handle(path: String): WebResourceResponse? {
-        val result = delegate.handle(path)
-        if (path.endsWith("index.html") && result != null) {
+        val ultimatePath = Utils.extractUltimatePath(path)
+        val result = delegate.handle(ultimatePath)
+        if (ultimatePath.endsWith("index.html") && result != null) {
             return WebResourceResponse(
                 result.mimeType,
                 result.encoding,
