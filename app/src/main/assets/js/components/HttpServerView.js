@@ -3,6 +3,7 @@
 const HttpServerView = ({}) => {
     const {renderMessagePopup, showError, showMessage, showMessageWithProgress} = useMessagePopup()
     const [httpServerState, setHttpServerState] = useState(null)
+    const [stopStartRequestIsInProgress, setStopStartRequestIsInProgress] = useState(false)
 
     useEffect(async () => {
         reloadServerState()
@@ -11,9 +12,11 @@ const HttpServerView = ({}) => {
     async function reloadServerState() {
         const serverStateResp = await be.getHttpServerState()
         setHttpServerState(serverStateResp.data)
+        setStopStartRequestIsInProgress(false)
     }
 
     async function startHttpServer() {
+        setStopStartRequestIsInProgress(true)
         const resp = await be.startHttpServer()
         if (resp.err) {
             await showError(resp.err)
@@ -22,6 +25,7 @@ const HttpServerView = ({}) => {
     }
 
     async function stopHttpServer() {
+        setStopStartRequestIsInProgress(true)
         await be.stopHttpServer()
         reloadServerState()
     }
@@ -43,12 +47,16 @@ const HttpServerView = ({}) => {
     }
 
     function renderButtons() {
-        const startStopButton = httpServerState.isRunning
-            ? RE.Button({variant: 'contained', color: 'secondary', onClick: stopHttpServer}, "stop https server")
-            : RE.Button({variant: 'contained', color: 'primary', onClick: startHttpServer}, "start https server")
         return RE.Container.row.left.center({}, {},
             iconButton({iconName:'refresh', onClick: reloadServerState}),
-            startStopButton
+            buttonWithCircularProgress({
+                onClick: httpServerState.isRunning ? stopHttpServer : startHttpServer,
+                text: httpServerState.isRunning ? 'stop https server' : 'start https server',
+                color: httpServerState.isRunning ? 'secondary' : 'primary',
+                variant: 'contained',
+                showProgress: stopStartRequestIsInProgress,
+                disabled: stopStartRequestIsInProgress,
+            })
         )
     }
 

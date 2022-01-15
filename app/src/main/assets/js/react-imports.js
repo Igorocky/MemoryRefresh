@@ -260,7 +260,7 @@ function textField(attrs) {
 }
 
 const inButtonCircularProgressStyle = {
-    color: MuiColors.green[500],
+    color: MuiColors.blue[500],
     position: 'absolute',
     top: '50%',
     left: '50%',
@@ -268,9 +268,9 @@ const inButtonCircularProgressStyle = {
     marginLeft: -12,
 }
 
-function buttonWithCircularProgress({variant, disabled, onClick, text, showProgress, buttonAttrs}) {
+function buttonWithCircularProgress({variant, disabled, onClick, text, showProgress, color, buttonAttrs}) {
     return RE.div({style:{position: 'relative'}},
-        RE.Button({...(buttonAttrs??{}), variant, disabled, onClick}, text),
+        RE.Button({...(buttonAttrs??{}), variant, disabled, color, onClick}, text),
         RE.If(showProgress,
             () => RE.CircularProgress({size:24, style: inButtonCircularProgressStyle})
         )
