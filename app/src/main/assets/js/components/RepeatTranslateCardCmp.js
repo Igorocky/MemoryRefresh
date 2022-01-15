@@ -170,9 +170,6 @@ const RepeatTranslateCardCmp = ({allTags, allTagsMap, controlsContainer, cardToR
     }
 
     function onUserInputChange({newUserInput}) {
-        if (newUserInput.length === 1 && isUpperCase(newUserInput) && !isUpperCase(card.translation.charAt(0))) {
-            newUserInput = newUserInput.toLowerCase()
-        }
         if (newUserInput != userInput) {
             setUserInput(newUserInput)
         }
