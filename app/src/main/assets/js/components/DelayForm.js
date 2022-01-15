@@ -1,20 +1,7 @@
 "use strict";
 
-const ALL_DELAY_UNITS = ['Seconds', 'Minutes', 'Hours', 'Days', 'Months',]
-const ALL_DELAY_UNITS_SHORT = ['s', 'm', 'h', 'd', 'M',]
-const DELAY_REGEX = /^(\d+)(s|m|h|d|M)?$/
-
-const DelayForm = ({initialDelay, delay, delayOnChange, onSubmit, onKeyDown, result,
+const DelayForm = ({actualDelay, initialDelay, delay, delayOnChange, result, onSubmit, onKeyDown,
                        delayTextFieldRef, delayTextFieldId, delayTextFieldTabIndex, updateDelayRequestIsInProgress}) => {
-
-    function parseDelayStr(text) {
-        const delayParseRes = DELAY_REGEX.exec(text)
-        return {delayAmount: delayParseRes?.[1], delayUnit: delayParseRes?.[2]}
-    }
-
-    const {delayAmount: initialDelayAmount, delayUnit: initialDelayUnit} = parseDelayStr(initialDelay)
-    const {delayAmount, delayUnit:delayUnitOrig} = parseDelayStr(delay)
-    const delayUnit = delayUnitOrig??initialDelayUnit
 
     function renderSubmitButton() {
         if (updateDelayRequestIsInProgress) {
@@ -23,51 +10,31 @@ const DelayForm = ({initialDelay, delay, delayOnChange, onSubmit, onKeyDown, res
             return iconButton({
                 iconName: 'done',
                 onClick: onSubmit,
-                iconStyle: {color: 'blue'}
+                iconStyle: {color: hasValue(result) ? 'blue' : 'grey'},
+                disabled: hasNoValue(result),
             })
         }
     }
 
     return RE.Container.row.left.center({},{style:{marginRight:'10px'}},
+        RE.span({style:{fontSize: '15px', color:'gray'}}, `[${actualDelay}]`),
+        RE.span({style:{fontSize: '15px', color:'gray'}}, initialDelay),
+        RE.span({style:{fontSize: '15px', color:'gray'}}, '\u{02192}'),
         textField({
             ref: delayTextFieldRef,
             id: delayTextFieldId,
-            value: delayAmount??delay,
+            value: delay,
             label: 'Delay',
             variant: 'outlined',
             multiline: false,
             maxRows: 1,
             inputProps: {size:3, tabIndex:delayTextFieldTabIndex},
-            color: hasValue(delayAmount)?'primary':'secondary',
-            onChange: event => {
-                const newText = event.nativeEvent.target.value.trim()
-                const {delayAmount: newDelayAmount, delayUnit: newDelayUnit} = parseDelayStr(newText)
-                if (newDelayAmount) {
-                    delayOnChange(newDelayAmount + (newDelayUnit??delayUnit))
-                } else {
-                    delayOnChange(newText)
-                }
-            },
+            color: hasValue(result)?'primary':'secondary',
+            size:'small',
+            onChange: event => delayOnChange(event.nativeEvent.target.value.trim()),
             onKeyUp: event => (event.keyCode === ENTER_KEY_CODE) ? onSubmit() : null,
             onKeyDown: onKeyDown,
         }),
-        RE.FormControl({variant:"outlined"},
-            RE.InputLabel({id:'unit-select'}, 'Unit'),
-            RE.Select(
-                {
-                    value:delayUnit,
-                    disabled:hasNoValue(delayAmount),
-                    variant: 'outlined',
-                    label: 'Unit',
-                    labelId: 'unit-select',
-                    onChange: event => {
-                        const newUnit = event.target.value
-                        delayOnChange(delayAmount + newUnit)
-                    }
-                },
-                ALL_DELAY_UNITS.map((unitDispName,idx) => RE.MenuItem({key:idx, value:ALL_DELAY_UNITS_SHORT[idx]}, ALL_DELAY_UNITS[idx]))
-            )
-        ),
         RE.span({style:{fontSize: '15px', fontFamily:'monospace', fontWeight:'bold'}}, result),
         renderSubmitButton()
     )

@@ -15,9 +15,10 @@ const RepeatTranslateCardCmp = ({allTags, allTagsMap, controlsContainer, cardToR
     const [answerFromBE, setAnswerFromBE] = useState(null)
     const [answerFromBEIsShown, setAnswerFromBEIsShown] = useState(false)
     const [beValidationResult, setBeValidationResult] = useState(null)
-    const [delay, setDelay] = useState(card?.schedule?.delay)
     const [autoFocusDelay, setAutoFocusDelay] = useState(false)
     const delayTextField = useRef(null)
+    const setDelayRef = useRef(null)
+    const delayResultRef = useRef(null)
     const [updateDelayRequestIsInProgress, setUpdateDelayRequestIsInProgress] = useState(false)
 
     const [editMode, setEditMode] = useState(false)
@@ -39,7 +40,6 @@ const RepeatTranslateCardCmp = ({allTags, allTagsMap, controlsContainer, cardToR
 
     async function reloadCard() {
         setCard(null)
-        setDelay(null)
         setErrorLoadingCard(null)
         const resp = await be.readTranslateCardById({cardId:cardToRepeat.id})
         if (resp.err) {
@@ -47,7 +47,6 @@ const RepeatTranslateCardCmp = ({allTags, allTagsMap, controlsContainer, cardToR
             setErrorLoadingCard(resp.err)
         } else {
             setCard(resp.data)
-            setDelay(resp.data.schedule.delay)
             if (editMode && hasValue(answerFromBE)) {
                 setAnswerFromBE(resp.data.translation.trim())
             }
@@ -122,9 +121,9 @@ const RepeatTranslateCardCmp = ({allTags, allTagsMap, controlsContainer, cardToR
                     event.preventDefault();
                     say(answerFromBE)
                 } else {
-                    const newDelay = getDelayCoefByKeyCode({event, coefs:delayCoefs, currDelay:delay, initialDelay:card?.schedule?.delay??''})
-                    if (hasValue(newDelay)) {
-                        setDelay(newDelay)
+                    const newDelay = getDelayCoefByKeyCode({event, coefs:delayCoefs, currDelay:delayResultRef.current, initialDelay:card?.schedule?.delay??''})
+                    if (hasValue(newDelay) && setDelayRef.current) {
+                        setDelayRef.current(newDelay)
                     }
                 }
             },
@@ -193,21 +192,21 @@ const RepeatTranslateCardCmp = ({allTags, allTagsMap, controlsContainer, cardToR
             return re(DelayCmp,{
                 actualDelay: card.timeSinceLastCheck,
                 initialDelay:card?.schedule?.delay??'',
-                delay:delay??'',
-                delayOnChange: newDelay => setDelay(newDelay),
+                setDelayRef,
+                delayResultRef,
                 coefs:delayCoefs,
                 coefsOnChange:updateDelayCoefs,
                 delayTextFieldRef:delayTextField,
                 delayTextFieldId:CARD_DELAY_TEXT_FIELD,
                 delayTextFieldTabIndex:2,
                 updateDelayRequestIsInProgress,
-                onSubmit: updateSchedule,
+                onSubmit: delay => updateSchedule({delay}),
                 onF9: () => say(answerFromBE)
             })
         }
     }
 
-    async function updateSchedule() {
+    async function updateSchedule({delay}) {
         setUpdateDelayRequestIsInProgress(true)
         const res = await be.updateTranslateCard({cardId:card.id, delay, recalculateDelay: true})
         setUpdateDelayRequestIsInProgress(false)

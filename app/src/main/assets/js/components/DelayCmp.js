@@ -1,19 +1,52 @@
 "use strict";
 
+const DELAY_DUR_REGEX = /^(\d+)([smhdM])?$/
+const DELAY_COEF_REGEX = /^x(\d+(?:\.\d+)?)$/
+
 const DelayCmp = ({
-                      actualDelay, initialDelay, delay, delayOnChange,
+                      actualDelay, initialDelay, setDelayRef, delayResultRef,
                       coefs, coefsOnChange,
                       delayTextFieldRef, delayTextFieldId, delayTextFieldTabIndex, updateDelayRequestIsInProgress,
                       onSubmit, onF9}) => {
+
+    // actualDelay = '15d 21h'
+    // initialDelay = '3h'
+    // onSubmit = newDelay => console.log('submit:delay', newDelay)
+    // coefs = ['','x2.0','','']
+
+    const [delay, setDelay] = useState(initialDelay)
+    if (setDelayRef) {
+        setDelayRef.current = newDelay => setDelay(newDelay)
+    }
+
     const {renderMessagePopup, showDialog} = useMessagePopup()
 
-    function renderChangeInfo() {
-        return RE.Container.row.left.center({},{style:{marginRight:'20px', fontSize: '15px', color:'gray'}},
-            RE.span({style:{}}, `[${actualDelay}]`),
-            RE.span({style:{}}, initialDelay),
-            RE.span({style:{}}, '\u{02192}'),
-            RE.span({style:{fontSize: '15px', fontFamily:'monospace', fontWeight:'bold'}}, delay),
-        )
+    function parseDelayDurStr(text) {
+        const delayParseRes = DELAY_DUR_REGEX.exec(text)
+        return {delayAmount: delayParseRes?.[1], delayUnit: delayParseRes?.[2]}
+    }
+
+    function parseDelayCoefStr(text) {
+        const delayParseRes = DELAY_COEF_REGEX.exec(text)
+        return {delayCoef: delayParseRes?.[1]}
+    }
+
+    const {delayUnit: initialDelayUnit} = parseDelayDurStr(initialDelay)
+    const {delayAmount, delayUnit:delayUnitOrig} = parseDelayDurStr(delay)
+    const delayUnit = delayUnitOrig??initialDelayUnit
+    const {delayCoef} = parseDelayCoefStr(delay)
+
+    function getResult() {
+        if (hasValue(delayCoef)) {
+            return delay
+        } else if (hasValue(delayAmount)) {
+            return delayAmount + delayUnit
+        }
+    }
+
+    const result = getResult()
+    if (delayResultRef) {
+        delayResultRef.current = result
     }
 
     async function openSettings() {
@@ -32,7 +65,7 @@ const DelayCmp = ({
 
     function toggleCoef(idx) {
         const coef = coefs[idx]
-        delay !== coef ? delayOnChange(coef) : delayOnChange(initialDelay)
+        delay !== coef ? setDelay(coef) : setDelay(initialDelay)
     }
 
     function renderCoefs() {
@@ -67,22 +100,26 @@ const DelayCmp = ({
         } else {
             const newDelay = getDelayCoefByKeyCode({event, coefs, currDelay:delay, initialDelay})
             if (hasValue(newDelay)) {
-                delayOnChange(newDelay)
+                setDelay(newDelay)
             }
         }
     }
 
     return RE.Container.col.top.left({},{style:{marginBottom:'15px'}},
-        renderChangeInfo(),
         renderCoefs(),
         re(DelayForm, {
+            actualDelay,
             initialDelay,
-            delay:delay.charAt(0) === 'x' ? initialDelay : delay,
-            delayOnChange,
+            delay,
+            delayOnChange: newDelay => setDelay(newDelay),
             delayTextFieldRef, delayTextFieldId, delayTextFieldTabIndex, updateDelayRequestIsInProgress,
-            onSubmit,
+            onSubmit: () => {
+                if (hasValue(result)) {
+                    onSubmit?.(result)
+                }
+            },
             onKeyDown: delayFormOnKeyDown,
-            result:delay,
+            result,
         }),
         renderMessagePopup()
     )
