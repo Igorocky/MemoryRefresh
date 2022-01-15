@@ -106,7 +106,6 @@ const DelayCmp = ({
     }
 
     return RE.Container.col.top.left({},{style:{marginBottom:'15px'}},
-        renderCoefs(),
         re(DelayForm, {
             actualDelay,
             initialDelay,
@@ -121,6 +120,7 @@ const DelayCmp = ({
             onKeyDown: delayFormOnKeyDown,
             result,
         }),
+        renderCoefs(),
         renderMessagePopup()
     )
 }
