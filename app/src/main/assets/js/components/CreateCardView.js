@@ -1,6 +1,7 @@
 "use strict";
 
 const TEXT_TO_TRANSLATE_ID = 'textToTranslateId'
+const TRANSLATION_ID = 'translationId'
 
 const CreateCardView = ({query,openView,setPageTitle}) => {
     const {renderMessagePopup, showError, showMessageWithProgress} = useMessagePopup()
@@ -44,6 +45,22 @@ const CreateCardView = ({query,openView,setPageTitle}) => {
             document.getElementById(TEXT_TO_TRANSLATE_ID)?.focus()
         }
     }
+    
+    function extractWords() {
+        const textToTranslateInput = document.getElementById(TEXT_TO_TRANSLATE_ID)
+        if (textToTranslateInput) {
+            const selectionStart = textToTranslateInput.selectionStart
+            const selectionEnd = textToTranslateInput.selectionEnd
+            if ((selectionStart??0) < (selectionEnd??0)) {
+                const leftPart = textToTranslate.substring(0, selectionStart)
+                const selectedText = textToTranslate.substring(selectionStart, selectionEnd)
+                const rightPart = textToTranslate.substring(selectionEnd)
+                setTextToTranslate(`${leftPart}[???]${rightPart}`)
+                setTranslation(translation + selectedText)
+                document.getElementById(TRANSLATION_ID)?.focus()
+            }
+        }
+    }
 
     function renderPageContent() {
         if (errorLoadingTags) {
@@ -58,7 +75,8 @@ const CreateCardView = ({query,openView,setPageTitle}) => {
                 allTags, allTagsMap,
                 paused,pausedOnChange:newValue => setPaused(newValue),
                 textToTranslate,textToTranslateOnChange: newValue => setTextToTranslate(newValue),textToTranslateId: TEXT_TO_TRANSLATE_ID,
-                translation,translationOnChange: newValue => setTranslation(newValue),
+                textToTranslateOnExtractWords:extractWords,
+                translation,translationOnChange: newValue => setTranslation(newValue),translationId: TRANSLATION_ID,
                 tagIds,tagIdsOnChange:newValue => setTagIds(newValue),
                 onSave: createCard, saveDisabled: !textToTranslate.length || !translation.length
             })

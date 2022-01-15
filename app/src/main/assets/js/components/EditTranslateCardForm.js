@@ -3,8 +3,8 @@
 const EditTranslateCardForm = ({
                                     allTags, allTagsMap,
                                     paused,pausedOnChange,pausedBgColor,
-                                    textToTranslate,textToTranslateOnChange,textToTranslateBgColor,textToTranslateId,
-                                    translation,translationOnChange,translationBgColor,
+                                    textToTranslate,textToTranslateOnChange,textToTranslateBgColor,textToTranslateId,textToTranslateOnExtractWords,
+                                    translation, translationOnChange, translationBgColor, translationId,
                                     delay,delayOnChange,delayBgColor,
                                     tagIds,tagIdsOnChange,tagIdsBgColor,
                                     activatesIn,createdAt,
@@ -55,34 +55,40 @@ const EditTranslateCardForm = ({
 
     return RE.Container.col.top.left({}, {},
         renderButtons(),
-        RE.If(hasValue(textToTranslate), () => textField({
-            id: textToTranslateId,
-            value: textToTranslate,
-            label: 'Native text',
-            variant: 'outlined',
-            autoFocus: false,
-            multiline: true,
-            maxRows: 10,
-            size: 'small',
-            style: {backgroundColor:textToTranslateBgColor, marginTop:margin},
-            inputProps: {cols:27},
-            onChange: event => {
-                const newText = event.nativeEvent.target.value
-                if (newText != textToTranslate) {
-                    textToTranslateOnChange(newText)
-                }
-            },
-            onKeyUp: event => {
-                if (event.ctrlKey && event.keyCode === ENTER_KEY_CODE) {
-                    if (!saveDisabled) {
-                        onSave?.()
+        RE.If(hasValue(textToTranslate), () => RE.Container.row.left.center({style: {marginTop:margin}},{},
+            textField({
+                id: textToTranslateId,
+                value: textToTranslate,
+                label: 'Native text',
+                variant: 'outlined',
+                autoFocus: true,
+                multiline: true,
+                maxRows: 10,
+                size: 'small',
+                style: {backgroundColor:textToTranslateBgColor},
+                inputProps: {cols:27},
+                onChange: event => {
+                    const newText = event.nativeEvent.target.value
+                    if (newText != textToTranslate) {
+                        textToTranslateOnChange(newText)
                     }
-                } else if (event.nativeEvent.keyCode == ESCAPE_KEY_CODE) {
-                    onCancel?.()
-                }
-            },
-        })),
+                },
+                onKeyUp: event => {
+                    if (event.ctrlKey && !event.shiftKey && event.keyCode === ENTER_KEY_CODE) {
+                        if (!saveDisabled) {
+                            onSave?.()
+                        }
+                    } else if (event.altKey && event.keyCode === ENTER_KEY_CODE) {
+                        textToTranslateOnExtractWords?.()
+                    } else if (event.nativeEvent.keyCode == ESCAPE_KEY_CODE) {
+                        onCancel?.()
+                    }
+                },
+            }),
+            RE.If(hasValue(textToTranslateOnExtractWords), () => iconButton({iconName:'arrow_circle_down', onClick: textToTranslateOnExtractWords,}))
+        )),
         RE.If(hasValue(translation), () => textField({
+            id: translationId,
             value: translation,
             label: 'Foreign text',
             variant: 'outlined',
