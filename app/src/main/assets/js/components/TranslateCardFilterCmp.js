@@ -10,6 +10,8 @@ const AVAILABLE_TRANSLATE_CARD_FILTERS = {
     NATIVE_TEXT_CONTAINS:'NATIVE_TEXT_CONTAINS',
     FOREIGN_TEXT_LENGTH:'FOREIGN_TEXT_LENGTH',
     FOREIGN_TEXT_CONTAINS:'FOREIGN_TEXT_CONTAINS',
+    BECOMES_ACCESSIBLE_ON_OR_AFTER:'BECOMES_ACCESSIBLE_ON_OR_AFTER',
+    BECOMES_ACCESSIBLE_ON_OR_BEFORE:'BECOMES_ACCESSIBLE_ON_OR_BEFORE',
     SORT_BY:'SORT_BY',
 }
 
@@ -23,11 +25,14 @@ const CARD_FILTER_SORT_ORDER = {
     NATIVE_TEXT_CONTAINS:7,
     FOREIGN_TEXT_LENGTH:8,
     FOREIGN_TEXT_CONTAINS:9,
-    SORT_BY:10,
+    BECOMES_ACCESSIBLE_ON_OR_AFTER:10,
+    BECOMES_ACCESSIBLE_ON_OR_BEFORE:11,
+    SORT_BY:12,
 }
 
 const AVAILABLE_TRANSLATE_CARD_SORT_BY = {
     TIME_CREATED:'TIME_CREATED',
+    NEXT_ACCESS_AT:'NEXT_ACCESS_AT',
 }
 
 const AVAILABLE_TRANSLATE_CARD_SORT_DIR = {
@@ -60,6 +65,13 @@ const TranslateCardFilterCmp = ({
 
     const [createdOnOrAfter, setCreatedOnOrAfter] = useState(() => initialState?.createdOnOrAfter ? new Date(initialState?.createdOnOrAfter) : new Date())
     const [createdOnOrBefore, setCreatedOnOrBefore] = useState(() => initialState?.createdOnOrBefore ? new Date(initialState?.createdOnOrBefore) : new Date())
+
+    const [becomesAccessibleOnOrAfter, setBecomesAccessibleOnOrAfter] = useState(
+        () => initialState?.becomesAccessibleOnOrAfter ? new Date(initialState?.becomesAccessibleOnOrAfter) : new Date()
+    )
+    const [becomesAccessibleOnOrBefore, setBecomesAccessibleOnOrBefore] = useState(
+        () => initialState?.becomesAccessibleOnOrBefore ? new Date(initialState?.becomesAccessibleOnOrBefore) : new Date()
+    )
 
     const [nativeTextMinLength, setNativeTextMinLength] = useState(initialState?.nativeTextMinLength??null)
     const [nativeTextMaxLength, setNativeTextMaxLength] = useState(initialState?.nativeTextMaxLength??null)
@@ -324,6 +336,68 @@ const TranslateCardFilterCmp = ({
         }
     }
 
+    function createBecomesAccessibleOnOrAfterFilterObject() {
+        const filterName = af.BECOMES_ACCESSIBLE_ON_OR_AFTER
+        const minimized = filterName !== focusedFilter
+        return {
+            [filterName]: {
+                displayName: 'Accessible on or after',
+                render: () => RE.Container.col.top.left({},{},
+                    RE.Container.row.left.center({},{},
+                        iconButton({
+                            iconName:'cancel',
+                            onClick: () => {
+                                removeFilter(filterName)
+                                setBecomesAccessibleOnOrAfter(new Date())
+                            }
+                        }),
+                        RE.span({style:{paddingRight:'10px'}, onClick: () => setFocusedFilter(null)}, 'Accessible on or after:')
+                    ),
+                    re(DateSelector,{
+                        selectedDate: becomesAccessibleOnOrAfter,
+                        onDateSelected: newDate => setBecomesAccessibleOnOrAfter(newDate),
+                        minimized,
+                    })
+                ),
+                renderMinimized: () =>
+                    'Accessible on or after: '+
+                        `${becomesAccessibleOnOrAfter.getFullYear()} ${ALL_MONTHS[becomesAccessibleOnOrAfter.getMonth()]} ${becomesAccessibleOnOrAfter.getDate()}`,
+                getFilterValues: () => ({nextAccessFrom: startOfDay(becomesAccessibleOnOrAfter).getTime()})
+            }
+        }
+    }
+
+    function createBecomesAccessibleOnOrBeforeFilterObject() {
+        const filterName = af.BECOMES_ACCESSIBLE_ON_OR_BEFORE
+        const minimized = filterName !== focusedFilter
+        return {
+            [filterName]: {
+                displayName: 'Accessible on or before',
+                render: () => RE.Container.col.top.left({},{},
+                    RE.Container.row.left.center({},{},
+                        iconButton({
+                            iconName:'cancel',
+                            onClick: () => {
+                                removeFilter(filterName)
+                                setBecomesAccessibleOnOrBefore(new Date())
+                            }
+                        }),
+                        RE.span({style:{paddingRight:'10px'}, onClick: () => setFocusedFilter(null)}, 'Accessible on or before:')
+                    ),
+                    re(DateSelector,{
+                        selectedDate: becomesAccessibleOnOrBefore,
+                        onDateSelected: newDate => setBecomesAccessibleOnOrBefore(newDate),
+                        minimized,
+                    })
+                ),
+                renderMinimized: () =>
+                    'Accessible on or before: '+
+                        `${becomesAccessibleOnOrBefore.getFullYear()} ${ALL_MONTHS[becomesAccessibleOnOrBefore.getMonth()]} ${becomesAccessibleOnOrBefore.getDate()}`,
+                getFilterValues: () => ({nextAccessTill: addDays(startOfDay(becomesAccessibleOnOrBefore),1).getTime()})
+            }
+        }
+    }
+
     function createNativeTextLengthFilterObject() {
         const filterName = af.NATIVE_TEXT_LENGTH
         const minimized = filterName !== focusedFilter
@@ -485,7 +559,10 @@ const TranslateCardFilterCmp = ({
     function createSortByFilterObject() {
         const filterName = af.SORT_BY
         const minimized = filterName !== focusedFilter
-        const possibleParams = {[sb.TIME_CREATED]:{displayName:'Date created'}}
+        const possibleParams = {
+            [sb.TIME_CREATED]:{displayName:'Date created'},
+            [sb.NEXT_ACCESS_AT]:{displayName:'Next access at'},
+        }
         const possibleDirs = {[sd.ASC]:{displayName:'A-Z'}, [sd.DESC]:{displayName:'Z-A'}}
         return {
             [filterName]: {
@@ -528,6 +605,8 @@ const TranslateCardFilterCmp = ({
         ...createNativeTextContainsFilterObject(),
         ...createForeignTextLengthFilterObject(),
         ...createForeignTextContainsFilterObject(),
+        ...createBecomesAccessibleOnOrAfterFilterObject(),
+        ...createBecomesAccessibleOnOrBeforeFilterObject(),
         ...createSortByFilterObject(),
     }
 
@@ -562,6 +641,8 @@ const TranslateCardFilterCmp = ({
                 af.NATIVE_TEXT_CONTAINS,
                 af.FOREIGN_TEXT_LENGTH,
                 af.FOREIGN_TEXT_CONTAINS,
+                af.BECOMES_ACCESSIBLE_ON_OR_AFTER,
+                af.BECOMES_ACCESSIBLE_ON_OR_BEFORE,
                 af.SORT_BY,
             ]
         return RE.List({},
