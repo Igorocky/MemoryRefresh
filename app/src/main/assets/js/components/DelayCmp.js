@@ -79,7 +79,7 @@ const DelayCmp = ({
                             toggleCoef(idx)
                         }
                     },
-                    style:{backgroundColor: coef !== '' && delay === coef ? '#00d0ff' : undefined},
+                    style:{backgroundColor: coef !== '' && delay === coef ? '#00d0ff' : undefined, textTransform:'none'},
                     symbol:coef,
                 })),
                 {
