@@ -302,7 +302,7 @@ class DataManager(
         val tagIdsToExclude: Set<Long>? = null,
         val translationLengthLessThan: Long? = null,
         val translationLengthGreaterThan: Long? = null,
-        val rowsLimit: Long = 6,
+        val rowsLimit: Long = 5,
     )
     @BeMethod
     @Synchronized

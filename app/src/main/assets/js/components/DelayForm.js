@@ -16,7 +16,7 @@ const DelayForm = ({actualDelay, initialDelay, delay, delayOnChange, result, onS
         }
     }
 
-    return RE.Container.row.left.center({},{style:{marginRight:'10px'}},
+    return RE.Container.row.left.center({},{style:{marginRight:'5px'}},
         RE.span({style:{fontSize: '15px', color:'gray'}}, `[${actualDelay}]`),
         RE.span({style:{fontSize: '15px', color:'gray'}}, initialDelay),
         RE.span({style:{fontSize: '15px', color:'gray'}}, '\u{02192}'),
