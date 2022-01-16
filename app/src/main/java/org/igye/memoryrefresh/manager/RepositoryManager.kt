@@ -114,14 +114,14 @@ class RepositoryManager(
     @BeMethod
     @Synchronized
     fun shareBackup(args: ShareBackupArgs): BeRespose<Unit?> {
-        return Try {
+        return BeRespose(ErrorCode.SHARE_BACKUP) {
             val fileUri: Uri = FileProvider.getUriForFile(
                 context,
                 "org.igye.memoryrefresh.fileprovider.dev",
                 File(backupDir, args.backupName)
             )
             shareFile.get()?.invoke(fileUri)
-        }.apply(Utils.toBeResponse(ErrorCode.SHARE_BACKUP))
+        }
     }
 
     fun close() {

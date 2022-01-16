@@ -209,20 +209,6 @@ object Utils {
         return result
     }
 
-    fun <T> toBeResponse(errCode: ErrorCode): (Try<T>) -> BeRespose<T> = {
-        it
-            .map { BeRespose(data = it) }
-            .getIfSuccessOrElse {
-//                if (true) throw it
-                BeRespose(
-                    err = BeErr(
-                        code = (if (it is MemoryRefreshException) it.errCode.code else null)?:errCode.code,
-                        msg = if (it is MemoryRefreshException) it.msg else ("${it.message} (${it.javaClass.canonicalName})")
-                    )
-                )
-            }
-    }
-
     fun executeInsert(table: Table, stmt: SQLiteStatement): Long {
         val id = stmt.executeInsert()
         if (id < 0) {
