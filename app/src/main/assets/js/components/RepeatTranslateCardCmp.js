@@ -29,6 +29,8 @@ const RepeatTranslateCardCmp = ({allTags, allTagsMap, controlsContainer, cardToR
 
     const [textReaderConfigOpened, setTextReaderConfigOpened] = useState(false)
 
+    const userInputIsCorrect = hasValue(answerFromBE) && answerFromBE === userInput.trim()
+
     useEffect(() => {
         if (autoFocusDelay && delayTextField.current) {
             const delayInput = document.getElementById(CARD_DELAY_TEXT_FIELD)
@@ -95,7 +97,7 @@ const RepeatTranslateCardCmp = ({allTags, allTagsMap, controlsContainer, cardToR
 
     function getUserInputBackgroundColor() {
         if (hasValue(answerFromBE)) {
-            return isUserInputCorrect() ? '#c6ebc6' : '#ffb3b3'
+            return userInputIsCorrect ? '#c6ebc6' : '#ffb3b3'
         }
     }
 
@@ -133,7 +135,13 @@ const RepeatTranslateCardCmp = ({allTags, allTagsMap, controlsContainer, cardToR
                         toggleShowAnswerButton()
                     }
                 } else if (event.altKey && event.keyCode === ENTER_KEY_CODE) {
-                    updateSchedule()
+                    if (userInputIsCorrect) {
+                        if (cycledMode) {
+                            proceedToNextCard()
+                        } else if (hasValue(delayResultRef.current)) {
+                            updateSchedule({delay:delayResultRef.current})
+                        }
+                    }
                 }
             },
         })
@@ -162,12 +170,8 @@ const RepeatTranslateCardCmp = ({allTags, allTagsMap, controlsContainer, cardToR
         }
     }
 
-    function isUserInputCorrect() {
-        return hasNoValue(answerFromBE) ? undefined : answerFromBE == userInput.trim()
-    }
-
     function onUserInputChange({newUserInput}) {
-        if (newUserInput != userInput) {
+        if (newUserInput !== userInput) {
             setUserInput(newUserInput)
         }
     }
@@ -207,18 +211,22 @@ const RepeatTranslateCardCmp = ({allTags, allTagsMap, controlsContainer, cardToR
     }
 
     async function updateSchedule({delay}) {
-        setUpdateDelayRequestIsInProgress(true)
-        const res = await be.updateTranslateCard({cardId:card.id, delay, recalculateDelay: true})
-        setUpdateDelayRequestIsInProgress(false)
-        if (res.err) {
-            showError(res.err)
-        } else {
-            proceedToNextCard()
+        if (userInputIsCorrect) {
+            setUpdateDelayRequestIsInProgress(true)
+            const res = await be.updateTranslateCard({cardId:card.id, delay, recalculateDelay: true})
+            setUpdateDelayRequestIsInProgress(false)
+            if (res.err) {
+                showError(res.err)
+            } else {
+                proceedToNextCard()
+            }
         }
     }
 
     function proceedToNextCard() {
-        onDone({cardWasUpdated})
+        if (userInputIsCorrect) {
+            onDone({cardWasUpdated})
+        }
     }
 
     function focusUserTranslation() {
@@ -292,7 +300,7 @@ const RepeatTranslateCardCmp = ({allTags, allTagsMap, controlsContainer, cardToR
                     renderUserTranslation(),
                     renderValidateButton(),
                 ),
-                RE.If(hasValue(answerFromBE) && isUserInputCorrect(), () => RE.Container.col.top.left({},{},
+                RE.If(hasValue(answerFromBE) && userInputIsCorrect, () => RE.Container.col.top.left({},{},
                     renderDelay(),
                     renderValidationHistory()
                 )),
