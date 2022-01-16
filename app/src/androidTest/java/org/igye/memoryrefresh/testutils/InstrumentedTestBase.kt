@@ -26,6 +26,7 @@ open class InstrumentedTestBase {
     protected val TR_TP = CardType.TRANSLATION.intValue
 
     protected lateinit var dm: DataManager
+    protected lateinit var sm: SettingsManager
     protected lateinit var repo: Repository
     protected lateinit var c: CardsTable
     protected lateinit var tg: TagsTable
@@ -36,6 +37,7 @@ open class InstrumentedTestBase {
 
     @Before
     fun init() {
+        sm = SettingsManager(appContext)
         dm = createInmemoryDataManager()
         repo = dm.getRepo()
 
@@ -290,7 +292,7 @@ open class InstrumentedTestBase {
                     )
                 }
             ),
-            settingsManager = SettingsManager(context = appContext)
+            settingsManager = sm
         )
     }
 

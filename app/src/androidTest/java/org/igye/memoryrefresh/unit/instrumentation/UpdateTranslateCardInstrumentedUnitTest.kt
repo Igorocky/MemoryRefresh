@@ -2,9 +2,10 @@ package org.igye.memoryrefresh.unit.instrumentation
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import org.igye.memoryrefresh.common.Utils
-import org.igye.memoryrefresh.common.Utils.millisToDurationStr
+import org.igye.memoryrefresh.common.Utils.MILLIS_IN_DAY
 import org.igye.memoryrefresh.database.select
 import org.igye.memoryrefresh.manager.DataManager.*
+import org.igye.memoryrefresh.manager.SettingsManager
 import org.igye.memoryrefresh.testutils.InstrumentedTestBase
 import org.junit.Assert.*
 import org.junit.Test
@@ -465,6 +466,30 @@ class UpdateTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
             listOf(c.id to cardId, c.paused to 0),
         ))
         assertTableContent(repo = repo, table = c.ver, expectedRows = listOf())
+    }
+
+    @Test
+    fun updateTranslateCard_doesnt_set_delay_more_than_maximum_allowed() {
+        //given
+        val cardId = dm.createTranslateCard(CreateTranslateCardArgs(textToTranslate = "A", translation = "a")).data!!
+        sm.updateMaxDelay(SettingsManager.UpdateMaxDelayArgs("300d"))
+
+        val delay = "100d"
+        dm.updateTranslateCard(UpdateTranslateCardArgs(cardId = cardId, delay = delay, recalculateDelay = true))
+        val nextAccessInMillis1 = dm.readTranslateCardById(ReadTranslateCardByIdArgs(cardId = cardId)).data!!.schedule.nextAccessInMillis
+        assertTrue(100*MILLIS_IN_DAY*0.85 <= nextAccessInMillis1 && nextAccessInMillis1 <= 100*MILLIS_IN_DAY*1.15)
+
+        dm.updateTranslateCard(UpdateTranslateCardArgs(cardId = cardId, delay = delay, recalculateDelay = true))
+        val nextAccessInMillis2 = dm.readTranslateCardById(ReadTranslateCardByIdArgs(cardId = cardId)).data!!.schedule.nextAccessInMillis
+        assertTrue(100*MILLIS_IN_DAY*0.85 <= nextAccessInMillis2 && nextAccessInMillis2 <= 100*MILLIS_IN_DAY*1.15)
+
+        //when
+        sm.updateMaxDelay(SettingsManager.UpdateMaxDelayArgs("30d"))
+        dm.updateTranslateCard(UpdateTranslateCardArgs(cardId = cardId, delay = delay, recalculateDelay = true))
+
+        //then
+        val nextAccessInMillis3 = dm.readTranslateCardById(ReadTranslateCardByIdArgs(cardId = cardId)).data!!.schedule.nextAccessInMillis
+        assertTrue(30*MILLIS_IN_DAY*0.9 <= nextAccessInMillis3 && nextAccessInMillis3 <= 30*MILLIS_IN_DAY)
     }
 
     @Test

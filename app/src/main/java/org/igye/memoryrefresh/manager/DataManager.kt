@@ -478,8 +478,14 @@ class DataManager(
                     newDelay
                 }
                 val randomFactor = 0.85 + Random.nextDouble(from = 0.0, until = 0.30001)
-                val maxDelayMillis = delayStrToMillis(settingsManager.readMaxDelay().data!!)
-                val nextAccessInMillis = min(maxDelayMillis, (delayStrToMillis(finalDelay) * randomFactor).toLong())
+                val maxDelayMillis: Long = delayStrToMillis(settingsManager.readMaxDelay().data!!)
+                val nextAccessInMillisCandidate = (delayStrToMillis(finalDelay) * randomFactor).toLong()
+                val nextAccessInMillis = if (maxDelayMillis < nextAccessInMillisCandidate) {
+                    val randomFactor = 0.9 + Random.nextDouble(from = 0.0, until = 0.1)
+                    (maxDelayMillis * randomFactor).toLong()
+                } else {
+                    nextAccessInMillisCandidate
+                }
                 val timestamp = clock.instant().toEpochMilli()
                 val nextAccessAt = timestamp + nextAccessInMillis
                 repo.cardsSchedule.update(

@@ -95,7 +95,7 @@ class SettingsManager(
         return BeRespose(ErrorCode.UPDATE_MAX_DELAY) {
             val newMaxDelay = Try {
                 Utils.delayStrToMillis(args.newMaxDelay)
-            }.map { args.newMaxDelay }.getIfSuccessOrElse { "30d" }
+            }.map { args.newMaxDelay }.getIfSuccessOrElse { AppSettings.defaultMaxDelay }
             saveApplicationSettings(getApplicationSettings().copy(maxDelay = newMaxDelay))
             maxDelay.set(newMaxDelay)
             newMaxDelay
@@ -108,7 +108,7 @@ class SettingsManager(
     fun readMaxDelay(): BeRespose<String> {
         return BeRespose(ErrorCode.READ_MAX_DELAY) {
             if (maxDelay.get() == null) {
-                maxDelay.set(getApplicationSettings().maxDelay)
+                maxDelay.set(getApplicationSettings().maxDelay?:AppSettings.defaultMaxDelay)
             }
             maxDelay.get()!!
         }

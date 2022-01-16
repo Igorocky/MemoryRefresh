@@ -8,6 +8,7 @@ import org.igye.memoryrefresh.common.Utils.MILLIS_IN_MINUTE
 import org.igye.memoryrefresh.database.CardType
 import org.igye.memoryrefresh.dto.domain.TranslateCard
 import org.igye.memoryrefresh.manager.DataManager.*
+import org.igye.memoryrefresh.manager.SettingsManager
 import org.igye.memoryrefresh.testutils.InstrumentedTestBase
 import org.junit.Assert.*
 import org.junit.Test
@@ -788,6 +789,7 @@ class DataManagerInstrumentedIntTest: InstrumentedTestBase() {
 
     @Test
     fun updateTranslateCard_should_correctly_apply_random_permutation_to_actual_delay() {
+        sm.updateMaxDelay(SettingsManager.UpdateMaxDelayArgs(newMaxDelay = "200M"))
         recalculationOfDelayShuoldBeEvenlyDistributedInsideOfPlusMinusRange(
             delayStr = "1h",
             baseDurationMillis = MILLIS_IN_HOUR,
