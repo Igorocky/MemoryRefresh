@@ -56,16 +56,13 @@ const RepeatTranslateCardCmp = ({allTags, allTagsMap, controlsContainer, cardToR
 
     function renderQuestion() {
         if (card) {
-            let question
             if (card.textToTranslate.indexOf('\n') >= 0) {
-                question = multilineTextToTable({text:card.textToTranslate})
+                return multilineTextToTable({text:card.textToTranslate, tableStyle:{marginTop:'10px'}})
             } else {
-                question = RE.div({}, card.textToTranslate)
+                return RE.div({style:{border:'1px solid lightgrey', borderRadius:'5px', marginTop:'10px', padding:'3px'}},
+                    card.textToTranslate
+                )
             }
-            return RE.Container.col.top.left({},{},
-                RE.div({style:{fontWeight:'bold',marginBottom:'10px'}}, 'Translate:'),
-                question
-            )
         }
     }
 

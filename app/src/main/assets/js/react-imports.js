@@ -313,8 +313,8 @@ function renderListOfTags({tags,color,fontSize = '14px'}) {
     ))
 }
 
-function multilineTextToTable({text}) {
-    return RE.table({className:'table-with-collapsed-borders lightgray'}, RE.tbody({},
+function multilineTextToTable({text, tableStyle}) {
+    return RE.table({className:'table-with-collapsed-borders lightgray', style:tableStyle}, RE.tbody({},
         text.split('\n').map((line,idx) => RE.tr({key:idx}, RE.td({}, line)))
     ))
 }
