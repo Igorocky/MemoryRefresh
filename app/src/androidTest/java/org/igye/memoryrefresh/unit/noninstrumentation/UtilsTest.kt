@@ -83,6 +83,8 @@ class UtilsTest {
         assertEquals("x14.4", correctDelayCoefIfNeeded("x14.35"))
         assertEquals("x14.3", correctDelayCoefIfNeeded("x14.313455"))
         assertEquals("x0.3", correctDelayCoefIfNeeded("x0.31"))
+        assertEquals("1s", correctDelayCoefIfNeeded("1s"))
+        assertEquals("7d", correctDelayCoefIfNeeded("7d"))
     }
 
     @Test

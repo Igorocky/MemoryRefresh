@@ -85,7 +85,7 @@ const EditTranslateCardForm = ({
                     }
                 },
             }),
-            RE.If(hasValue(textToTranslateOnExtractWords), () => iconButton({iconName:'arrow_circle_down', onClick: textToTranslateOnExtractWords,}))
+            RE.If(hasValue(textToTranslateOnExtractWords), () => iconButton({iconName:'arrow_circle_down', onClick: textToTranslateOnExtractWords,tabIndex:100}))
         )),
         RE.If(hasValue(translation), () => textField({
             id: translationId,

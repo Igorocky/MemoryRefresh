@@ -189,7 +189,9 @@ object Utils {
     fun correctDelayCoefIfNeeded(coef: String): String {
         val bd = delayCoefToBigDeciaml(coef)
         if (bd == null) {
-            return ""
+            return Try {
+                delayStrToMillis(coef)
+            }.map { coef }.getIfSuccessOrElse { "" }
         } else {
             return "x" + bd
         }
