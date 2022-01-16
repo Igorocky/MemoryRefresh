@@ -14,7 +14,6 @@ import org.igye.memoryrefresh.dto.common.BeErr
 import org.igye.memoryrefresh.dto.common.BeRespose
 import org.igye.memoryrefresh.dto.domain.*
 import java.time.Clock
-import kotlin.math.min
 import kotlin.random.Random
 
 
@@ -563,6 +562,8 @@ class DataManager(
         val createdFrom: Long? = null,
         val createdTill: Long? = null,
         val overdueGreaterEq: Double? = null,
+        val nextAccessFrom: Long? = null,
+        val nextAccessTill: Long? = null,
         val rowsLimit: Long? = null,
         val sortBy: TranslateCardSortBy? = null,
         val sortDir: SortDirection? = null,
@@ -624,6 +625,12 @@ class DataManager(
         }
         if (args.createdTill != null) {
             whereFilters.add("c.${c.createdAt} <= ${args.createdTill}")
+        }
+        if (args.nextAccessFrom != null) {
+            whereFilters.add("s.${s.nextAccessAt} >= ${args.nextAccessFrom}")
+        }
+        if (args.nextAccessTill != null) {
+            whereFilters.add("s.${s.nextAccessAt} <= ${args.nextAccessTill}")
         }
         if (args.overdueGreaterEq != null) {
             whereFilters.add("$overdueFormula >= ${args.overdueGreaterEq}")

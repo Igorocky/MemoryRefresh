@@ -1179,6 +1179,119 @@ class ReadTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
     }
 
     @Test
+    fun readTranslateCardsByFilter_filters_by_nextAccessFrom() {
+        val card1 = createCard(cardId = 1L)
+        testClock.plus(MILLIS_IN_MINUTE)
+        val card2 = createCard(cardId = 2L)
+        testClock.plus(MILLIS_IN_MINUTE)
+        val card3 = createCard(cardId = 3L)
+        testClock.plus(MILLIS_IN_MINUTE)
+        val card4 = createCard(cardId = 4L)
+        testClock.plus(MILLIS_IN_MINUTE)
+        val card5 = createCard(cardId = 5L)
+        testClock.plus(MILLIS_IN_MINUTE)
+
+        assertTrue(card1.schedule.nextAccessAt < card2.schedule.nextAccessAt - 1000)
+        assertTrue(card2.schedule.nextAccessAt < card3.schedule.nextAccessAt - 1000)
+        assertTrue(card3.schedule.nextAccessAt < card4.schedule.nextAccessAt - 1000)
+        assertTrue(card4.schedule.nextAccessAt < card5.schedule.nextAccessAt - 1000)
+
+        assertSearchResult(
+            listOf(card3, card4, card5),
+            dm.readTranslateCardsByFilter(ReadTranslateCardsByFilterArgs(
+                nextAccessFrom = card3.schedule.nextAccessAt
+            )),
+            skipTimeSinceLastCheck = true,
+            skipOverdue = true
+        )
+
+        assertSearchResult(
+            listOf(card4, card5),
+            dm.readTranslateCardsByFilter(ReadTranslateCardsByFilterArgs(
+                nextAccessFrom = card3.schedule.nextAccessAt+1
+            )),
+            skipTimeSinceLastCheck = true,
+            skipOverdue = true
+        )
+    }
+
+    @Test
+    fun readTranslateCardsByFilter_filters_by_nextAccessTill() {
+        val card1 = createCard(cardId = 1L)
+        testClock.plus(MILLIS_IN_MINUTE)
+        val card2 = createCard(cardId = 2L)
+        testClock.plus(MILLIS_IN_MINUTE)
+        val card3 = createCard(cardId = 3L)
+        testClock.plus(MILLIS_IN_MINUTE)
+        val card4 = createCard(cardId = 4L)
+        testClock.plus(MILLIS_IN_MINUTE)
+        val card5 = createCard(cardId = 5L)
+        testClock.plus(MILLIS_IN_MINUTE)
+
+        assertTrue(card1.schedule.nextAccessAt < card2.schedule.nextAccessAt - 1000)
+        assertTrue(card2.schedule.nextAccessAt < card3.schedule.nextAccessAt - 1000)
+        assertTrue(card3.schedule.nextAccessAt < card4.schedule.nextAccessAt - 1000)
+        assertTrue(card4.schedule.nextAccessAt < card5.schedule.nextAccessAt - 1000)
+
+        assertSearchResult(
+            listOf(card1, card2, card3),
+            dm.readTranslateCardsByFilter(ReadTranslateCardsByFilterArgs(
+                nextAccessTill = card3.schedule.nextAccessAt
+            )),
+            skipTimeSinceLastCheck = true,
+            skipOverdue = true
+        )
+
+        assertSearchResult(
+            listOf(card1, card2),
+            dm.readTranslateCardsByFilter(ReadTranslateCardsByFilterArgs(
+                nextAccessTill = card3.schedule.nextAccessAt-1
+            )),
+            skipTimeSinceLastCheck = true,
+            skipOverdue = true
+        )
+    }
+
+    @Test
+    fun readTranslateCardsByFilter_filters_by_nextAccessFrom_and_nextAccessTill() {
+        val card1 = createCard(cardId = 1L)
+        testClock.plus(MILLIS_IN_MINUTE)
+        val card2 = createCard(cardId = 2L)
+        testClock.plus(MILLIS_IN_MINUTE)
+        val card3 = createCard(cardId = 3L)
+        testClock.plus(MILLIS_IN_MINUTE)
+        val card4 = createCard(cardId = 4L)
+        testClock.plus(MILLIS_IN_MINUTE)
+        val card5 = createCard(cardId = 5L)
+        testClock.plus(MILLIS_IN_MINUTE)
+
+        assertTrue(card1.schedule.nextAccessAt < card2.schedule.nextAccessAt - 1000)
+        assertTrue(card2.schedule.nextAccessAt < card3.schedule.nextAccessAt - 1000)
+        assertTrue(card3.schedule.nextAccessAt < card4.schedule.nextAccessAt - 1000)
+        assertTrue(card4.schedule.nextAccessAt < card5.schedule.nextAccessAt - 1000)
+
+        assertSearchResult(
+            listOf(card2, card3, card4),
+            dm.readTranslateCardsByFilter(ReadTranslateCardsByFilterArgs(
+                nextAccessFrom = card2.schedule.nextAccessAt,
+                nextAccessTill = card4.schedule.nextAccessAt,
+            )),
+            skipTimeSinceLastCheck = true,
+            skipOverdue = true
+        )
+
+        assertSearchResult(
+            listOf(card3),
+            dm.readTranslateCardsByFilter(ReadTranslateCardsByFilterArgs(
+                nextAccessFrom = card2.schedule.nextAccessAt+1,
+                nextAccessTill = card4.schedule.nextAccessAt-1,
+            )),
+            skipTimeSinceLastCheck = true,
+            skipOverdue = true
+        )
+    }
+
+    @Test
     fun readTranslateCardsByFilter_filters_by_overdueGreaterEq() {
         val card1 = createCard(cardId = 1L, mapper = {it.copy(overdue = -0.5)})
         val card2 = createCard(cardId = 2L, mapper = {it.copy(overdue = -0.1)})
@@ -1349,13 +1462,19 @@ class ReadTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
         )
     }
 
-    private fun assertSearchResult(expected: List<TranslateCard>, actual: BeRespose<ReadTranslateCardsByFilterResp>, matchOrder:Boolean = false) {
+    private fun assertSearchResult(
+        expected: List<TranslateCard>,
+        actual: BeRespose<ReadTranslateCardsByFilterResp>,
+        matchOrder:Boolean = false,
+        skipTimeSinceLastCheck: Boolean = false,
+        skipOverdue: Boolean = false,
+    ) {
         val actualCardsList = actual.data!!.cards
         assertEquals(expected.size, actualCardsList.size)
         var cnt = 0
         if (matchOrder) {
             for (i in expected.indices) {
-                assertTranslateCardsEqual(expected[i], actualCardsList[i])
+                assertTranslateCardsEqual(expected[i], actualCardsList[i], skipTimeSinceLastCheck = skipTimeSinceLastCheck, skipOverdue = skipOverdue)
                 cnt++
             }
         } else {
@@ -1366,7 +1485,7 @@ class ReadTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
                 if (actualCard == null) {
                     fail("Missing cardId=$id in actual result.")
                 } else {
-                    assertTranslateCardsEqual(expected[i], actualCard)
+                    assertTranslateCardsEqual(expected[i], actualCard, skipTimeSinceLastCheck = skipTimeSinceLastCheck, skipOverdue = skipOverdue)
                 }
                 cnt++
             }

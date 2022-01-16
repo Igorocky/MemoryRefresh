@@ -156,7 +156,12 @@ open class InstrumentedTestBase {
         )
     }
 
-    protected fun assertTranslateCardsEqual(expected: TranslateCard, actual: TranslateCard) {
+    protected fun assertTranslateCardsEqual(
+        expected: TranslateCard,
+        actual: TranslateCard,
+        skipTimeSinceLastCheck: Boolean = false,
+        skipOverdue: Boolean = false,
+    ) {
         assertEquals("doesn't match: id", expected.id, actual.id)
         assertEquals("doesn't match: createdAt", expected.createdAt, actual.createdAt)
         assertEquals("doesn't match: paused", expected.paused, actual.paused)
@@ -169,8 +174,12 @@ open class InstrumentedTestBase {
         assertEquals("doesn't match: schedule.nextAccessInMillis", expected.schedule.nextAccessInMillis, actual.schedule.nextAccessInMillis)
         assertEquals("doesn't match: schedule.nextAccessAt", expected.schedule.nextAccessAt, actual.schedule.nextAccessAt)
 
-        assertEquals("doesn't match: timeSinceLastCheck", expected.timeSinceLastCheck, actual.timeSinceLastCheck)
-        assertEquals("doesn't match: overdue", expected.overdue, actual.overdue, 0.0001)
+        if (!skipTimeSinceLastCheck) {
+            assertEquals("doesn't match: timeSinceLastCheck", expected.timeSinceLastCheck, actual.timeSinceLastCheck)
+        }
+        if (!skipOverdue) {
+            assertEquals("doesn't match: overdue", expected.overdue, actual.overdue, 0.0001)
+        }
         assertEquals("doesn't match: textToTranslate", expected.textToTranslate, actual.textToTranslate)
         assertEquals("doesn't match: translation", expected.translation, actual.translation)
     }
