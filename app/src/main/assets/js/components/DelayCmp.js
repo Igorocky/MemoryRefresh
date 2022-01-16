@@ -6,6 +6,7 @@ const DELAY_COEF_REGEX = /^x(\d+(?:\.\d+)?)$/
 const DelayCmp = ({
                       actualDelay, initialDelay, setDelayRef, delayResultRef,
                       coefs, coefsOnChange,
+                      maxDelay, maxDelayOnChange,
                       delayTextFieldRef, delayTextFieldId, delayTextFieldTabIndex, updateDelayRequestIsInProgress,
                       onSubmit, onF9}) => {
 
@@ -50,16 +51,20 @@ const DelayCmp = ({
     }
 
     async function openSettings() {
-        const newCoefs = await showDialog({
+        const {newCoefs,newMaxDelay} = await showDialog({
             title: 'Delay coefficients:',
             contentRenderer: resolve => re(DelayCoefsSettingsCmp,{
                 coefs,
-                onOk: newCoefs => resolve(newCoefs),
-                onCancel: () => resolve(null)
+                maxDelay,
+                onOk: newSettings => resolve(newSettings),
+                onCancel: () => resolve({})
             })
         })
         if (hasValue(newCoefs)) {
             coefsOnChange(newCoefs)
+        }
+        if (hasValue(newMaxDelay)) {
+            maxDelayOnChange(newMaxDelay)
         }
     }
 

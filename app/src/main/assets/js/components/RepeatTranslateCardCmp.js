@@ -2,6 +2,7 @@
 
 const RepeatTranslateCardCmp = ({allTags, allTagsMap, controlsContainer, cardToRepeat, onCardWasDeleted, onCardWasUpdated, onDone, cycledMode,
                                     delayCoefs, updateDelayCoefs,
+                                    maxDelay, updateMaxDelay,
                                     say, renderTextReaderConfig, setTextToSay}) => {
     const USER_INPUT_TEXT_FIELD = 'user-input'
     const CARD_DELAY_TEXT_FIELD = 'card-delay'
@@ -196,6 +197,8 @@ const RepeatTranslateCardCmp = ({allTags, allTagsMap, controlsContainer, cardToR
                 delayResultRef,
                 coefs:delayCoefs,
                 coefsOnChange:updateDelayCoefs,
+                maxDelay,
+                maxDelayOnChange:updateMaxDelay,
                 delayTextFieldRef:delayTextField,
                 delayTextFieldId:CARD_DELAY_TEXT_FIELD,
                 delayTextFieldTabIndex:2,

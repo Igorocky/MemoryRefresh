@@ -35,8 +35,8 @@ class AppContainer(
     val cardToTag = CardToTagTable(clock = clock, cards = cards, tags = tags)
 
     val repositoryManager = RepositoryManager(context = context, clock = clock, repositoryProvider = {createNewRepo()})
-    val dataManager = DataManager(clock = clock, repositoryManager = repositoryManager)
     val settingsManager = SettingsManager(context = context)
+    val dataManager = DataManager(clock = clock, repositoryManager = repositoryManager, settingsManager = settingsManager)
     val httpsServerManager = HttpsServerManager(
         appContext = context,
         settingsManager = settingsManager,

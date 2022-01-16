@@ -5,6 +5,7 @@ import org.igye.memoryrefresh.ErrorCode.*
 import org.igye.memoryrefresh.common.BeMethod
 import org.igye.memoryrefresh.common.MemoryRefreshException
 import org.igye.memoryrefresh.common.Utils
+import org.igye.memoryrefresh.common.Utils.delayStrToMillis
 import org.igye.memoryrefresh.common.Utils.multiplyDelay
 import org.igye.memoryrefresh.database.CardType
 import org.igye.memoryrefresh.database.doInTransaction
@@ -13,12 +14,14 @@ import org.igye.memoryrefresh.dto.common.BeErr
 import org.igye.memoryrefresh.dto.common.BeRespose
 import org.igye.memoryrefresh.dto.domain.*
 import java.time.Clock
+import kotlin.math.min
 import kotlin.random.Random
 
 
 class DataManager(
     private val clock: Clock,
     private val repositoryManager: RepositoryManager,
+    private val settingsManager: SettingsManager,
 ) {
     fun getRepo() = repositoryManager.getRepo()
 
@@ -475,7 +478,8 @@ class DataManager(
                     newDelay
                 }
                 val randomFactor = 0.85 + Random.nextDouble(from = 0.0, until = 0.30001)
-                val nextAccessInMillis = (Utils.delayStrToMillis(finalDelay) * randomFactor).toLong()
+                val maxDelayMillis = delayStrToMillis(settingsManager.readMaxDelay().data!!)
+                val nextAccessInMillis = min(maxDelayMillis, (delayStrToMillis(finalDelay) * randomFactor).toLong())
                 val timestamp = clock.instant().toEpochMilli()
                 val nextAccessAt = timestamp + nextAccessInMillis
                 repo.cardsSchedule.update(

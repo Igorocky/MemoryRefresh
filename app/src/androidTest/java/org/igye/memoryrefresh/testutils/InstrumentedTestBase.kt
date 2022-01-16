@@ -14,6 +14,7 @@ import org.igye.memoryrefresh.dto.domain.CardSchedule
 import org.igye.memoryrefresh.dto.domain.TranslateCard
 import org.igye.memoryrefresh.manager.DataManager
 import org.igye.memoryrefresh.manager.RepositoryManager
+import org.igye.memoryrefresh.manager.SettingsManager
 import org.junit.Assert.*
 import org.junit.Before
 import java.util.*
@@ -288,7 +289,8 @@ open class InstrumentedTestBase {
                         cardToTag = cardToTag,
                     )
                 }
-            )
+            ),
+            settingsManager = SettingsManager(context = appContext)
         )
     }
 

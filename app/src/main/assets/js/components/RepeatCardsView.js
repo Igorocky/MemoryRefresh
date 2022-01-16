@@ -9,6 +9,7 @@ const RepeatCardsView = ({query,openView,setPageTitle,controlsContainer, cycledM
 
     const {allTags, allTagsMap, errorLoadingTags} = useTags()
     const {coefs:delayCoefs, errorLoadingCoefs, updateCoefs:updateDelayCoefs} = useDelayCoefs({onError:showError, showMessageWithProgress})
+    const {maxDelay, errorLoadingMaxDelay, updateMaxDelay} = useMaxDelay({onError:showError, showMessageWithProgress})
 
     const {getNextCardId, countCard, numberOfFullCycles, getNumberOfCompletedCardsInCycle, resetCardCounts} = useCardCounts()
 
@@ -114,6 +115,8 @@ const RepeatCardsView = ({query,openView,setPageTitle,controlsContainer, cycledM
                     cardToRepeat,
                     delayCoefs,
                     updateDelayCoefs,
+                    maxDelay,
+                    updateMaxDelay,
                     say, renderTextReaderConfig, setTextToSay,
                     onCardWasUpdated: () => {
                         setCardUpdateCounter(prev => prev + 1)
@@ -178,6 +181,10 @@ const RepeatCardsView = ({query,openView,setPageTitle,controlsContainer, cycledM
         } else if (errorLoadingCoefs) {
             return RE.Container.col.top.left({},{},
                 `An error occurred during loading of delay coefficients: [${errorLoadingCoefs.code}] - ${errorLoadingCoefs.msg}`,
+            )
+        } else if (errorLoadingMaxDelay) {
+            return RE.Container.col.top.left({},{},
+                `An error occurred during loading of max delay: [${errorLoadingMaxDelay.code}] - ${errorLoadingMaxDelay.msg}`,
             )
         } else if (hasNoValue(allTags) || hasNoValue(allTagsMap)) {
             return 'Loading tags...'

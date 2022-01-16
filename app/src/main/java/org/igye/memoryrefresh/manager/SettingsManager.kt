@@ -3,12 +3,14 @@ package org.igye.memoryrefresh.manager
 import android.content.Context
 import org.igye.memoryrefresh.ErrorCode
 import org.igye.memoryrefresh.common.BeMethod
+import org.igye.memoryrefresh.common.Try
 import org.igye.memoryrefresh.common.Utils
 import org.igye.memoryrefresh.dto.common.AppSettings
 import org.igye.memoryrefresh.dto.common.BeRespose
 import org.igye.memoryrefresh.dto.common.HttpServerSettings
 import java.io.File
 import java.io.FileOutputStream
+import java.util.concurrent.atomic.AtomicReference
 
 class SettingsManager(
     private val context: Context,
@@ -83,6 +85,32 @@ class SettingsManager(
     fun readDelayCoefs(): BeRespose<List<String>> {
         return BeRespose(ErrorCode.READ_DELAY_COEFS) {
             getApplicationSettings().delayCoefs?:listOf("x0.3","","","x1.2")
+        }
+    }
+
+    data class UpdateMaxDelayArgs(val newMaxDelay:String)
+    @BeMethod
+    @Synchronized
+    fun updateMaxDelay(args:UpdateMaxDelayArgs): BeRespose<String> {
+        return BeRespose(ErrorCode.UPDATE_MAX_DELAY) {
+            val newMaxDelay = Try {
+                Utils.delayStrToMillis(args.newMaxDelay)
+            }.map { args.newMaxDelay }.getIfSuccessOrElse { "30d" }
+            saveApplicationSettings(getApplicationSettings().copy(maxDelay = newMaxDelay))
+            maxDelay.set(newMaxDelay)
+            newMaxDelay
+        }
+    }
+
+    private val maxDelay: AtomicReference<String?> = AtomicReference(null)
+    @BeMethod
+    @Synchronized
+    fun readMaxDelay(): BeRespose<String> {
+        return BeRespose(ErrorCode.READ_MAX_DELAY) {
+            if (maxDelay.get() == null) {
+                maxDelay.set(getApplicationSettings().maxDelay)
+            }
+            maxDelay.get()!!
         }
     }
 

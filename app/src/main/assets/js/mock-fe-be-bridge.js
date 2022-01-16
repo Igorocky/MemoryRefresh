@@ -246,6 +246,16 @@ function createFeBeBridgeForUiTestMode() {
         return okResponse([...DELAY_COEFS])
     }
 
+    const MAX_DELAY = ['30d']
+    mockedBeFunctions.readMaxDelay = () => {
+        return okResponse(MAX_DELAY[0])
+    }
+
+    mockedBeFunctions.updateMaxDelay = ({newMaxDelay}) => {
+        MAX_DELAY[0] = newMaxDelay
+        return mockedBeFunctions.readMaxDelay()
+    }
+
     mockedBeFunctions.doBackup = () => {
         return okResponse({name:'new-backup-' + new Date(), size:4335})
     }
