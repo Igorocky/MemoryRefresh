@@ -466,31 +466,29 @@ class DataManager(
         val repo = getRepo()
         repo.writableDatabase.doInTransaction {
             val existingCard = readCardById(cardId = cardId)
-            val newDelay = delay?.trim()?:existingCard.schedule.delay
+            var newDelay = delay?.trim()?:existingCard.schedule.delay
             if (newDelay.isEmpty()) {
                 throw MemoryRefreshException(errCode = UPDATE_CARD_DELAY_IS_EMPTY, msg = "Delay should not be empty.")
             }
             if (recalculateDelay || newDelay != existingCard.schedule.delay) {
-                val finalDelay = if (newDelay.startsWith("x")) {
-                    multiplyDelay(existingCard.schedule.delay, newDelay)
-                } else {
-                    newDelay
+                if (newDelay.startsWith("x")) {
+                    newDelay = multiplyDelay(existingCard.schedule.delay, newDelay)
                 }
                 val randomFactor = 0.85 + Random.nextDouble(from = 0.0, until = 0.30001)
-                val maxDelayMillis: Long = delayStrToMillis(settingsManager.readMaxDelay().data!!)
-                val nextAccessInMillisCandidate = (delayStrToMillis(finalDelay) * randomFactor).toLong()
-                val nextAccessInMillis = if (maxDelayMillis < nextAccessInMillisCandidate) {
+                val maxDelay = settingsManager.readMaxDelay().data!!
+                val maxDelayMillis: Long = delayStrToMillis(maxDelay)
+                var nextAccessInMillis = (delayStrToMillis(newDelay) * randomFactor).toLong()
+                if (maxDelayMillis < nextAccessInMillis) {
                     val randomFactor = 0.9 + Random.nextDouble(from = 0.0, until = 0.1)
-                    (maxDelayMillis * randomFactor).toLong()
-                } else {
-                    nextAccessInMillisCandidate
+                    nextAccessInMillis = (maxDelayMillis * randomFactor).toLong()
+                    newDelay = maxDelay
                 }
                 val timestamp = clock.instant().toEpochMilli()
                 val nextAccessAt = timestamp + nextAccessInMillis
                 repo.cardsSchedule.update(
                     timestamp = timestamp,
                     cardId = cardId,
-                    delay = finalDelay,
+                    delay = newDelay,
                     randomFactor = randomFactor,
                     nextAccessInMillis = nextAccessInMillis,
                     nextAccessAt = nextAccessAt
