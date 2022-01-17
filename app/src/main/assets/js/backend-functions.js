@@ -31,6 +31,8 @@ const be = {
     deleteTranslateCard: createBeFunction('deleteTranslateCard'),
     readDelayCoefs: createBeFunction('readDelayCoefs'),
     updateDelayCoefs: createBeFunction('updateDelayCoefs'),
+    readDefaultDelayCoefs: createBeFunction('readDefaultDelayCoefs'),
+    updateDefaultDelayCoefs: createBeFunction('updateDefaultDelayCoefs'),
     readMaxDelay: createBeFunction('readMaxDelay'),
     updateMaxDelay: createBeFunction('updateMaxDelay'),
 }

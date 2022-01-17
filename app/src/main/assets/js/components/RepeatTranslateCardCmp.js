@@ -2,6 +2,7 @@
 
 const RepeatTranslateCardCmp = ({allTags, allTagsMap, controlsContainer, cardToRepeat, onCardWasDeleted, onCardWasUpdated, onDone, cycledMode,
                                     delayCoefs, updateDelayCoefs,
+                                    defCoefs, updateDefCoefs,
                                     maxDelay, updateMaxDelay,
                                     say, renderTextReaderConfig, setTextToSay}) => {
     const USER_INPUT_TEXT_FIELD = 'user-input'
@@ -192,12 +193,15 @@ const RepeatTranslateCardCmp = ({allTags, allTagsMap, controlsContainer, cardToR
             }, 'Next')
         } else {
             return re(DelayCmp,{
+                beValidationResult,
                 actualDelay: card.timeSinceLastCheck,
                 initialDelay:card?.schedule?.delay??'',
                 setDelayRef,
                 delayResultRef,
                 coefs:delayCoefs,
                 coefsOnChange:updateDelayCoefs,
+                defCoefs,
+                updateDefCoefs,
                 maxDelay,
                 maxDelayOnChange:updateMaxDelay,
                 delayTextFieldRef:delayTextField,

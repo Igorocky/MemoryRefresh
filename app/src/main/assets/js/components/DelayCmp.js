@@ -4,8 +4,10 @@ const DELAY_DUR_REGEX = /^(\d+)([smhdM])?$/
 const DELAY_COEF_REGEX = /^x(\d+(?:\.\d+)?)$/
 
 const DelayCmp = ({
+                      beValidationResult,
                       actualDelay, initialDelay, setDelayRef, delayResultRef,
                       coefs, coefsOnChange,
+                      defCoefs, updateDefCoefs,
                       maxDelay, maxDelayOnChange,
                       delayTextFieldRef, delayTextFieldId, delayTextFieldTabIndex, updateDelayRequestIsInProgress,
                       onSubmit, onF9}) => {
@@ -15,7 +17,17 @@ const DelayCmp = ({
     // onSubmit = newDelay => console.log('submit:delay', newDelay)
     // coefs = ['','x2.0','','']
 
-    const [delay, setDelay] = useState(initialDelay)
+    function getDefaultDelay() {
+        if (beValidationResult === true && hasValue(defCoefs?.onCorrect) && hasValue(coefs)) {
+            return coefs[defCoefs.onCorrect]??''
+        }
+        if (beValidationResult === false && hasValue(defCoefs?.onError) && hasValue(coefs)) {
+            return coefs[defCoefs.onError]??''
+        }
+        return initialDelay
+    }
+
+    const [delay, setDelay] = useState(getDefaultDelay)
     if (setDelayRef) {
         setDelayRef.current = newDelay => setDelay(newDelay)
     }
@@ -51,10 +63,11 @@ const DelayCmp = ({
     }
 
     async function openSettings() {
-        const {newCoefs,newMaxDelay} = await showDialog({
+        const {newCoefs, newDefCoefs, newMaxDelay} = await showDialog({
             title: 'Delay coefficients:',
             contentRenderer: resolve => re(DelayCoefsSettingsCmp,{
                 coefs,
+                defCoefs,
                 maxDelay,
                 onOk: newSettings => resolve(newSettings),
                 onCancel: () => resolve({})
@@ -62,6 +75,9 @@ const DelayCmp = ({
         })
         if (hasValue(newCoefs)) {
             coefsOnChange(newCoefs)
+        }
+        if (hasValue(newDefCoefs)) {
+            updateDefCoefs(newDefCoefs)
         }
         if (hasValue(newMaxDelay)) {
             maxDelayOnChange(newMaxDelay)

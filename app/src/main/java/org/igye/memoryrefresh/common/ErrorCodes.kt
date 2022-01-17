@@ -1,6 +1,8 @@
 package org.igye.memoryrefresh
 
 enum class ErrorCode(val code: Long) {
+    READ_DEFAULT_DELAY_COEFS(52L),
+    UPDATE_DEFAULT_DELAY_COEFS(51L),
     READ_MAX_DELAY(50L),
     UPDATE_MAX_DELAY(49L),
     READ_DELAY_COEFS(48L),

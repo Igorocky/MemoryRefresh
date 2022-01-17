@@ -246,6 +246,20 @@ function createFeBeBridgeForUiTestMode() {
         return okResponse([...DELAY_COEFS])
     }
 
+    const DEFAULT_DELAY_COEFS = {
+        onCorrect: null,
+        onError: null
+    }
+    mockedBeFunctions.readDefaultDelayCoefs = () => {
+        return okResponse({...DEFAULT_DELAY_COEFS})
+    }
+
+    mockedBeFunctions.updateDefaultDelayCoefs = ({newDefCoefs}) => {
+        DEFAULT_DELAY_COEFS.onCorrect = newDefCoefs.onCorrect
+        DEFAULT_DELAY_COEFS.onError = newDefCoefs.onError
+        return mockedBeFunctions.readDefaultDelayCoefs()
+    }
+
     const MAX_DELAY = ['30d']
     mockedBeFunctions.readMaxDelay = () => {
         return okResponse(MAX_DELAY[0])

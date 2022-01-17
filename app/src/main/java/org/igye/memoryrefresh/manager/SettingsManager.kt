@@ -8,6 +8,7 @@ import org.igye.memoryrefresh.common.Utils
 import org.igye.memoryrefresh.dto.common.AppSettings
 import org.igye.memoryrefresh.dto.common.BeRespose
 import org.igye.memoryrefresh.dto.common.HttpServerSettings
+import org.igye.memoryrefresh.dto.domain.DefaultDelayCoefs
 import java.io.File
 import java.io.FileOutputStream
 import java.util.concurrent.atomic.AtomicReference
@@ -85,6 +86,24 @@ class SettingsManager(
     fun readDelayCoefs(): BeRespose<List<String>> {
         return BeRespose(ErrorCode.READ_DELAY_COEFS) {
             getApplicationSettings().delayCoefs?:listOf("x0.3","","","x1.2")
+        }
+    }
+
+    data class UpdateDefaultDelayCoefsArgs(val newDefCoefs: DefaultDelayCoefs)
+    @BeMethod
+    @Synchronized
+    fun updateDefaultDelayCoefs(args:UpdateDefaultDelayCoefsArgs): BeRespose<DefaultDelayCoefs> {
+        return BeRespose(ErrorCode.UPDATE_DEFAULT_DELAY_COEFS) {
+            saveApplicationSettings(getApplicationSettings().copy(defaultDelayCoefs = args.newDefCoefs))
+            args.newDefCoefs
+        }
+    }
+
+    @BeMethod
+    @Synchronized
+    fun readDefaultDelayCoefs(): BeRespose<DefaultDelayCoefs> {
+        return BeRespose(ErrorCode.READ_DEFAULT_DELAY_COEFS) {
+            getApplicationSettings().defaultDelayCoefs?:DefaultDelayCoefs()
         }
     }
 
