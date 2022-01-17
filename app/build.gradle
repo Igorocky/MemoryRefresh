@@ -8,7 +8,7 @@ android {
     buildToolsVersion "30.0.2"
 
     defaultConfig {
-        applicationId "org.igye.memoryrefresh.dev"
+        applicationId "org.igye.memoryrefresh"
         minSdkVersion 26
         targetSdkVersion 30
         versionCode 2010
