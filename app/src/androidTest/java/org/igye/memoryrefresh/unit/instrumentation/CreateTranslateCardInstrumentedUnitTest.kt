@@ -3,7 +3,7 @@ package org.igye.memoryrefresh.unit.instrumentation
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import org.igye.memoryrefresh.manager.DataManager.*
 import org.igye.memoryrefresh.testutils.InstrumentedTestBase
-import org.junit.Assert.assertEquals
+import org.junit.Assert.*
 import org.junit.Test
 import org.junit.runner.RunWith
 
@@ -105,18 +105,71 @@ class CreateTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
     }
 
     @Test
-    fun TODO_createTranslateCard_creates_unpaused_card_if_paused_flag_was_not_specified() {
-        TODO()
+    fun createTranslateCard_creates_unpaused_card_if_paused_flag_was_not_specified() {
+        //given
+        val time1 = testClock.currentMillis()
+
+        //when
+        val translateCardId = dm.createTranslateCard(
+            CreateTranslateCardArgs(
+                textToTranslate = "a",
+                translation = "b",
+            )
+        ).data!!
+        val translateCard = dm.readTranslateCardById(ReadTranslateCardByIdArgs(cardId = translateCardId)).data!!
+
+        //then
+        assertFalse(translateCard.paused)
+
+        assertTableContent(repo = repo, table = c, matchColumn = c.id, expectedRows = listOf(
+            listOf(c.id to translateCard.id, c.type to TR_TP, c.createdAt to time1, c.paused to 0)
+        ))
     }
 
     @Test
-    fun TODO_createTranslateCard_creates_unpaused_card_if_paused_flag_was_specified_as_false() {
-        TODO()
+    fun createTranslateCard_creates_unpaused_card_if_paused_flag_was_specified_as_false() {
+        //given
+        val time1 = testClock.currentMillis()
+
+        //when
+        val translateCardId = dm.createTranslateCard(
+            CreateTranslateCardArgs(
+                textToTranslate = "a",
+                translation = "b",
+                paused = false
+            )
+        ).data!!
+        val translateCard = dm.readTranslateCardById(ReadTranslateCardByIdArgs(cardId = translateCardId)).data!!
+
+        //then
+        assertFalse(translateCard.paused)
+
+        assertTableContent(repo = repo, table = c, matchColumn = c.id, expectedRows = listOf(
+            listOf(c.id to translateCard.id, c.type to TR_TP, c.createdAt to time1, c.paused to 0)
+        ))
     }
 
     @Test
-    fun TODO_createTranslateCard_creates_paused_card_if_paused_flag_was_specified_as_true() {
-        TODO()
+    fun createTranslateCard_creates_paused_card_if_paused_flag_was_specified_as_true() {
+        //given
+        val time1 = testClock.currentMillis()
+
+        //when
+        val translateCardId = dm.createTranslateCard(
+            CreateTranslateCardArgs(
+                textToTranslate = "a",
+                translation = "b",
+                paused = true
+            )
+        ).data!!
+        val translateCard = dm.readTranslateCardById(ReadTranslateCardByIdArgs(cardId = translateCardId)).data!!
+
+        //then
+        assertTrue(translateCard.paused)
+
+        assertTableContent(repo = repo, table = c, matchColumn = c.id, expectedRows = listOf(
+            listOf(c.id to translateCard.id, c.type to TR_TP, c.createdAt to time1, c.paused to 1)
+        ))
     }
 
 }
