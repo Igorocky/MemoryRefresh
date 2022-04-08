@@ -33,6 +33,7 @@ class AppContainer(
     val translationCardsLog = TranslationCardsLogTable(clock = clock)
     val tags = TagsTable(clock = clock)
     val cardToTag = CardToTagTable(clock = clock, cards = cards, tags = tags)
+    val noteCards = NoteCardsTable(clock = clock, cards = cards)
 
     val repositoryManager = RepositoryManager(context = context, clock = clock, repositoryProvider = {createNewRepo()})
     val settingsManager = SettingsManager(context = context)
@@ -52,7 +53,8 @@ class AppContainer(
             translationCards = translationCards,
             translationCardsLog = translationCardsLog,
             tags = tags,
-            cardToTag = cardToTag
+            cardToTag = cardToTag,
+            noteCards = noteCards
         )
     }
 

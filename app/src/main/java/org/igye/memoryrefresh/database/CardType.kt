@@ -4,7 +4,8 @@ import org.igye.memoryrefresh.ErrorCode
 import org.igye.memoryrefresh.common.MemoryRefreshException
 
 enum class CardType(val intValue: Long) {
-    TRANSLATION(intValue = 1);
+    TRANSLATION(intValue = 1),
+    NOTE(intValue = 2);
 
     companion object {
         fun fromInt(intValue: Long): CardType {

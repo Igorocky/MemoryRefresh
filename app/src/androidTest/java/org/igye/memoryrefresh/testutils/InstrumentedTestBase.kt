@@ -282,6 +282,7 @@ open class InstrumentedTestBase {
         val translationCardsLog = TranslationCardsLogTable(clock = testClock)
         val tags = TagsTable(clock = testClock)
         val cardToTag = CardToTagTable(clock = testClock, cards = cards, tags = tags)
+        val noteCards = NoteCardsTable(clock = testClock, cards = cards)
 
         return DataManager(
             clock = testClock,
@@ -298,6 +299,7 @@ open class InstrumentedTestBase {
                         translationCardsLog = translationCardsLog,
                         tags = tags,
                         cardToTag = cardToTag,
+                        noteCards = noteCards
                     )
                 }
             ),

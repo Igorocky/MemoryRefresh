@@ -30,6 +30,7 @@ class DataManager(
     private val l = getRepo().translationCardsLog
     private val tg = getRepo().tags
     private val ctg = getRepo().cardToTag
+    private val n = getRepo().noteCards
 
     private val tagsStat = repositoryManager.tagsStat
 
@@ -190,6 +191,30 @@ class DataManager(
         }
     }
 
+    data class CreateNoteCardArgs(
+        val text:String,
+        val tagIds: Set<Long> = emptySet(),
+        val paused: Boolean = false,
+    )
+    @BeMethod
+    @Synchronized
+    fun createNoteCard(args: CreateNoteCardArgs): BeRespose<Long> {
+        val text = args.text.trim()
+        if (text.isBlank()) {
+            return BeRespose(err = BeErr(code = SAVE_NEW_NOTE_CARD_TEXT_IS_EMPTY.code, msg = "Text should not be empty."))
+        } else {
+            tagsStat.tagsCouldChange()
+            val repo = getRepo()
+            return BeRespose(SAVE_NEW_NOTE_CARD_EXCEPTION) {
+                repo.writableDatabase.doInTransaction {
+                    val cardId = createCard(cardType = CardType.NOTE, tagIds = args.tagIds, paused = args.paused)
+                    repo.noteCards.insert(cardId = cardId, text = text)
+                    cardId
+                }
+            }
+        }
+    }
+
     data class ReadTranslateCardByIdArgs(val cardId: Long)
     private val readTranslateCardByIdQuery = """
         select
@@ -244,11 +269,71 @@ class DataManager(
         }
     }
 
+    data class ReadNoteCardByIdArgs(val cardId: Long)
+    private val readNoteCardByIdQuery = """
+        select
+            c.${c.id},
+            s.${s.updatedAt},
+            s.${s.nextAccessAt},
+            c.${c.createdAt},
+            c.${c.paused},
+            c.${c.lastCheckedAt},
+            (? - s.${s.nextAccessAt} ) * 1.0 / (case when s.${s.nextAccessInMillis} = 0 then 1 else s.${s.nextAccessInMillis} end),
+            (select group_concat(ctg.${ctg.tagId}) from $ctg ctg where ctg.${ctg.cardId} = c.${c.id}) as tagIds,
+            s.${s.delay},
+            s.${s.nextAccessInMillis},
+            n.${n.text} 
+        from 
+            $c c
+            left join $s s on c.${c.id} = s.${s.cardId}
+            left join $n n on c.${c.id} = n.${n.cardId}
+        where c.${c.id} = ?
+    """.trimIndent()
+    @BeMethod
+    @Synchronized
+    fun readNoteCardById(args: ReadNoteCardByIdArgs): BeRespose<NoteCard> {
+        return BeRespose(READ_NOTE_CARD_BY_ID) {
+            getRepo().readableDatabase.doInTransaction {
+                val currTime = clock.instant().toEpochMilli()
+                select(query = readNoteCardByIdQuery, args = arrayOf(currTime.toString(), args.cardId.toString())){
+                    val cardId = it.getLong()
+                    val updatedAt = it.getLong()
+                    val nextAccessAt = it.getLong()
+                    NoteCard(
+                        id = cardId,
+                        createdAt = it.getLong(),
+                        paused = it.getLong() == 1L,
+                        timeSinceLastCheck = Utils.millisToDurationStr(currTime - it.getLong()),
+                        overdue = it.getDouble(),
+                        tagIds = (it.getStringOrNull()?:"").splitToSequence(",").filter { it.isNotBlank() }.map { it.toLong() }.toList(),
+                        schedule = CardSchedule(
+                            cardId = cardId,
+                            updatedAt = updatedAt,
+                            delay = it.getString(),
+                            nextAccessInMillis = it.getLong(),
+                            nextAccessAt = nextAccessAt,
+                        ),
+                        activatesIn = if (nextAccessAt - currTime >= 0) Utils.millisToDurationStr(nextAccessAt - currTime) else "-",
+                        text = it.getString(),
+                    )
+                }.rows[0]
+            }
+        }
+    }
+
     @BeMethod
     @Synchronized
     fun readTranslateCardsByFilter(args: ReadTranslateCardsByFilterArgs): BeRespose<ReadTranslateCardsByFilterResp> {
         return BeRespose(READ_TRANSLATE_CARD_BY_FILTER) {
             readTranslateCardsByFilterInner(args)
+        }
+    }
+
+    @BeMethod
+    @Synchronized
+    fun readNoteCardsByFilter(args: ReadNoteCardsByFilterArgs): BeRespose<ReadNoteCardsByFilterResp> {
+        return BeRespose(READ_NOTE_CARD_BY_FILTER) {
+            readNoteCardsByFilterInner(args)
         }
     }
 
@@ -260,6 +345,49 @@ class DataManager(
     @BeMethod
     @Synchronized
     fun readTranslateCardHistory(args: ReadTranslateCardHistoryArgs): BeRespose<TranslateCardHistResp> {
+        return BeRespose(GET_TRANSLATE_CARD_HISTORY) {
+            getRepo().writableDatabase.doInTransaction {
+                val card: TranslateCard = readTranslateCardById(ReadTranslateCardByIdArgs(cardId = args.cardId)).data!!
+                val cardIdArgs = arrayOf(args.cardId.toString())
+                val validationHistory = ArrayList(select(
+                    query = getValidationHistoryQuery,
+                    args = cardIdArgs,
+                    rowMapper = {
+                        TranslateCardValidationHistRecord(
+                            recId = it.getLong(),
+                            cardId = it.getLong(),
+                            timestamp = it.getLong(),
+                            actualDelay = "",
+                            translation = it.getString(),
+                            isCorrect = it.getLong() == 1L,
+                        )
+                    }
+                ).rows)
+                val dataHistory: ArrayList<TranslateCardHistRecord> = ArrayList(select(
+                    query = getDataHistoryQuery,
+                    args = cardIdArgs,
+                    rowMapper = {
+                        TranslateCardHistRecord(
+                            verId = it.getLong(),
+                            cardId = it.getLong(),
+                            timestamp = it.getLong(),
+                            textToTranslate = it.getString(),
+                            translation = it.getString(),
+                            validationHistory = ArrayList()
+                        )
+                    }
+                ).rows)
+                prepareTranslateCardHistResp(card, dataHistory, validationHistory)
+            }
+        }
+    }
+
+    data class ReadNoteCardHistoryArgs(val cardId:Long)
+    private val getNoteCardDataHistoryQuery =
+        "select ${n.ver.verId}, ${n.cardId}, ${n.ver.timestamp}, ${n.text} from ${n.ver} where ${n.cardId} = ? order by ${n.ver.timestamp} desc"
+    @BeMethod
+    @Synchronized
+    fun readNoteCardHistory(args: ReadNoteCardHistoryArgs): BeRespose<TranslateCardHistResp> {
         return BeRespose(GET_TRANSLATE_CARD_HISTORY) {
             getRepo().writableDatabase.doInTransaction {
                 val card: TranslateCard = readTranslateCardById(ReadTranslateCardByIdArgs(cardId = args.cardId)).data!!
@@ -703,6 +831,142 @@ class DataManager(
                 )
             }.rows
             ReadTranslateCardsByFilterResp(cards = result)
+        }
+    }
+
+    data class ReadNoteCardsByFilterArgs(
+        val tagIdsToInclude: Set<Long>? = null,
+        val tagIdsToExclude: Set<Long>? = null,
+        val paused: Boolean? = null,
+        val textContains: String? = null,
+        val createdFrom: Long? = null,
+        val createdTill: Long? = null,
+        val overdueGreaterEq: Double? = null,
+        val nextAccessFrom: Long? = null,
+        val nextAccessTill: Long? = null,
+        val rowsLimit: Long? = null,
+        val sortBy: TranslateCardSortBy? = null,
+        val sortDir: SortDirection? = null,
+    )
+    @Synchronized
+    private fun readNoteCardsByFilterInner(args: ReadNoteCardsByFilterArgs): ReadNoteCardsByFilterResp {
+        val tagIdsToInclude: List<Long>? = args.tagIdsToInclude?.toList()
+        val leastUsedTagId: Long? = if (tagIdsToInclude == null || tagIdsToInclude.isEmpty()) {
+            null
+        } else {
+            tagsStat.getLeastUsedTagId(tagIdsToInclude)
+        }
+        val currTime = clock.instant().toEpochMilli()
+        val overdueFormula = "(($currTime - s.${s.nextAccessAt} ) * 1.0 / (case when s.${s.nextAccessInMillis} = 0 then 1 else s.${s.nextAccessInMillis} end))"
+        fun havingFilterForTag(tagId:Long, include: Boolean) =
+            "max(case when ctg.${ctg.tagId} = $tagId then 1 else 0 end) = ${if (include) "1" else "0"}"
+        fun havingFilterForTags(tagIds:Sequence<Long>, include: Boolean) =
+            tagIds.map { havingFilterForTag(tagId = it, include = include) }.joinToString(" and ")
+        val havingFilters = ArrayList<String>()
+        if (tagIdsToInclude != null && tagIdsToInclude.size > 1) {
+            havingFilters.add(havingFilterForTags(
+                tagIds = tagIdsToInclude.asSequence().filter { it != leastUsedTagId },
+                include = true
+            ))
+        }
+        if (args.tagIdsToExclude != null && args.tagIdsToExclude.isNotEmpty()) {
+            havingFilters.add(havingFilterForTags(
+                tagIds = args.tagIdsToExclude.asSequence(),
+                include = false
+            ))
+        }
+        val whereFilters = ArrayList<String>()
+        val queryArgs = ArrayList<String>()
+        if (args.paused != null) {
+            whereFilters.add("c.${c.paused} = ${if(args.paused) 1 else 0}")
+        }
+        if (args.textContains != null) {
+            whereFilters.add("lower(t.${n.text}) like ?")
+            queryArgs.add("%${args.textContains.lowercase()}%")
+        }
+        if (args.createdFrom != null) {
+            whereFilters.add("c.${c.createdAt} >= ${args.createdFrom}")
+        }
+        if (args.createdTill != null) {
+            whereFilters.add("c.${c.createdAt} <= ${args.createdTill}")
+        }
+        if (args.nextAccessFrom != null) {
+            whereFilters.add("s.${s.nextAccessAt} >= ${args.nextAccessFrom}")
+        }
+        if (args.nextAccessTill != null) {
+            whereFilters.add("s.${s.nextAccessAt} <= ${args.nextAccessTill}")
+        }
+        if (args.overdueGreaterEq != null) {
+            whereFilters.add("$overdueFormula >= ${args.overdueGreaterEq}")
+        }
+        var orderBy = ""
+        if (args.sortBy != null) {
+            orderBy = "order by " + when (args.sortBy) {
+                TranslateCardSortBy.TIME_CREATED -> "c.${c.createdAt}"
+                TranslateCardSortBy.OVERDUE -> overdueFormula
+                TranslateCardSortBy.NEXT_ACCESS_AT -> "s.${s.nextAccessAt}"
+            } + " " + (args.sortDir?:SortDirection.ASC)
+        }
+        val rowNumLimit = if (args.rowsLimit == null) "" else "limit ${args.rowsLimit}"
+
+        var query = """
+            select
+                c.${c.id},
+                s.${s.updatedAt},
+                s.${s.nextAccessAt},
+                c.${c.createdAt},
+                c.${c.paused},
+                c.${c.lastCheckedAt},
+                $overdueFormula overdue,
+                c.tagIds,
+                s.${s.delay},
+                s.${s.nextAccessInMillis},
+                n.${n.text}
+            from
+                (
+                    select
+                        c.${c.id},
+                        c.${c.createdAt},
+                        max(c.${c.paused}) ${c.paused},
+                        max(c.${c.lastCheckedAt}) ${c.lastCheckedAt},
+                        group_concat(ctg.${ctg.tagId}) as tagIds
+                    from $c c left join $ctg ctg on c.${c.id} = ctg.${ctg.cardId}
+                        ${if (leastUsedTagId == null) "" else "inner join $ctg tg_incl on c.${c.id} = tg_incl.${ctg.cardId} and tg_incl.${ctg.tagId} = $leastUsedTagId"}
+                    group by c.${c.id}
+                    ${if (havingFilters.isEmpty()) "" else havingFilters.joinToString(prefix = "having ", separator = " and ")}
+                ) c
+                left join $s s on c.${c.id} = s.${s.cardId}
+                left join $n n on c.${c.id} = n.${n.cardId}
+            ${if (whereFilters.isEmpty()) "" else whereFilters.joinToString(prefix = "where ", separator = " and ")}
+            $orderBy
+            $rowNumLimit
+        """.trimIndent()
+
+        return getRepo().readableDatabase.doInTransaction {
+            val currTime = clock.instant().toEpochMilli()
+            val result = select(query = query, args = queryArgs.toTypedArray()) {
+                val cardId = it.getLong()
+                val updatedAt = it.getLong()
+                val nextAccessAt = it.getLong()
+                NoteCard(
+                    id = cardId,
+                    createdAt = it.getLong(),
+                    paused = it.getLong() == 1L,
+                    timeSinceLastCheck = Utils.millisToDurationStr(currTime - it.getLong()),
+                    overdue = it.getDouble(),
+                    tagIds = (it.getStringOrNull()?:"").splitToSequence(",").filter { it.isNotBlank() }.map { it.toLong() }.toList(),
+                    schedule = CardSchedule(
+                        cardId = cardId,
+                        updatedAt = updatedAt,
+                        delay = it.getString(),
+                        nextAccessInMillis = it.getLong(),
+                        nextAccessAt = nextAccessAt,
+                    ),
+                    activatesIn = if (nextAccessAt - currTime >= 0) Utils.millisToDurationStr(nextAccessAt - currTime) else "-",
+                    text = it.getString()
+                )
+            }.rows
+            ReadNoteCardsByFilterResp(cards = result)
         }
     }
 

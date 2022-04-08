@@ -16,7 +16,8 @@ class Repository(
     val translationCards: TranslationCardsTable,
     val translationCardsLog: TranslationCardsLogTable,
     val tags: TagsTable,
-    val cardToTag: CardToTagTable
+    val cardToTag: CardToTagTable,
+    val noteCards: NoteCardsTable
 ) : SQLiteOpenHelper(context, dbName, null, DATABASE_VERSION) {
     private val allTables = listOf(cards, cardsSchedule, translationCards, translationCardsLog, tags, cardToTag)
 
@@ -60,6 +61,8 @@ class Repository(
     private fun incVersion(db: SQLiteDatabase, oldVersion: Int) {
         if (oldVersion == 1) {
             upgradeFromV1ToV2(db)
+        } else if (oldVersion == 2) {
+            upgradeFromV2ToV3(db)
         } else {
             throw MemoryRefreshException(
                 msg = "Upgrade for a database of version $oldVersion is not implemented.",
@@ -163,6 +166,10 @@ class Repository(
             )
         )
 
+    }
+
+    private fun upgradeFromV2ToV3(db: SQLiteDatabase) {
+        noteCards.create(db)
     }
 
     /**

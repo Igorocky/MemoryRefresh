@@ -1,6 +1,10 @@
 package org.igye.memoryrefresh
 
 enum class ErrorCode(val code: Long) {
+    READ_NOTE_CARD_BY_FILTER(56L),
+    READ_NOTE_CARD_BY_ID(55L),
+    SAVE_NEW_NOTE_CARD_EXCEPTION(54L),
+    SAVE_NEW_NOTE_CARD_TEXT_IS_EMPTY(53L),
     READ_DEFAULT_DELAY_COEFS(52L),
     UPDATE_DEFAULT_DELAY_COEFS(51L),
     READ_MAX_DELAY(50L),
