@@ -24,6 +24,7 @@ open class InstrumentedTestBase {
     protected val appContext = InstrumentationRegistry.getInstrumentation().targetContext
     protected val testClock = TestClock(1000)
     protected val TR_TP = CardType.TRANSLATION.intValue
+    protected val NC_TP = CardType.NOTE.intValue
 
     protected lateinit var dm: DataManager
     protected lateinit var sm: SettingsManager
@@ -32,6 +33,7 @@ open class InstrumentedTestBase {
     protected lateinit var tg: TagsTable
     protected lateinit var ctg: CardToTagTable
     protected lateinit var t: TranslationCardsTable
+    protected lateinit var n: NoteCardsTable
     protected lateinit var s: CardsScheduleTable
     protected lateinit var l: TranslationCardsLogTable
 
@@ -42,11 +44,12 @@ open class InstrumentedTestBase {
         repo = dm.getRepo()
 
         c = repo.cards
+        s = repo.cardsSchedule
         tg = repo.tags
         ctg = repo.cardToTag
         t = repo.translationCards
-        s = repo.cardsSchedule
         l = repo.translationCardsLog
+        n = repo.noteCards
 
         testClock.setFixedTime(Random.nextLong(from = 1000L, until = 10_000L))
     }
@@ -132,6 +135,7 @@ open class InstrumentedTestBase {
                 schedule = CardSchedule(
                     cardId = cardId,
                     updatedAt = updatedAt,
+                    origDelay = "delay-" + cardId,
                     delay = "delay-" + cardId,
                     nextAccessInMillis = nextAccessInMillis,
                     nextAccessAt = updatedAt + nextAccessInMillis,

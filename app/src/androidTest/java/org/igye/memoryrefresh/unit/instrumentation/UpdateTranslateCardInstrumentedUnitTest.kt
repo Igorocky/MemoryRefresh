@@ -331,11 +331,11 @@ class UpdateTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
         val rnd1 = repo.readableDatabase.select("select ${s.randomFactor} from $s where ${s.cardId} = $cardId") { it.getDouble() }.rows[0]
 
         assertTableContent(repo = repo, table = s, expectedRows = listOf(
-            listOf(s.cardId to cardId, s.updatedAt to preUpdateTime, s.delay to "4d",
-                s.nextAccessInMillis to (rnd1*4*Utils.MILLIS_IN_DAY).toLong(), s.nextAccessAt to preUpdateTime+(rnd1*4*Utils.MILLIS_IN_DAY).toLong()),
+            listOf(s.cardId to cardId, s.updatedAt to preUpdateTime, s.origDelay to "4d", s.delay to "4d",
+                s.nextAccessInMillis to (rnd1*4* MILLIS_IN_DAY).toLong(), s.nextAccessAt to preUpdateTime+(rnd1*4* MILLIS_IN_DAY).toLong()),
         ))
         assertTableContent(repo = repo, table = s.ver, expectedRows = listOf(
-            listOf(s.cardId to cardId, s.updatedAt to createTime, s.delay to "1s",
+            listOf(s.cardId to cardId, s.updatedAt to createTime, s.origDelay to "1s", s.delay to "1s",
                 s.nextAccessInMillis to 1000, s.nextAccessAt to createTime+1000),
         ))
 
@@ -345,18 +345,18 @@ class UpdateTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
 
         //then
         val rnd2 = repo.readableDatabase.select("select ${s.randomFactor} from $s where ${s.cardId} = $cardId") { it.getDouble() }.rows[0]
-        val expectedDelayMillis = 10*Utils.MILLIS_IN_DAY
+        val expectedDelayMillis = 10* MILLIS_IN_DAY
         assertTableContent(repo = repo, table = s, expectedRows = listOf(
             listOf(s.cardId to cardId, s.updatedAt to updateTime, s.randomFactor to rnd2,
-                s.delay to "10d",
+                s.origDelay to "x2.5", s.delay to "10d",
                 s.nextAccessInMillis to (expectedDelayMillis*rnd2).toLong(),
                 s.nextAccessAt to updateTime+(expectedDelayMillis*rnd2).toLong()),
         ))
         assertTableContent(repo = repo, table = s.ver, expectedRows = listOf(
-            listOf(s.cardId to cardId, s.updatedAt to createTime, s.delay to "1s",
+            listOf(s.cardId to cardId, s.updatedAt to createTime, s.origDelay to "1s", s.delay to "1s",
                 s.nextAccessInMillis to 1000, s.nextAccessAt to createTime+1000),
-            listOf(s.cardId to cardId, s.updatedAt to preUpdateTime, s.delay to "4d",
-                s.nextAccessInMillis to (rnd1*4*Utils.MILLIS_IN_DAY).toLong(), s.nextAccessAt to preUpdateTime+(rnd1*4*Utils.MILLIS_IN_DAY).toLong()),
+            listOf(s.cardId to cardId, s.updatedAt to preUpdateTime, s.origDelay to "4d", s.delay to "4d",
+                s.nextAccessInMillis to (rnd1*4* MILLIS_IN_DAY).toLong(), s.nextAccessAt to preUpdateTime+(rnd1*4* MILLIS_IN_DAY).toLong()),
         ))
     }
 

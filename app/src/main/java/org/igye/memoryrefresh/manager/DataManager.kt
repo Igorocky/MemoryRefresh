@@ -226,6 +226,7 @@ class DataManager(
             c.${c.lastCheckedAt},
             (? - s.${s.nextAccessAt} ) * 1.0 / (case when s.${s.nextAccessInMillis} = 0 then 1 else s.${s.nextAccessInMillis} end),
             (select group_concat(ctg.${ctg.tagId}) from $ctg ctg where ctg.${ctg.cardId} = c.${c.id}) as tagIds,
+            s.${s.origDelay},
             s.${s.delay},
             s.${s.nextAccessInMillis},
             t.${t.textToTranslate}, 
@@ -256,6 +257,7 @@ class DataManager(
                         schedule = CardSchedule(
                             cardId = cardId,
                             updatedAt = updatedAt,
+                            origDelay = it.getString(),
                             delay = it.getString(),
                             nextAccessInMillis = it.getLong(),
                             nextAccessAt = nextAccessAt,
@@ -280,6 +282,7 @@ class DataManager(
             c.${c.lastCheckedAt},
             (? - s.${s.nextAccessAt} ) * 1.0 / (case when s.${s.nextAccessInMillis} = 0 then 1 else s.${s.nextAccessInMillis} end),
             (select group_concat(ctg.${ctg.tagId}) from $ctg ctg where ctg.${ctg.cardId} = c.${c.id}) as tagIds,
+            s.${s.origDelay},
             s.${s.delay},
             s.${s.nextAccessInMillis},
             n.${n.text} 
@@ -309,6 +312,7 @@ class DataManager(
                         schedule = CardSchedule(
                             cardId = cardId,
                             updatedAt = updatedAt,
+                            origDelay = it.getString(),
                             delay = it.getString(),
                             nextAccessInMillis = it.getLong(),
                             nextAccessAt = nextAccessAt,
@@ -577,7 +581,7 @@ class DataManager(
         return repo.writableDatabase.doInTransaction {
             val currTime = clock.instant().toEpochMilli()
             val cardId = repo.cards.insert(cardType = cardType, paused = paused)
-            repo.cardsSchedule.insert(cardId = cardId, timestamp = currTime, delay = "1s", randomFactor = 1.0, nextAccessInMillis = 1000, nextAccessAt = currTime+1000)
+            repo.cardsSchedule.insert(cardId = cardId, timestamp = currTime, origDelay = "1s", delay = "1s", randomFactor = 1.0, nextAccessInMillis = 1000, nextAccessAt = currTime+1000)
             tagIds.forEach { repo.cardToTag.insert(cardId = cardId, tagId = it) }
             cardId
         }
@@ -594,6 +598,7 @@ class DataManager(
         val repo = getRepo()
         repo.writableDatabase.doInTransaction {
             val existingCard = readCardById(cardId = cardId)
+            val origDelay = delay?.trim()?:existingCard.schedule.origDelay
             var newDelay = delay?.trim()?:existingCard.schedule.delay
             if (newDelay.isEmpty()) {
                 throw MemoryRefreshException(errCode = UPDATE_CARD_DELAY_IS_EMPTY, msg = "Delay should not be empty.")
@@ -616,6 +621,7 @@ class DataManager(
                 repo.cardsSchedule.update(
                     timestamp = timestamp,
                     cardId = cardId,
+                    origDelay = origDelay,
                     delay = newDelay,
                     randomFactor = randomFactor,
                     nextAccessInMillis = nextAccessInMillis,
@@ -640,6 +646,7 @@ class DataManager(
             c.${c.lastCheckedAt},
             (select group_concat(ctg.${ctg.tagId}) from $ctg ctg where ctg.${ctg.cardId} = c.${c.id}) as tagIds,
             s.${s.updatedAt},
+            s.${s.origDelay},
             s.${s.delay},
             s.${s.nextAccessInMillis},
             s.${s.nextAccessAt}
@@ -665,6 +672,7 @@ class DataManager(
                         schedule = CardSchedule(
                             cardId = cardId,
                             updatedAt = it.getLong(),
+                            origDelay = it.getString(),
                             delay = it.getString(),
                             nextAccessInMillis = it.getLong(),
                             nextAccessAt = it.getLong(),
@@ -781,6 +789,7 @@ class DataManager(
                 c.${c.lastCheckedAt},
                 $overdueFormula overdue,
                 c.tagIds,
+                s.${s.origDelay},
                 s.${s.delay},
                 s.${s.nextAccessInMillis},
                 t.${t.textToTranslate}, 
@@ -821,6 +830,7 @@ class DataManager(
                     schedule = CardSchedule(
                         cardId = cardId,
                         updatedAt = updatedAt,
+                        origDelay = it.getString(),
                         delay = it.getString(),
                         nextAccessInMillis = it.getLong(),
                         nextAccessAt = nextAccessAt,
@@ -919,6 +929,7 @@ class DataManager(
                 c.${c.lastCheckedAt},
                 $overdueFormula overdue,
                 c.tagIds,
+                s.${s.origDelay},
                 s.${s.delay},
                 s.${s.nextAccessInMillis},
                 n.${n.text}
@@ -958,6 +969,7 @@ class DataManager(
                     schedule = CardSchedule(
                         cardId = cardId,
                         updatedAt = updatedAt,
+                        origDelay = it.getString(),
                         delay = it.getString(),
                         nextAccessInMillis = it.getLong(),
                         nextAccessAt = nextAccessAt,

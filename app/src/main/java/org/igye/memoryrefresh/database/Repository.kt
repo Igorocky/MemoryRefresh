@@ -19,7 +19,9 @@ class Repository(
     val cardToTag: CardToTagTable,
     val noteCards: NoteCardsTable
 ) : SQLiteOpenHelper(context, dbName, null, DATABASE_VERSION) {
-    private val allTables = listOf(cards, cardsSchedule, translationCards, translationCardsLog, tags, cardToTag)
+    private val allTables = listOf(
+        cards, cardsSchedule, tags, cardToTag, translationCards, translationCardsLog, noteCards
+    )
 
     override fun onCreate(db: SQLiteDatabase) {
         db.transaction {
@@ -170,6 +172,69 @@ class Repository(
 
     private fun upgradeFromV2ToV3(db: SQLiteDatabase) {
         noteCards.create(db)
+
+        db.execSQL("""
+                ALTER TABLE $cardsSchedule ADD COLUMN ${cardsSchedule.origDelay} text
+        """.trimIndent())
+        db.execSQL("""
+                update $cardsSchedule set ${cardsSchedule.origDelay} = '-' where ${cardsSchedule.origDelay} is null
+        """.trimIndent())
+        recreateTable(
+            db = db,
+            tableName = cardsSchedule.tableName,
+            createTableBody = """ (
+                            ${cardsSchedule.cardId} integer unique references $cards(${cards.id}) on update restrict on delete restrict,
+                            ${cardsSchedule.updatedAt} integer not null,
+                            ${cardsSchedule.origDelay} text not null,
+                            ${cardsSchedule.delay} text not null,
+                            ${cardsSchedule.randomFactor} real not null,
+                            ${cardsSchedule.nextAccessInMillis} integer not null,
+                            ${cardsSchedule.nextAccessAt} integer not null
+                        ) """.trimIndent(),
+            oldColumnNames = listOf(
+                cardsSchedule.cardId,
+                cardsSchedule.updatedAt,
+                cardsSchedule.origDelay,
+                cardsSchedule.delay,
+                cardsSchedule.randomFactor,
+                cardsSchedule.nextAccessInMillis,
+                cardsSchedule.nextAccessAt,
+            )
+        )
+
+
+        db.execSQL("""
+                ALTER TABLE ${cardsSchedule.ver} ADD COLUMN ${cardsSchedule.origDelay} text
+        """.trimIndent())
+        db.execSQL("""
+                update ${cardsSchedule.ver} set ${cardsSchedule.origDelay} = '-' where ${cardsSchedule.origDelay} is null
+        """.trimIndent())
+        recreateTable(
+            db = db,
+            tableName = cardsSchedule.ver.tableName,
+            createTableBody = """ (
+                    ${cardsSchedule.ver.verId} integer primary key autoincrement,
+                    ${cardsSchedule.ver.timestamp} integer not null,
+                    ${cardsSchedule.cardId} integer not null,
+                    ${cardsSchedule.updatedAt} integer not null,
+                    ${cardsSchedule.origDelay} text not null,
+                    ${cardsSchedule.delay} text not null,
+                    ${cardsSchedule.randomFactor} real not null,
+                    ${cardsSchedule.nextAccessInMillis} integer not null,
+                    ${cardsSchedule.nextAccessAt} integer not null
+                ) """.trimIndent(),
+            oldColumnNames = listOf(
+                cardsSchedule.ver.verId,
+                cardsSchedule.ver.timestamp,
+                cardsSchedule.cardId,
+                cardsSchedule.updatedAt,
+                cardsSchedule.origDelay,
+                cardsSchedule.delay,
+                cardsSchedule.randomFactor,
+                cardsSchedule.nextAccessInMillis,
+                cardsSchedule.nextAccessAt,
+            )
+        )
     }
 
     /**

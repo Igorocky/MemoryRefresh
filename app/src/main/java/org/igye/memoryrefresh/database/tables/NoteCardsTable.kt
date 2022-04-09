@@ -8,7 +8,7 @@ import java.time.Clock
 class NoteCardsTable(
     private val clock: Clock,
     private val cards: CardsTable,
-): TableWithVersioning(name = "TRANSLATION_CARDS") {
+): TableWithVersioning(name = "NOTE_CARDS") {
     val cardId = "CARD_ID"
     val text = "TEXT"
 
