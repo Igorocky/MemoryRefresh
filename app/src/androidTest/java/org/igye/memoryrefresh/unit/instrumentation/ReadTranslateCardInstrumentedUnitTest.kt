@@ -68,8 +68,8 @@ class ReadTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
             listOf(c.id to expectedCardId2, c.type to TR_TP, c.createdAt to createTime2, c.paused to 1, c.lastCheckedAt to lastCheckedAt2),
         ))
         insert(repo = repo, table = s, rows = listOf(
-            listOf(s.cardId to expectedCardId1, s.updatedAt to updatedAt1, s.delay to delay1, s.randomFactor to 1.0, s.nextAccessInMillis to nextAccessInMillis1, s.nextAccessAt to nextAccessAt1),
-            listOf(s.cardId to expectedCardId2, s.updatedAt to updatedAt2, s.delay to delay2, s.randomFactor to 1.0, s.nextAccessInMillis to nextAccessInMillis2, s.nextAccessAt to nextAccessAt2),
+            listOf(s.cardId to expectedCardId1, s.updatedAt to updatedAt1, s.origDelay to delay1, s.delay to delay1, s.randomFactor to 1.0, s.nextAccessInMillis to nextAccessInMillis1, s.nextAccessAt to nextAccessAt1),
+            listOf(s.cardId to expectedCardId2, s.updatedAt to updatedAt2, s.origDelay to delay2, s.delay to delay2, s.randomFactor to 1.0, s.nextAccessInMillis to nextAccessInMillis2, s.nextAccessAt to nextAccessAt2),
         ))
         insert(repo = repo, table = t, rows = listOf(
             listOf(t.cardId to expectedCardId1, t.textToTranslate to textToTranslate1, t.translation to translation1),
@@ -145,7 +145,7 @@ class ReadTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
             listOf(c.id to expectedCardId, c.type to TR_TP, c.createdAt to 0, c.lastCheckedAt to 0)
         ))
         insert(repo = repo, table = s, rows = listOf(
-            listOf(s.cardId to expectedCardId, s.updatedAt to 0, s.delay to "1m", s.randomFactor to 1.0, s.nextAccessInMillis to 100, s.nextAccessAt to baseTime + 100)
+            listOf(s.cardId to expectedCardId, s.updatedAt to 0, s.origDelay to "1m", s.delay to "1m", s.randomFactor to 1.0, s.nextAccessInMillis to 100, s.nextAccessAt to baseTime + 100)
         ))
         insert(repo = repo, table = t, rows = listOf(
             listOf(t.cardId to expectedCardId, t.textToTranslate to "0", t.translation to "0")
@@ -171,7 +171,7 @@ class ReadTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
             listOf(c.id to expectedCardId, c.type to TR_TP, c.createdAt to 0, c.lastCheckedAt to 0)
         ))
         insert(repo = repo, table = s, rows = listOf(
-            listOf(s.cardId to expectedCardId, s.updatedAt to 0, s.delay to "1m", s.randomFactor to 1.0, s.nextAccessInMillis to 100, s.nextAccessAt to baseTime + 100)
+            listOf(s.cardId to expectedCardId, s.updatedAt to 0, s.origDelay to "1m", s.delay to "1m", s.randomFactor to 1.0, s.nextAccessInMillis to 100, s.nextAccessAt to baseTime + 100)
         ))
         insert(repo = repo, table = t, rows = listOf(
             listOf(t.cardId to expectedCardId, t.textToTranslate to "0", t.translation to "0")
@@ -211,7 +211,7 @@ class ReadTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
             createCardRecord(cardId = cardIdWithoutOverdue4),
         ))
         fun createScheduleRecord(cardId: Long, nextAccessIn: Int) =
-            listOf(s.cardId to cardId, s.updatedAt to 0, s.delay to "1m", s.randomFactor to 1.0, s.nextAccessInMillis to nextAccessIn, s.nextAccessAt to baseTime + nextAccessIn)
+            listOf(s.cardId to cardId, s.updatedAt to 0, s.origDelay to "1m", s.delay to "1m", s.randomFactor to 1.0, s.nextAccessInMillis to nextAccessIn, s.nextAccessAt to baseTime + nextAccessIn)
         insert(repo = repo, table = s, rows = listOf(
             createScheduleRecord(cardId = cardIdWithoutOverdue1, nextAccessIn = timeElapsed+1_000),
             createScheduleRecord(cardId = cardIdWithLargeOverdue, nextAccessIn = timeElapsed-26_000),
@@ -280,7 +280,7 @@ class ReadTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
             createCardRecord(cardId = cardId5, paused = 0),
         ))
         fun createScheduleRecord(cardId: Long) =
-            listOf(s.cardId to cardId, s.updatedAt to 0, s.delay to "1m", s.randomFactor to 1.0, s.nextAccessInMillis to 1, s.nextAccessAt to 1)
+            listOf(s.cardId to cardId, s.updatedAt to 0, s.origDelay to "1m", s.delay to "1m", s.randomFactor to 1.0, s.nextAccessInMillis to 1, s.nextAccessAt to 1)
         insert(repo = repo, table = s, rows = listOf(
             createScheduleRecord(cardId = cardId1),
             createScheduleRecord(cardId = cardId2),
@@ -326,7 +326,7 @@ class ReadTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
             createCardRecord(cardId = expectedCardId),
         ))
         fun createScheduleRecord(cardId: Long, nextAccessIn: Int) =
-            listOf(s.cardId to cardId, s.updatedAt to 0, s.delay to "1m", s.randomFactor to 1.0, s.nextAccessInMillis to nextAccessIn, s.nextAccessAt to baseTime + nextAccessIn)
+            listOf(s.cardId to cardId, s.updatedAt to 0, s.origDelay to "1m", s.delay to "1m", s.randomFactor to 1.0, s.nextAccessInMillis to nextAccessIn, s.nextAccessAt to baseTime + nextAccessIn)
         insert(repo = repo, table = s, rows = listOf(
             createScheduleRecord(cardId = expectedCardId, nextAccessIn = timeElapsed-1_000),
         ))
@@ -358,7 +358,7 @@ class ReadTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
             createCardRecord(cardId = expectedCardId),
         ))
         fun createScheduleRecord(cardId: Long, nextAccessIn: Int) =
-            listOf(s.cardId to cardId, s.updatedAt to 0, s.delay to "1m", s.randomFactor to 1.0, s.nextAccessInMillis to nextAccessIn, s.nextAccessAt to baseTime + nextAccessIn)
+            listOf(s.cardId to cardId, s.updatedAt to 0, s.origDelay to "1m", s.delay to "1m", s.randomFactor to 1.0, s.nextAccessInMillis to nextAccessIn, s.nextAccessAt to baseTime + nextAccessIn)
         insert(repo = repo, table = s, rows = listOf(
             createScheduleRecord(cardId = expectedCardId, nextAccessIn = (timeElapsed + 2*MILLIS_IN_HOUR + 3*MILLIS_IN_MINUTE + 39*MILLIS_IN_SECOND).toInt()),
         ))
@@ -417,7 +417,7 @@ class ReadTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
             createCardRecord(cardId = cardIdWithoutOverdue4),
         ))
         fun createScheduleRecord(cardId: Long, nextAccessIn: Int) =
-            listOf(s.cardId to cardId, s.updatedAt to 0, s.delay to "1m", s.randomFactor to 1.0, s.nextAccessInMillis to nextAccessIn, s.nextAccessAt to baseTime + nextAccessIn)
+            listOf(s.cardId to cardId, s.updatedAt to 0, s.origDelay to "1m", s.delay to "1m", s.randomFactor to 1.0, s.nextAccessInMillis to nextAccessIn, s.nextAccessAt to baseTime + nextAccessIn)
         insert(repo = repo, table = s, rows = listOf(
             createScheduleRecord(cardId = cardIdWithoutOverdue1, nextAccessIn = timeElapsed+1_000),
             createScheduleRecord(cardId = cardIdWithLargeOverdue, nextAccessIn = timeElapsed-26_000),

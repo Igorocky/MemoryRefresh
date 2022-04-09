@@ -103,6 +103,7 @@ open class InstrumentedTestBase {
             listOf(
                 s.cardId to card.id,
                 s.updatedAt to card.schedule.updatedAt,
+                s.origDelay to card.schedule.origDelay,
                 s.delay to card.schedule.delay,
                 s.randomFactor to 1.0,
                 s.nextAccessInMillis to card.schedule.nextAccessInMillis,
