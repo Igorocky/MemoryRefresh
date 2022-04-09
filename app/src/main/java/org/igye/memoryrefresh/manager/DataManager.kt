@@ -350,7 +350,7 @@ class DataManager(
     @Synchronized
     fun readTranslateCardHistory(args: ReadTranslateCardHistoryArgs): BeRespose<TranslateCardHistResp> {
         return BeRespose(GET_TRANSLATE_CARD_HISTORY) {
-            getRepo().writableDatabase.doInTransaction {
+            getRepo().readableDatabase.doInTransaction {
                 val card: TranslateCard = readTranslateCardById(ReadTranslateCardByIdArgs(cardId = args.cardId)).data!!
                 val cardIdArgs = arrayOf(args.cardId.toString())
                 val validationHistory = ArrayList(select(
@@ -391,40 +391,24 @@ class DataManager(
         "select ${n.ver.verId}, ${n.cardId}, ${n.ver.timestamp}, ${n.text} from ${n.ver} where ${n.cardId} = ? order by ${n.ver.timestamp} desc"
     @BeMethod
     @Synchronized
-    fun readNoteCardHistory(args: ReadNoteCardHistoryArgs): BeRespose<TranslateCardHistResp> {
-        return BeRespose(GET_TRANSLATE_CARD_HISTORY) {
-            getRepo().writableDatabase.doInTransaction {
-                val card: TranslateCard = readTranslateCardById(ReadTranslateCardByIdArgs(cardId = args.cardId)).data!!
+    fun readNoteCardHistory(args: ReadNoteCardHistoryArgs): BeRespose<NoteCardHistResp> {
+        return BeRespose(GET_NOTE_CARD_HISTORY) {
+            getRepo().readableDatabase.doInTransaction {
+                val card: NoteCard = readNoteCardById(ReadNoteCardByIdArgs(cardId = args.cardId)).data!!
                 val cardIdArgs = arrayOf(args.cardId.toString())
-                val validationHistory = ArrayList(select(
-                    query = getValidationHistoryQuery,
+                val dataHistory: ArrayList<NoteCardHistRecord> = ArrayList(select(
+                    query = getNoteCardDataHistoryQuery,
                     args = cardIdArgs,
                     rowMapper = {
-                        TranslateCardValidationHistRecord(
-                            recId = it.getLong(),
-                            cardId = it.getLong(),
-                            timestamp = it.getLong(),
-                            actualDelay = "",
-                            translation = it.getString(),
-                            isCorrect = it.getLong() == 1L,
-                        )
-                    }
-                ).rows)
-                val dataHistory: ArrayList<TranslateCardHistRecord> = ArrayList(select(
-                    query = getDataHistoryQuery,
-                    args = cardIdArgs,
-                    rowMapper = {
-                        TranslateCardHistRecord(
+                        NoteCardHistRecord(
                             verId = it.getLong(),
                             cardId = it.getLong(),
                             timestamp = it.getLong(),
-                            textToTranslate = it.getString(),
-                            translation = it.getString(),
-                            validationHistory = ArrayList()
+                            text = it.getString(),
                         )
                     }
                 ).rows)
-                prepareTranslateCardHistResp(card, dataHistory, validationHistory)
+                prepareNoteCardHistResp(card, dataHistory)
             }
         }
     }
@@ -474,6 +458,47 @@ class DataManager(
         }
     }
 
+    data class SelectTopOverdueNoteCardsArgs(
+        val tagIdsToInclude: Set<Long>? = null,
+        val tagIdsToExclude: Set<Long>? = null,
+        val rowsLimit: Long = 100,
+    )
+    @BeMethod
+    @Synchronized
+    fun selectTopOverdueNoteCards(args: SelectTopOverdueNoteCardsArgs = SelectTopOverdueNoteCardsArgs()): BeRespose<ReadTopOverdueNoteCardsResp> {
+        val filterArgs = ReadNoteCardsByFilterArgs(
+            paused = false,
+            overdueGreaterEq = 0.0,
+            tagIdsToInclude = args.tagIdsToInclude,
+            tagIdsToExclude = args.tagIdsToExclude,
+            sortBy = TranslateCardSortBy.OVERDUE,
+            sortDir = SortDirection.DESC,
+            rowsLimit = args.rowsLimit
+        )
+        return BeRespose(READ_TOP_OVERDUE_NOTE_CARDS) {
+            val overdueCards = readNoteCardsByFilterInner(filterArgs).cards
+            if (overdueCards.isEmpty()) {
+                val waitingCards = readNoteCardsByFilterInner(
+                    filterArgs.copy(
+                        overdueGreaterEq = null,
+                        rowsLimit = 1,
+                        sortBy = TranslateCardSortBy.NEXT_ACCESS_AT,
+                        sortDir = SortDirection.ASC
+                    )
+                ).cards
+                if (waitingCards.isEmpty()) {
+                    ReadTopOverdueNoteCardsResp()
+                } else {
+                    ReadTopOverdueNoteCardsResp(
+                        nextCardIn = Utils.millisToDurationStr(waitingCards[0].schedule.nextAccessAt - clock.instant().toEpochMilli())
+                    )
+                }
+            } else {
+                ReadTopOverdueNoteCardsResp(cards = overdueCards)
+            }
+        }
+    }
+
     data class UpdateTranslateCardArgs(
         val cardId:Long,
         val paused: Boolean? = null,
@@ -508,6 +533,41 @@ class DataManager(
                 }
                 if (newTextToTranslate != existingTextToTranslate || newTranslation != existingTranslation) {
                     repo.translationCards.update(cardId = args.cardId, textToTranslate = newTextToTranslate, translation = newTranslation)
+                }
+            }
+        }
+    }
+
+    data class UpdateNoteCardArgs(
+        val cardId:Long,
+        val paused: Boolean? = null,
+        val delay: String? = null,
+        val recalculateDelay: Boolean = false,
+        val tagIds: Set<Long>? = null,
+        val text:String? = null,
+    )
+    private val updateNoteCardQuery = "select ${n.text} from $n where ${n.cardId} = ?"
+    private val updateNoteCardQueryColumnNames = arrayOf(n.text)
+    @BeMethod
+    @Synchronized
+    fun updateNoteCard(args: UpdateNoteCardArgs): BeRespose<Unit> {
+        return BeRespose(UPDATE_NOTE_CARD_EXCEPTION) {
+            val repo = getRepo()
+            repo.writableDatabase.doInTransaction {
+                updateCard(cardId = args.cardId, delay = args.delay, recalculateDelay = args.recalculateDelay, tagIds = args.tagIds, paused = args.paused)
+                val existingText: String = select(
+                    query = updateNoteCardQuery,
+                    args = arrayOf(args.cardId.toString()),
+                    columnNames = updateNoteCardQueryColumnNames,
+                ) {
+                    it.getString()
+                }.rows[0]
+                val newText = args.text?.trim()?:existingText
+                if (newText.isEmpty()) {
+                    throw MemoryRefreshException(errCode = UPDATE_NOTE_CARD_TEXT_IS_EMPTY, msg = "Text should not be empty.")
+                }
+                if (newText != existingText) {
+                    repo.noteCards.update(cardId = args.cardId, text = newText)
                 }
             }
         }
@@ -804,6 +864,7 @@ class DataManager(
                         group_concat(ctg.${ctg.tagId}) as tagIds
                     from $c c left join $ctg ctg on c.${c.id} = ctg.${ctg.cardId}
                         ${if (leastUsedTagId == null) "" else "inner join $ctg tg_incl on c.${c.id} = tg_incl.${ctg.cardId} and tg_incl.${ctg.tagId} = $leastUsedTagId"}
+                    where c.${c.type} = ${CardType.TRANSLATION.intValue}
                     group by c.${c.id}
                     ${if (havingFilters.isEmpty()) "" else havingFilters.joinToString(prefix = "having ", separator = " and ")}
                 ) c
@@ -943,6 +1004,7 @@ class DataManager(
                         group_concat(ctg.${ctg.tagId}) as tagIds
                     from $c c left join $ctg ctg on c.${c.id} = ctg.${ctg.cardId}
                         ${if (leastUsedTagId == null) "" else "inner join $ctg tg_incl on c.${c.id} = tg_incl.${ctg.cardId} and tg_incl.${ctg.tagId} = $leastUsedTagId"}
+                    where c.${c.type} = ${CardType.NOTE.intValue}
                     group by c.${c.id}
                     ${if (havingFilters.isEmpty()) "" else havingFilters.joinToString(prefix = "having ", separator = " and ")}
                 ) c
@@ -1021,6 +1083,30 @@ class DataManager(
             dataHistory[dataIdx].validationHistory.add(validation)
         }
         return TranslateCardHistResp(
+            isHistoryFull = true,
+            dataHistory = dataHistory
+        )
+    }
+
+    private fun prepareNoteCardHistResp(
+        card: NoteCard,
+        dataHistory: MutableList<NoteCardHistRecord>,
+    ): NoteCardHistResp {
+        dataHistory.add(0, NoteCardHistRecord(
+            verId = -1,
+            cardId = card.id,
+            timestamp = if (dataHistory.isEmpty()) card.createdAt else dataHistory[0].timestamp,
+            text = card.text,
+        ))
+        for (i in 1 .. dataHistory.size-2) {
+            val dataHistRec = dataHistory.removeAt(i)
+            dataHistory.add(i, dataHistRec.copy(timestamp = dataHistory[i].timestamp))
+        }
+        if (dataHistory.isNotEmpty()) {
+            val lastDataHistRec = dataHistory.removeLast()
+            dataHistory.add(lastDataHistRec.copy(timestamp = card.createdAt))
+        }
+        return NoteCardHistResp(
             isHistoryFull = true,
             dataHistory = dataHistory
         )
