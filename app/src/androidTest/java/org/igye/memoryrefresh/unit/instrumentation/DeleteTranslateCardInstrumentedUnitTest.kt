@@ -42,7 +42,7 @@ class DeleteTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
 
         assertTableContent(repo = repo, table = s, matchColumn = s.cardId, expectedRows = listOf())
         assertTableContent(repo = repo, table = s.ver, expectedRows = listOf(
-            listOf(s.ver.timestamp to timeDeleted, s.cardId to cardId, s.delay to "1s", s.nextAccessInMillis to 1000L, s.nextAccessAt to timeCreated+1000)
+            listOf(s.ver.timestamp to timeDeleted, s.cardId to cardId, s.origDelay to "1s", s.delay to "1s", s.nextAccessInMillis to 1000L, s.nextAccessAt to timeCreated+1000)
         ))
 
         assertTableContent(repo = repo, table = l, expectedRows = listOf())

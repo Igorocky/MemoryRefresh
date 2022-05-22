@@ -29,6 +29,7 @@ class CreateTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
         //then
         assertEquals(expectedTextToTranslate, translateCard.textToTranslate)
         assertEquals(expectedTranslation, translateCard.translation)
+        assertEquals("1s", translateCard.schedule.origDelay)
         assertEquals("1s", translateCard.schedule.delay)
         assertEquals(1000, translateCard.schedule.nextAccessInMillis)
         assertEquals(time1+1000, translateCard.schedule.nextAccessAt)
@@ -77,6 +78,7 @@ class CreateTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
         //then
         assertEquals(expectedTextToTranslate, translateCard.textToTranslate)
         assertEquals(expectedTranslation, translateCard.translation)
+        assertEquals("1s", translateCard.schedule.origDelay)
         assertEquals("1s", translateCard.schedule.delay)
         assertEquals(1000, translateCard.schedule.nextAccessInMillis)
         assertEquals(time1+1000, translateCard.schedule.nextAccessAt)

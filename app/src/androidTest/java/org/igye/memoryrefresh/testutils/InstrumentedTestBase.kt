@@ -111,6 +111,7 @@ open class InstrumentedTestBase {
             listOf(
                 s.cardId to card.id,
                 s.updatedAt to card.schedule.updatedAt,
+                s.origDelay to card.schedule.origDelay,
                 s.delay to card.schedule.delay,
                 s.randomFactor to 1.0,
                 s.nextAccessInMillis to card.schedule.nextAccessInMillis,
@@ -143,6 +144,7 @@ open class InstrumentedTestBase {
                 schedule = CardSchedule(
                     cardId = cardId,
                     updatedAt = updatedAt,
+                    origDelay = "orig-delay-" + cardId,
                     delay = "delay-" + cardId,
                     nextAccessInMillis = nextAccessInMillis,
                     nextAccessAt = updatedAt + nextAccessInMillis,
@@ -183,6 +185,7 @@ open class InstrumentedTestBase {
 
         assertEquals("doesn't match: schedule.cardId", expected.schedule.cardId, actual.schedule.cardId)
         assertEquals("doesn't match: schedule.updatedAt", expected.schedule.updatedAt, actual.schedule.updatedAt)
+        assertEquals("doesn't match: schedule.origDelay", expected.schedule.origDelay, actual.schedule.origDelay)
         assertEquals("doesn't match: schedule.delay", expected.schedule.delay, actual.schedule.delay)
         assertEquals("doesn't match: schedule.nextAccessInMillis", expected.schedule.nextAccessInMillis, actual.schedule.nextAccessInMillis)
         assertEquals("doesn't match: schedule.nextAccessAt", expected.schedule.nextAccessAt, actual.schedule.nextAccessAt)

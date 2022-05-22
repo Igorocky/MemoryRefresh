@@ -825,7 +825,7 @@ class DataManagerInstrumentedIntTest: InstrumentedTestBase() {
             listOf(c.id to cardId, c.type to TR_TP, c.createdAt to 0)
         ))
         insert(repo = repo, table = s, rows = listOf(
-            listOf(s.cardId to cardId, s.updatedAt to 0, s.delay to "0s", s.randomFactor to 1.0, s.nextAccessInMillis to 0, s.nextAccessAt to 0)
+            listOf(s.cardId to cardId, s.updatedAt to 0, s.origDelay to "0s", s.delay to "0s", s.randomFactor to 1.0, s.nextAccessInMillis to 0, s.nextAccessAt to 0)
         ))
         insert(repo = repo, table = t, rows = listOf(
             listOf(t.cardId to cardId, t.textToTranslate to "A", t.translation to "B", t.direction to NATIVE_FOREIGN)

@@ -1,7 +1,6 @@
 package org.igye.memoryrefresh.unit.instrumentation
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import org.igye.memoryrefresh.common.Utils
 import org.igye.memoryrefresh.common.Utils.MILLIS_IN_DAY
 import org.igye.memoryrefresh.database.TranslationCardDirection.FOREIGN_NATIVE
 import org.igye.memoryrefresh.database.TranslationCardDirection.NATIVE_FOREIGN
@@ -251,10 +250,10 @@ class UpdateTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
         assertTableContent(repo = repo, table = s, expectedRows = listOf(
             listOf(s.cardId to existingCardId1, s.updatedAt to createTime, s.delay to "1s"),
             listOf(s.cardId to existingCardId2, s.updatedAt to createTime, s.delay to "1s"),
-            listOf(s.cardId to cardId, s.updatedAt to updateTime, s.delay to "5m"),
+            listOf(s.cardId to cardId, s.updatedAt to updateTime, s.origDelay to "5m", s.delay to "5m"),
         ))
         assertTableContent(repo = repo, table = s.ver, expectedRows = listOf(
-            listOf(s.cardId to cardId, s.ver.timestamp to updateTime, s.cardId to cardId, s.updatedAt to createTime, s.delay to "1s"),
+            listOf(s.cardId to cardId, s.ver.timestamp to updateTime, s.cardId to cardId, s.updatedAt to createTime, s.origDelay to "1s", s.delay to "1s"),
         ))
 
         assertTableContent(repo = repo, table = ctg, expectedRows = listOf(
@@ -296,7 +295,7 @@ class UpdateTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
         assertTableContent(repo = repo, table = c.ver, expectedRows = listOf())
 
         assertTableContent(repo = repo, table = s, expectedRows = listOf(
-            listOf(s.cardId to cardId, s.updatedAt to preUpdateTime, s.delay to delayBeforeUpdate),
+            listOf(s.cardId to cardId, s.updatedAt to preUpdateTime, s.origDelay to delayBeforeUpdate, s.delay to delayBeforeUpdate),
         ))
         assertTableContent(repo = repo, table = s.ver, expectedRows = listOf(
             listOf(s.cardId to cardId, s.updatedAt to createTime, s.delay to "1s"),
@@ -335,7 +334,7 @@ class UpdateTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
         assertTableContent(repo = repo, table = c.ver, expectedRows = listOf())
 
         assertTableContent(repo = repo, table = s, expectedRows = listOf(
-            listOf(s.cardId to cardId, s.updatedAt to preUpdateTime, s.delay to delayBeforeUpdate),
+            listOf(s.cardId to cardId, s.updatedAt to preUpdateTime, s.origDelay to delayBeforeUpdate, s.delay to delayBeforeUpdate),
         ))
         assertTableContent(repo = repo, table = s.ver, expectedRows = listOf(
             listOf(s.cardId to cardId, s.updatedAt to createTime, s.delay to "1s"),
@@ -362,11 +361,11 @@ class UpdateTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
         val rnd1 = repo.readableDatabase.select("select ${s.randomFactor} from $s where ${s.cardId} = $cardId") { it.getDouble() }.rows[0]
 
         assertTableContent(repo = repo, table = s, expectedRows = listOf(
-            listOf(s.cardId to cardId, s.updatedAt to preUpdateTime, s.delay to "4d",
-                s.nextAccessInMillis to (rnd1*4*Utils.MILLIS_IN_DAY).toLong(), s.nextAccessAt to preUpdateTime+(rnd1*4*Utils.MILLIS_IN_DAY).toLong()),
+            listOf(s.cardId to cardId, s.updatedAt to preUpdateTime, s.origDelay to "4d", s.delay to "4d",
+                s.nextAccessInMillis to (rnd1*4*MILLIS_IN_DAY).toLong(), s.nextAccessAt to preUpdateTime+(rnd1*4*MILLIS_IN_DAY).toLong()),
         ))
         assertTableContent(repo = repo, table = s.ver, expectedRows = listOf(
-            listOf(s.cardId to cardId, s.updatedAt to createTime, s.delay to "1s",
+            listOf(s.cardId to cardId, s.updatedAt to createTime, s.origDelay to "1s", s.delay to "1s",
                 s.nextAccessInMillis to 1000, s.nextAccessAt to createTime+1000),
         ))
 
@@ -376,18 +375,18 @@ class UpdateTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
 
         //then
         val rnd2 = repo.readableDatabase.select("select ${s.randomFactor} from $s where ${s.cardId} = $cardId") { it.getDouble() }.rows[0]
-        val expectedDelayMillis = 10*Utils.MILLIS_IN_DAY
+        val expectedDelayMillis = 10* MILLIS_IN_DAY
         assertTableContent(repo = repo, table = s, expectedRows = listOf(
             listOf(s.cardId to cardId, s.updatedAt to updateTime, s.randomFactor to rnd2,
-                s.delay to "10d",
+                s.origDelay to "x2.5", s.delay to "10d",
                 s.nextAccessInMillis to (expectedDelayMillis*rnd2).toLong(),
                 s.nextAccessAt to updateTime+(expectedDelayMillis*rnd2).toLong()),
         ))
         assertTableContent(repo = repo, table = s.ver, expectedRows = listOf(
-            listOf(s.cardId to cardId, s.updatedAt to createTime, s.delay to "1s",
+            listOf(s.cardId to cardId, s.updatedAt to createTime, s.origDelay to "1s", s.delay to "1s",
                 s.nextAccessInMillis to 1000, s.nextAccessAt to createTime+1000),
-            listOf(s.cardId to cardId, s.updatedAt to preUpdateTime, s.delay to "4d",
-                s.nextAccessInMillis to (rnd1*4*Utils.MILLIS_IN_DAY).toLong(), s.nextAccessAt to preUpdateTime+(rnd1*4*Utils.MILLIS_IN_DAY).toLong()),
+            listOf(s.cardId to cardId, s.updatedAt to preUpdateTime, s.origDelay to "4d", s.delay to "4d",
+                s.nextAccessInMillis to (rnd1*4* MILLIS_IN_DAY).toLong(), s.nextAccessAt to preUpdateTime+(rnd1*4* MILLIS_IN_DAY).toLong()),
         ))
     }
 
@@ -507,20 +506,27 @@ class UpdateTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
 
         val delay = "100d"
         dm.updateTranslateCard(UpdateTranslateCardArgs(cardId = cardId, delay = delay, recalculateDelay = true))
-        val nextAccessInMillis1 = dm.readTranslateCardById(ReadTranslateCardByIdArgs(cardId = cardId)).data!!.schedule.nextAccessInMillis
+        val translateCardAfterUpdate1 = dm.readTranslateCardById(ReadTranslateCardByIdArgs(cardId = cardId)).data
+        val nextAccessInMillis1 = translateCardAfterUpdate1!!.schedule.nextAccessInMillis
         assertTrue(100*MILLIS_IN_DAY*0.85 <= nextAccessInMillis1 && nextAccessInMillis1 <= 100*MILLIS_IN_DAY*1.15)
+        assertEquals("100d", translateCardAfterUpdate1.schedule.origDelay)
 
         dm.updateTranslateCard(UpdateTranslateCardArgs(cardId = cardId, delay = delay, recalculateDelay = true))
-        val nextAccessInMillis2 = dm.readTranslateCardById(ReadTranslateCardByIdArgs(cardId = cardId)).data!!.schedule.nextAccessInMillis
+        val translateCardAfterUpdate2 = dm.readTranslateCardById(ReadTranslateCardByIdArgs(cardId = cardId)).data
+        val nextAccessInMillis2 = translateCardAfterUpdate2!!.schedule.nextAccessInMillis
         assertTrue(100*MILLIS_IN_DAY*0.85 <= nextAccessInMillis2 && nextAccessInMillis2 <= 100*MILLIS_IN_DAY*1.15)
+        assertEquals("100d", translateCardAfterUpdate2.schedule.origDelay)
 
         //when
         sm.updateMaxDelay(SettingsManager.UpdateMaxDelayArgs("30d"))
         dm.updateTranslateCard(UpdateTranslateCardArgs(cardId = cardId, delay = delay, recalculateDelay = true))
 
         //then
-        val nextAccessInMillis3 = dm.readTranslateCardById(ReadTranslateCardByIdArgs(cardId = cardId)).data!!.schedule.nextAccessInMillis
+        val translateCardWithAutoCorrectedDelay =
+            dm.readTranslateCardById(ReadTranslateCardByIdArgs(cardId = cardId)).data!!
+        val nextAccessInMillis3 = translateCardWithAutoCorrectedDelay.schedule.nextAccessInMillis
         assertTrue(30*MILLIS_IN_DAY*0.9 <= nextAccessInMillis3 && nextAccessInMillis3 <= 30*MILLIS_IN_DAY)
+        assertEquals("100d,max=30d", translateCardWithAutoCorrectedDelay.schedule.origDelay)
     }
 
     @Test
