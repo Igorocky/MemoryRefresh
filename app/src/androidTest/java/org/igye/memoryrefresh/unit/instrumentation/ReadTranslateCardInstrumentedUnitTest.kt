@@ -125,8 +125,20 @@ class ReadTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
     }
 
     @Test
-    fun TODO_readTranslateCardById_returns_empty_collection_of_tag_ids_if_card_doesnt_have_tags() {
-        TODO()
+    fun readTranslateCardById_returns_empty_collection_of_tag_ids_if_card_doesnt_have_tags() {
+        //given
+        val tagId1 = dm.createTag(CreateTagArgs("t1")).data!!
+        val tagId2 = dm.createTag(CreateTagArgs("t2")).data!!
+        val tagId3 = dm.createTag(CreateTagArgs("t3")).data!!
+        val cardId = dm.createTranslateCard(CreateTranslateCardArgs(
+            textToTranslate = "a", translation = "b", tagIds = setOf(), direction = NATIVE_FOREIGN
+        )).data!!
+
+        //when
+        val actualCard = dm.readTranslateCardById(ReadTranslateCardByIdArgs(cardId = cardId)).data!!
+
+        //then
+        assertEquals(0, actualCard.tagIds.size)
     }
 
     @Test
@@ -257,8 +269,55 @@ class ReadTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
     }
 
     @Test
-    fun TODO_selectTopOverdueCards_doesnt_return_paused_cards() {
-        TODO()
+    fun selectTopOverdueCards_doesnt_return_paused_cards() {
+        //given
+        val cardId1 = 1L
+        val cardId2 = 2L
+        val cardId3 = 3L
+        val cardId4 = 4L
+        val cardId5 = 5L
+        fun createCardRecord(cardId: Long, paused: Int) = listOf(c.id to cardId, c.paused to paused, c.type to TR_TP, c.createdAt to 0, c.lastCheckedAt to 0)
+        insert(repo = repo, table = c, rows = listOf(
+            createCardRecord(cardId = cardId1, paused = 0),
+            createCardRecord(cardId = cardId2, paused = 1),
+            createCardRecord(cardId = cardId3, paused = 0),
+            createCardRecord(cardId = cardId4, paused = 1),
+            createCardRecord(cardId = cardId5, paused = 0),
+        ))
+        fun createScheduleRecord(cardId: Long) =
+            listOf(s.cardId to cardId, s.updatedAt to 0, s.delay to "1m", s.randomFactor to 1.0, s.nextAccessInMillis to 1, s.nextAccessAt to 1)
+        insert(repo = repo, table = s, rows = listOf(
+            createScheduleRecord(cardId = cardId1),
+            createScheduleRecord(cardId = cardId2),
+            createScheduleRecord(cardId = cardId3),
+            createScheduleRecord(cardId = cardId4),
+            createScheduleRecord(cardId = cardId5),
+        ))
+        fun createTranslationRecord(cardId: Long) =
+            listOf(t.cardId to cardId, t.textToTranslate to "0", t.translation to "0", t.direction to FOREIGN_NATIVE)
+        insert(repo = repo, table = t, rows = listOf(
+            createTranslationRecord(cardId = cardId1),
+            createTranslationRecord(cardId = cardId2),
+            createTranslationRecord(cardId = cardId3),
+            createTranslationRecord(cardId = cardId4),
+            createTranslationRecord(cardId = cardId5),
+        ))
+
+        //when
+        testClock.setFixedTime(1000)
+        val actualTopOverdueCards = dm.selectTopOverdueTranslateCards().data!!
+
+        //then
+        val actualOverdue = actualTopOverdueCards.cards
+        assertEquals(3, actualOverdue.size)
+
+        val actualIds = actualOverdue.map { it.id }.toSet()
+        assertTrue(actualIds.contains(cardId1))
+        assertTrue(actualIds.contains(cardId3))
+        assertTrue(actualIds.contains(cardId5))
+
+        assertFalse(actualIds.contains(cardId2))
+        assertFalse(actualIds.contains(cardId4))
     }
 
     @Test
@@ -395,11 +454,6 @@ class ReadTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
         val nextCard = cardToRepeatResp.cards[0]
         assertEquals(cardIdWithLargeOverdue, nextCard.id)
         assertEquals(4, cardToRepeatResp.cards.size)
-    }
-
-    @Test
-    fun TODO_getNextCardToRepeat_doesnt_return_paused_cards() {
-        TODO()
     }
 
     @Test

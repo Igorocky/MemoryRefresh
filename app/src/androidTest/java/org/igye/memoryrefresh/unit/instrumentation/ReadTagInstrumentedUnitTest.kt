@@ -1,6 +1,7 @@
 package org.igye.memoryrefresh.unit.instrumentation
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import org.igye.memoryrefresh.dto.domain.Tag
 import org.igye.memoryrefresh.testutils.InstrumentedTestBase
 import org.junit.Assert
 import org.junit.Test
@@ -29,8 +30,26 @@ class ReadTagInstrumentedUnitTest: InstrumentedTestBase() {
     }
 
     @Test
-    fun TODO_readAllTags_returns_tags_ordered_by_name() {
-        TODO()
+    fun readAllTags_returns_tags_ordered_by_name() {
+        //given
+        insert(repo = repo, table = tg, listOf(
+            listOf(tg.id to 5, tg.name to "A", tg.createdAt to 0),
+            listOf(tg.id to 4, tg.name to "C", tg.createdAt to 0),
+            listOf(tg.id to 3, tg.name to "B", tg.createdAt to 0),
+            listOf(tg.id to 2, tg.name to "E", tg.createdAt to 0),
+            listOf(tg.id to 1, tg.name to "D", tg.createdAt to 0),
+        ))
+
+        //when
+        val allTags: List<Tag> = dm.readAllTags().data!!
+
+        //then
+        Assert.assertEquals(5, allTags.size)
+        Assert.assertEquals("A", allTags[0].name)
+        Assert.assertEquals("B", allTags[1].name)
+        Assert.assertEquals("C", allTags[2].name)
+        Assert.assertEquals("D", allTags[3].name)
+        Assert.assertEquals("E", allTags[4].name)
     }
 
     @Test
