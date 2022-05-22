@@ -132,9 +132,9 @@ object Tools {
         val appBuildGradleFile = File("./app/build.gradle")
         var newVersion: String? = null
         replace(
-            appBuildGradleFile,
-            compile("versionCode (\\d+)|versionName \"(\\d+)\\.(\\d+)\""),
-            appBuildGradleFile
+            srcFile = appBuildGradleFile,
+            pattern = compile("versionCode (\\d+)|versionName \"(\\d+)\\.(\\d+)\""),
+            dstFile = appBuildGradleFile
         ) { matcher ->
             if (matcher.group().startsWith("versionCode ")) {
                 "versionCode ${matcher.group(1).toLong()+1}"
@@ -147,9 +147,21 @@ object Tools {
         }
         if (newVersion == null) {
             throw RuntimeException("Failed to increase project version.")
-        } else {
-            return newVersion!!
         }
+        val appContainerFile = File("./app/src/main/java/org/igye/memoryrefresh/config/AppContainer.kt")
+        var numOfMatches = 0
+        replace(
+            srcFile = appContainerFile,
+            pattern = compile("private val appVersion = \"([\\d\\.]+)\""),
+            dstFile = appContainerFile
+        ) { matcher ->
+            numOfMatches++
+            "private val appVersion = \"$newVersion\""
+        }
+        if (numOfMatches != 1) {
+            throw RuntimeException("Failed to increase project version in AppContainer.")
+        }
+        return newVersion!!
     }
 
     private fun replace(srcFile: File, pattern: Pattern, dstFile: File, replacement: (Matcher) -> String?) {
