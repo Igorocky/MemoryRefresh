@@ -4,6 +4,7 @@ const TagSelector = ({allTags, selectedTags, onTagSelected, onTagRemoved, label,
 
     const [filterText, setFilterText] = useState('')
     let selectedTagIds = selectedTags.map(t=>t.id)
+    const filterTextFieldRef = useRef(null)
 
     function renderSelectedTags() {
         return RE.Fragment({},
@@ -12,7 +13,10 @@ const TagSelector = ({allTags, selectedTags, onTagSelected, onTagRemoved, label,
                 key:tag.id,
                 variant:'outlined',
                 size:'small',
-                onDelete: () => onTagRemoved(tag),
+                onDelete: () => {
+                    onTagRemoved(tag)
+                    focusFilterText()
+                },
                 label: tag.name,
                 color:color??'default',
             }))
@@ -29,11 +33,17 @@ const TagSelector = ({allTags, selectedTags, onTagSelected, onTagRemoved, label,
     }
 
     const filteredTags = getFilteredTags()
+    useEffect(() => {
+        if (IS_IN_WEBVIEW && filteredTags.length === 1 && filterText.length !== 0) {
+            selectTag(filteredTags[0])
+        }
+    }, [filteredTags.length])
 
     function renderTagFilter() {
         if (allTags?.length) {
             return textField(
                 {
+                    ref: filterTextFieldRef,
                     variant: 'outlined',
                     style: {width: 200},
                     size: 'small',
@@ -51,8 +61,15 @@ const TagSelector = ({allTags, selectedTags, onTagSelected, onTagRemoved, label,
         }
     }
 
+    function focusFilterText() {
+        if (filterTextFieldRef.current) {
+            filterTextFieldRef.current.getElementsByTagName('input')[0].focus()
+        }
+    }
+
     function selectTag(tag) {
         setFilterText('')
+        focusFilterText()
         onTagSelected(tag)
     }
 
