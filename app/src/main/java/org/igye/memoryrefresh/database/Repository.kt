@@ -6,6 +6,8 @@ import android.database.sqlite.SQLiteOpenHelper
 import androidx.core.database.sqlite.transaction
 import org.igye.memoryrefresh.ErrorCode
 import org.igye.memoryrefresh.common.MemoryRefreshException
+import org.igye.memoryrefresh.database.TranslationCardDirection.FOREIGN_NATIVE
+import org.igye.memoryrefresh.database.TranslationCardDirection.NATIVE_FOREIGN
 import org.igye.memoryrefresh.database.tables.*
 
 class Repository(
@@ -60,6 +62,8 @@ class Repository(
     private fun incVersion(db: SQLiteDatabase, oldVersion: Int) {
         if (oldVersion == 1) {
             upgradeFromV1ToV2(db)
+        } else if (oldVersion == 2) {
+            upgradeFromV2ToV3(db)
         } else {
             throw MemoryRefreshException(
                 msg = "Upgrade for a database of version $oldVersion is not implemented.",
@@ -163,6 +167,56 @@ class Repository(
             )
         )
 
+    }
+
+    private fun upgradeFromV2ToV3(db: SQLiteDatabase) {
+        db.execSQL("""
+                ALTER TABLE ${translationCards.ver} ADD COLUMN ${translationCards.direction} integer not null check (${translationCards.direction} in (${FOREIGN_NATIVE.intValue}, ${NATIVE_FOREIGN.intValue})) default ${NATIVE_FOREIGN.intValue}
+        """.trimIndent())
+
+        recreateTable(
+            db = db,
+            tableName = translationCards.ver.tableName,
+            createTableBody = """ (
+                    ${translationCards.ver.verId} integer primary key autoincrement,
+                    ${translationCards.ver.timestamp} integer not null,
+                    ${translationCards.cardId} integer not null,
+                    ${translationCards.textToTranslate} text not null,
+                    ${translationCards.translation} text not null,
+                    ${translationCards.direction} integer not null check (${translationCards.direction} in (${FOREIGN_NATIVE.intValue}, ${NATIVE_FOREIGN.intValue})),
+                    ${translationCards.reversedCardId} integer
+                ) """.trimIndent(),
+            oldColumnNames = listOf(
+                translationCards.ver.verId,
+                translationCards.ver.timestamp,
+                translationCards.cardId,
+                translationCards.textToTranslate,
+                translationCards.translation,
+                translationCards.direction,
+            )
+        )
+
+        db.execSQL("""
+                ALTER TABLE ${translationCards} ADD COLUMN ${translationCards.direction} integer not null check (${translationCards.direction} in (${FOREIGN_NATIVE.intValue}, ${NATIVE_FOREIGN.intValue})) default ${NATIVE_FOREIGN.intValue}
+        """.trimIndent())
+
+        recreateTable(
+            db = db,
+            tableName = translationCards.tableName,
+            createTableBody = """ (
+                    ${translationCards.cardId} integer unique references ${cards}(${cards.id}) on update restrict on delete restrict,
+                    ${translationCards.textToTranslate} text not null,
+                    ${translationCards.translation} text not null,
+                    ${translationCards.direction} integer not null check (${translationCards.direction} in (${FOREIGN_NATIVE.intValue}, ${NATIVE_FOREIGN.intValue})),
+                    ${translationCards.reversedCardId} integer references ${cards}(${cards.id}) on update set null on delete set null
+                ) """.trimIndent(),
+            oldColumnNames = listOf(
+                translationCards.cardId,
+                translationCards.textToTranslate,
+                translationCards.translation,
+                translationCards.direction,
+            )
+        )
     }
 
     /**

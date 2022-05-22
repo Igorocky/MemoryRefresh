@@ -1,10 +1,12 @@
 package org.igye.memoryrefresh.unit.instrumentation
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import org.igye.memoryrefresh.database.TranslationCardDirection.FOREIGN_NATIVE
 import org.igye.memoryrefresh.manager.DataManager.CreateTranslateCardArgs
 import org.igye.memoryrefresh.manager.DataManager.DeleteTranslateCardArgs
 import org.igye.memoryrefresh.testutils.InstrumentedTestBase
-import org.junit.Assert.*
+import org.junit.Assert.assertNotEquals
+import org.junit.Assert.assertNotNull
 import org.junit.Test
 import org.junit.runner.RunWith
 
@@ -18,7 +20,7 @@ class DeleteTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
         val expectedTranslation = "a"
         val timeCreated = testClock.currentMillis()
         val cardId = dm.createTranslateCard(
-            CreateTranslateCardArgs(textToTranslate = expectedTextToTranslate, translation = expectedTranslation)
+            CreateTranslateCardArgs(textToTranslate = expectedTextToTranslate, translation = expectedTranslation, direction = FOREIGN_NATIVE)
         ).data!!
 
         //when
@@ -55,7 +57,7 @@ class DeleteTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
         val expectedTranslation2 = "b"
         val timeCreated1 = testClock.currentMillis()
         val cardId1 = dm.createTranslateCard(
-            CreateTranslateCardArgs(textToTranslate = expectedTextToTranslate1, translation = expectedTranslation1)
+            CreateTranslateCardArgs(textToTranslate = expectedTextToTranslate1, translation = expectedTranslation1, direction = FOREIGN_NATIVE)
         ).data!!
         val timeDeleted1 = testClock.plus(1000)
         dm.deleteTranslateCard(DeleteTranslateCardArgs(cardId = cardId1))
@@ -63,7 +65,7 @@ class DeleteTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
         //when
         val timeCreated2 = testClock.plus(1000)
         val cardId2 = dm.createTranslateCard(
-            CreateTranslateCardArgs(textToTranslate = expectedTextToTranslate2, translation = expectedTranslation2)
+            CreateTranslateCardArgs(textToTranslate = expectedTextToTranslate2, translation = expectedTranslation2, direction = FOREIGN_NATIVE)
         ).data!!
 
         //then

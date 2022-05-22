@@ -1,6 +1,7 @@
 package org.igye.memoryrefresh.unit.instrumentation
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import org.igye.memoryrefresh.database.TranslationCardDirection.FOREIGN_NATIVE
 import org.igye.memoryrefresh.manager.DataManager.*
 import org.igye.memoryrefresh.testutils.InstrumentedTestBase
 import org.junit.Assert.assertEquals
@@ -19,7 +20,7 @@ class CreateTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
 
         //when
         val translateCardId = dm.createTranslateCard(
-            CreateTranslateCardArgs(textToTranslate = " $expectedTextToTranslate\t", translation = "  \t$expectedTranslation    \t  ")
+            CreateTranslateCardArgs(textToTranslate = " $expectedTextToTranslate\t", translation = "  \t$expectedTranslation    \t  ", direction = FOREIGN_NATIVE)
         ).data!!
         val translateCard = dm.readTranslateCardById(ReadTranslateCardByIdArgs(cardId = translateCardId)).data!!
 
@@ -65,7 +66,8 @@ class CreateTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
             CreateTranslateCardArgs(
                 textToTranslate = " $expectedTextToTranslate\t",
                 translation = "  \t$expectedTranslation    \t  ",
-                tagIds = setOf(tagId1, tagId2)
+                tagIds = setOf(tagId1, tagId2),
+                direction = FOREIGN_NATIVE
             )
         ).data!!
         val translateCard = dm.readTranslateCardById(ReadTranslateCardByIdArgs(cardId = translateCardId)).data!!

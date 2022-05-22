@@ -8,6 +8,7 @@ import org.igye.memoryrefresh.common.Utils.delayStrToMillis
 import org.igye.memoryrefresh.common.Utils.extractUltimatePath
 import org.igye.memoryrefresh.common.Utils.millisToDurationStr
 import org.igye.memoryrefresh.common.Utils.multiplyDelay
+import org.igye.memoryrefresh.config.AppContainer
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -120,9 +121,9 @@ class UtilsTest {
     @Test
     fun extractUltimatePath_returns_expected_results() {
         assertEquals("path/1", extractUltimatePath("path/1"))
-        assertEquals("path/1", extractUltimatePath("v1.0/path/1"))
+        assertEquals("path/1", extractUltimatePath("${AppContainer.appVersionUrlPrefix}/path/1"))
         assertEquals("/path/1", extractUltimatePath("/path/1"))
-        assertEquals("/path/1", extractUltimatePath("/v1.0/path/1"))
+        assertEquals("/path/1", extractUltimatePath("/${AppContainer.appVersionUrlPrefix}/path/1"))
     }
 
     private fun instantToMillis(inst: Instant): Long = inst.toEpochMilli()

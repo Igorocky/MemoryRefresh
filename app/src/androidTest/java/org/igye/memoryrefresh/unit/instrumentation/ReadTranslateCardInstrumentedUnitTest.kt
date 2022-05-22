@@ -5,8 +5,13 @@ import org.igye.memoryrefresh.common.Utils
 import org.igye.memoryrefresh.common.Utils.MILLIS_IN_HOUR
 import org.igye.memoryrefresh.common.Utils.MILLIS_IN_MINUTE
 import org.igye.memoryrefresh.common.Utils.MILLIS_IN_SECOND
+import org.igye.memoryrefresh.database.TranslationCardDirection.FOREIGN_NATIVE
+import org.igye.memoryrefresh.database.TranslationCardDirection.NATIVE_FOREIGN
 import org.igye.memoryrefresh.dto.common.BeRespose
-import org.igye.memoryrefresh.dto.domain.*
+import org.igye.memoryrefresh.dto.domain.ReadTranslateCardsByFilterResp
+import org.igye.memoryrefresh.dto.domain.SortDirection
+import org.igye.memoryrefresh.dto.domain.TranslateCard
+import org.igye.memoryrefresh.dto.domain.TranslateCardSortBy
 import org.igye.memoryrefresh.manager.DataManager.*
 import org.igye.memoryrefresh.testutils.InstrumentedTestBase
 import org.junit.Assert.*
@@ -24,7 +29,7 @@ class ReadTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
         val tagId2 = dm.createTag(CreateTagArgs("t2")).data!!
         val tagId3 = dm.createTag(CreateTagArgs("t3")).data!!
         val cardId = dm.createTranslateCard(CreateTranslateCardArgs(
-            textToTranslate = "a", translation = "b", tagIds = setOf(tagId1, tagId3)
+            textToTranslate = "a", translation = "b", tagIds = setOf(tagId1, tagId3), direction = FOREIGN_NATIVE
         )).data!!
 
         //when
@@ -72,8 +77,8 @@ class ReadTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
             listOf(s.cardId to expectedCardId2, s.updatedAt to updatedAt2, s.delay to delay2, s.randomFactor to 1.0, s.nextAccessInMillis to nextAccessInMillis2, s.nextAccessAt to nextAccessAt2),
         ))
         insert(repo = repo, table = t, rows = listOf(
-            listOf(t.cardId to expectedCardId1, t.textToTranslate to textToTranslate1, t.translation to translation1),
-            listOf(t.cardId to expectedCardId2, t.textToTranslate to textToTranslate2, t.translation to translation2),
+            listOf(t.cardId to expectedCardId1, t.textToTranslate to textToTranslate1, t.translation to translation1, t.direction to NATIVE_FOREIGN),
+            listOf(t.cardId to expectedCardId2, t.textToTranslate to textToTranslate2, t.translation to translation2, t.direction to NATIVE_FOREIGN),
         ))
         insert(repo = repo, table = ctg, rows = listOf(
             listOf(ctg.cardId to expectedCardId1, ctg.tagId to tagId1),
@@ -136,7 +141,7 @@ class ReadTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
             listOf(s.cardId to expectedCardId, s.updatedAt to 0, s.delay to "1m", s.randomFactor to 1.0, s.nextAccessInMillis to 100, s.nextAccessAt to baseTime + 100)
         ))
         insert(repo = repo, table = t, rows = listOf(
-            listOf(t.cardId to expectedCardId, t.textToTranslate to "0", t.translation to "0")
+            listOf(t.cardId to expectedCardId, t.textToTranslate to "0", t.translation to "0", t.direction to NATIVE_FOREIGN)
         ))
 
         //when
@@ -162,7 +167,7 @@ class ReadTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
             listOf(s.cardId to expectedCardId, s.updatedAt to 0, s.delay to "1m", s.randomFactor to 1.0, s.nextAccessInMillis to 100, s.nextAccessAt to baseTime + 100)
         ))
         insert(repo = repo, table = t, rows = listOf(
-            listOf(t.cardId to expectedCardId, t.textToTranslate to "0", t.translation to "0")
+            listOf(t.cardId to expectedCardId, t.textToTranslate to "0", t.translation to "0", t.direction to NATIVE_FOREIGN)
         ))
 
         //when
@@ -211,7 +216,7 @@ class ReadTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
             createScheduleRecord(cardId = cardIdWithoutOverdue4, nextAccessIn = timeElapsed+2_000),
         ))
         fun createTranslationRecord(cardId: Long) =
-            listOf(t.cardId to cardId, t.textToTranslate to "0", t.translation to "0")
+            listOf(t.cardId to cardId, t.textToTranslate to "0", t.translation to "0", t.direction to NATIVE_FOREIGN)
         insert(repo = repo, table = t, rows = listOf(
             createTranslationRecord(cardId = cardIdWithoutOverdue1),
             createTranslationRecord(cardId = cardIdWithLargeOverdue),
@@ -272,7 +277,7 @@ class ReadTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
             createScheduleRecord(cardId = expectedCardId, nextAccessIn = timeElapsed-1_000),
         ))
         fun createTranslationRecord(cardId: Long) =
-            listOf(t.cardId to cardId, t.textToTranslate to "0", t.translation to "0")
+            listOf(t.cardId to cardId, t.textToTranslate to "0", t.translation to "0", t.direction to NATIVE_FOREIGN)
         insert(repo = repo, table = t, rows = listOf(
             createTranslationRecord(cardId = expectedCardId),
         ))
@@ -304,7 +309,7 @@ class ReadTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
             createScheduleRecord(cardId = expectedCardId, nextAccessIn = (timeElapsed + 2*MILLIS_IN_HOUR + 3*MILLIS_IN_MINUTE + 39*MILLIS_IN_SECOND).toInt()),
         ))
         fun createTranslationRecord(cardId: Long) =
-            listOf(t.cardId to cardId, t.textToTranslate to "0", t.translation to "0")
+            listOf(t.cardId to cardId, t.textToTranslate to "0", t.translation to "0", t.direction to NATIVE_FOREIGN)
         insert(repo = repo, table = t, rows = listOf(
             createTranslationRecord(cardId = expectedCardId),
         ))
@@ -370,7 +375,7 @@ class ReadTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
             createScheduleRecord(cardId = cardIdWithoutOverdue4, nextAccessIn = timeElapsed+2_000),
         ))
         fun createTranslationRecord(cardId: Long) =
-            listOf(t.cardId to cardId, t.textToTranslate to "0", t.translation to "0")
+            listOf(t.cardId to cardId, t.textToTranslate to "0", t.translation to "0", t.direction to NATIVE_FOREIGN)
         insert(repo = repo, table = t, rows = listOf(
             createTranslationRecord(cardId = cardIdWithoutOverdue1),
             createTranslationRecord(cardId = cardIdWithLargeOverdue),
@@ -401,7 +406,7 @@ class ReadTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
     fun readTranslateCardHistory_when_there_are_few_data_and_validation_history_records() {
         //given
         val createTime1 = testClock.currentMillis()
-        val cardId = dm.createTranslateCard(CreateTranslateCardArgs(textToTranslate = "A", translation = "a")).data!!
+        val cardId = dm.createTranslateCard(CreateTranslateCardArgs(textToTranslate = "A", translation = "a", direction = FOREIGN_NATIVE)).data!!
 
         val validationTime2 = testClock.plus(2, ChronoUnit.MINUTES)
         assertTrue(dm.validateTranslateCard(ValidateTranslateCardArgs(cardId = cardId, userProvidedTranslation = "a")).data!!.isCorrect)
@@ -507,7 +512,7 @@ class ReadTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
     fun readTranslateCardHistory_when_there_are_no_data_changes_and_no_validation_at() {
         //given
         val createTime1 = testClock.currentMillis()
-        val cardId = dm.createTranslateCard(CreateTranslateCardArgs(textToTranslate = "A", translation = "a")).data!!
+        val cardId = dm.createTranslateCard(CreateTranslateCardArgs(textToTranslate = "A", translation = "a", direction = FOREIGN_NATIVE)).data!!
 
         //when
         val actualHistory = dm.readTranslateCardHistory(ReadTranslateCardHistoryArgs(cardId = cardId)).data!!
@@ -525,7 +530,7 @@ class ReadTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
     fun readTranslateCardHistory_when_there_are_no_data_changes_and_one_validation() {
         //given
         val createTime1 = testClock.currentMillis()
-        val cardId = dm.createTranslateCard(CreateTranslateCardArgs(textToTranslate = "A", translation = "a")).data!!
+        val cardId = dm.createTranslateCard(CreateTranslateCardArgs(textToTranslate = "A", translation = "a", direction = FOREIGN_NATIVE)).data!!
 
         val validationTime2 = testClock.plus(2, ChronoUnit.MINUTES)
         assertTrue(dm.validateTranslateCard(ValidateTranslateCardArgs(cardId = cardId, userProvidedTranslation = "a")).data!!.isCorrect)
@@ -550,7 +555,7 @@ class ReadTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
     fun readTranslateCardHistory_when_there_are_no_data_changes_and_two_validations() {
         //given
         val createTime1 = testClock.currentMillis()
-        val cardId = dm.createTranslateCard(CreateTranslateCardArgs(textToTranslate = "A", translation = "a")).data!!
+        val cardId = dm.createTranslateCard(CreateTranslateCardArgs(textToTranslate = "A", translation = "a", direction = FOREIGN_NATIVE)).data!!
 
         val validationTime2 = testClock.plus(2, ChronoUnit.MINUTES)
         assertTrue(dm.validateTranslateCard(ValidateTranslateCardArgs(cardId = cardId, userProvidedTranslation = "a")).data!!.isCorrect)
@@ -582,7 +587,7 @@ class ReadTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
     fun readTranslateCardHistory_when_there_is_one_data_change_and_no_validations_at_all() {
         //given
         val createTime1 = testClock.currentMillis()
-        val cardId = dm.createTranslateCard(CreateTranslateCardArgs(textToTranslate = "A", translation = "a")).data!!
+        val cardId = dm.createTranslateCard(CreateTranslateCardArgs(textToTranslate = "A", translation = "a", direction = FOREIGN_NATIVE)).data!!
 
         val updateTime5 = testClock.plus(5, ChronoUnit.MINUTES)
         dm.updateTranslateCard(UpdateTranslateCardArgs(cardId = cardId, textToTranslate = "B", translation = "b"))
@@ -608,7 +613,7 @@ class ReadTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
     fun readTranslateCardHistory_when_there_is_one_data_change_and_no_validations_for_first_data_change_and_one_validation_for_second_data_change() {
         //given
         val createTime1 = testClock.currentMillis()
-        val cardId = dm.createTranslateCard(CreateTranslateCardArgs(textToTranslate = "A", translation = "a")).data!!
+        val cardId = dm.createTranslateCard(CreateTranslateCardArgs(textToTranslate = "A", translation = "a", direction = FOREIGN_NATIVE)).data!!
 
         val updateTime5 = testClock.plus(5, ChronoUnit.MINUTES)
         dm.updateTranslateCard(UpdateTranslateCardArgs(cardId = cardId, textToTranslate = "B", translation = "b"))
@@ -641,7 +646,7 @@ class ReadTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
     fun readTranslateCardHistory_when_there_is_one_data_change_and_no_validations_for_first_data_change_and_two_validations_for_second_data_change() {
         //given
         val createTime1 = testClock.currentMillis()
-        val cardId = dm.createTranslateCard(CreateTranslateCardArgs(textToTranslate = "A", translation = "a")).data!!
+        val cardId = dm.createTranslateCard(CreateTranslateCardArgs(textToTranslate = "A", translation = "a", direction = FOREIGN_NATIVE)).data!!
 
         val updateTime5 = testClock.plus(5, ChronoUnit.MINUTES)
         dm.updateTranslateCard(UpdateTranslateCardArgs(cardId = cardId, textToTranslate = "B", translation = "b"))
@@ -681,7 +686,7 @@ class ReadTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
     fun readTranslateCardHistory_when_there_is_one_data_change_and_no_validations_for_second_data_change_and_one_validation_for_first_data_change() {
         //given
         val createTime1 = testClock.currentMillis()
-        val cardId = dm.createTranslateCard(CreateTranslateCardArgs(textToTranslate = "A", translation = "a")).data!!
+        val cardId = dm.createTranslateCard(CreateTranslateCardArgs(textToTranslate = "A", translation = "a", direction = FOREIGN_NATIVE)).data!!
 
         val validationTime2 = testClock.plus(2, ChronoUnit.MINUTES)
         assertTrue(dm.validateTranslateCard(ValidateTranslateCardArgs(cardId = cardId, userProvidedTranslation = "a")).data!!.isCorrect)
@@ -714,7 +719,7 @@ class ReadTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
     fun readTranslateCardHistory_when_there_is_one_data_change_and_no_validations_for_second_data_change_and_two_validations_for_first_data_change() {
         //given
         val createTime1 = testClock.currentMillis()
-        val cardId = dm.createTranslateCard(CreateTranslateCardArgs(textToTranslate = "A", translation = "a")).data!!
+        val cardId = dm.createTranslateCard(CreateTranslateCardArgs(textToTranslate = "A", translation = "a", direction = FOREIGN_NATIVE)).data!!
 
         val validationTime2 = testClock.plus(2, ChronoUnit.MINUTES)
         assertTrue(dm.validateTranslateCard(ValidateTranslateCardArgs(cardId = cardId, userProvidedTranslation = "a")).data!!.isCorrect)
@@ -754,7 +759,7 @@ class ReadTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
     fun readTranslateCardHistory_when_there_are_two_data_changes_and_no_validations_for_middle_data_change_and_one_validation_for_each_of_other_data_changes() {
         //given
         val createTime1 = testClock.currentMillis()
-        val cardId = dm.createTranslateCard(CreateTranslateCardArgs(textToTranslate = "A", translation = "a")).data!!
+        val cardId = dm.createTranslateCard(CreateTranslateCardArgs(textToTranslate = "A", translation = "a", direction = FOREIGN_NATIVE)).data!!
 
         val validationTime2 = testClock.plus(2, ChronoUnit.MINUTES)
         assertTrue(dm.validateTranslateCard(ValidateTranslateCardArgs(cardId = cardId, userProvidedTranslation = "a")).data!!.isCorrect)

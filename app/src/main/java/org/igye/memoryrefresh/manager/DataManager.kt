@@ -8,6 +8,7 @@ import org.igye.memoryrefresh.common.Utils
 import org.igye.memoryrefresh.common.Utils.delayStrToMillis
 import org.igye.memoryrefresh.common.Utils.multiplyDelay
 import org.igye.memoryrefresh.database.CardType
+import org.igye.memoryrefresh.database.TranslationCardDirection
 import org.igye.memoryrefresh.database.doInTransaction
 import org.igye.memoryrefresh.database.select
 import org.igye.memoryrefresh.dto.common.BeErr
@@ -167,6 +168,8 @@ class DataManager(
         val translation:String,
         val tagIds: Set<Long> = emptySet(),
         val paused: Boolean = false,
+        val direction: TranslationCardDirection,
+        val reversedCardId: Long? = null,
     )
     @BeMethod
     @Synchronized
@@ -183,7 +186,13 @@ class DataManager(
             return BeRespose(SAVE_NEW_TRANSLATE_CARD_EXCEPTION) {
                 repo.writableDatabase.doInTransaction {
                     val cardId = createCard(cardType = CardType.TRANSLATION, tagIds = args.tagIds, paused = args.paused)
-                    repo.translationCards.insert(cardId = cardId, textToTranslate = textToTranslate, translation = translation)
+                    repo.translationCards.insert(
+                        cardId = cardId,
+                        textToTranslate = textToTranslate,
+                        translation = translation,
+                        direction = args.direction,
+                        reversedCardId = args.reversedCardId
+                    )
                     cardId
                 }
             }
@@ -204,7 +213,9 @@ class DataManager(
             s.${s.delay},
             s.${s.nextAccessInMillis},
             t.${t.textToTranslate}, 
-            t.${t.translation} 
+            t.${t.translation}, 
+            t.${t.direction}, 
+            t.${t.reversedCardId} 
         from 
             $c c
             left join $s s on c.${c.id} = s.${s.cardId}
@@ -238,6 +249,8 @@ class DataManager(
                         activatesIn = if (nextAccessAt - currTime >= 0) Utils.millisToDurationStr(nextAccessAt - currTime) else "-",
                         textToTranslate = it.getString(),
                         translation = it.getString(),
+                        direction = TranslationCardDirection.fromInt(it.getLong()),
+                        reversedCardId = it.getLongOrNull(),
                     )
                 }.rows[0]
             }
@@ -349,10 +362,13 @@ class DataManager(
         val recalculateDelay: Boolean = false,
         val tagIds: Set<Long>? = null,
         val textToTranslate:String? = null,
-        val translation:String? = null
+        val translation:String? = null,
+        val direction: TranslationCardDirection? = null,
+        val updateReversedCardId: Boolean = false,
+        val reversedCardId: Long? = null,
     )
-    private val updateTranslateCardQuery = "select ${t.textToTranslate}, ${t.translation} from $t where ${t.cardId} = ?"
-    private val updateTranslateCardQueryColumnNames = arrayOf(t.textToTranslate, t.translation)
+    private val updateTranslateCardQuery = "select ${t.textToTranslate}, ${t.translation}, ${t.direction}, ${t.reversedCardId} from $t where ${t.cardId} = ?"
+    private val updateTranslateCardQueryColumnNames = arrayOf(t.textToTranslate, t.translation, t.direction, t.reversedCardId)
     @BeMethod
     @Synchronized
     fun updateTranslateCard(args: UpdateTranslateCardArgs): BeRespose<Unit> {
@@ -360,22 +376,42 @@ class DataManager(
             val repo = getRepo()
             repo.writableDatabase.doInTransaction {
                 updateCard(cardId = args.cardId, delay = args.delay, recalculateDelay = args.recalculateDelay, tagIds = args.tagIds, paused = args.paused)
-                val (existingTextToTranslate: String, existingTranslation: String) = select(
+                var existingTextToTranslate: String? = null
+                var existingTranslation: String? = null
+                var existingDirection: TranslationCardDirection? = null
+                var existingReversedCardId: Long? = null
+                select(
                     query = updateTranslateCardQuery,
                     args = arrayOf(args.cardId.toString()),
                     columnNames = updateTranslateCardQueryColumnNames,
                 ) {
-                    listOf(it.getString(), it.getString())
-                }.rows[0]
-                val newTextToTranslate = args.textToTranslate?.trim()?:existingTextToTranslate
-                val newTranslation = args.translation?.trim()?:existingTranslation
+                    existingTextToTranslate = it.getString()
+                    existingTranslation = it.getString()
+                    existingDirection = TranslationCardDirection.fromInt(it.getLong())
+                    existingReversedCardId = it.getLongOrNull()
+                }
+                val newTextToTranslate: String = args.textToTranslate?.trim()?:existingTextToTranslate!!
+                val newTranslation: String = args.translation?.trim()?:existingTranslation!!
+                val newDirection: TranslationCardDirection = args.direction?:existingDirection!!
+                val newReversedCardId: Long? = args.reversedCardId?:existingReversedCardId
                 if (newTextToTranslate.isEmpty()) {
                     throw MemoryRefreshException(errCode = UPDATE_TRANSLATE_CARD_TEXT_TO_TRANSLATE_IS_EMPTY, msg = "Text to translate should not be empty.")
                 } else if (newTranslation.isEmpty()) {
                     throw MemoryRefreshException(errCode = UPDATE_TRANSLATE_CARD_TRANSLATION_IS_EMPTY, msg = "Translation should not be empty.")
                 }
-                if (newTextToTranslate != existingTextToTranslate || newTranslation != existingTranslation) {
-                    repo.translationCards.update(cardId = args.cardId, textToTranslate = newTextToTranslate, translation = newTranslation)
+                if (
+                    newTextToTranslate != existingTextToTranslate
+                    || newTranslation != existingTranslation
+                    || newDirection != existingDirection
+                    || args.updateReversedCardId && newReversedCardId != existingReversedCardId
+                ) {
+                    repo.translationCards.update(
+                        cardId = args.cardId,
+                        textToTranslate = newTextToTranslate,
+                        translation = newTranslation,
+                        direction = newDirection,
+                        reversedCardId = newReversedCardId
+                    )
                 }
             }
         }
@@ -656,7 +692,9 @@ class DataManager(
                 s.${s.delay},
                 s.${s.nextAccessInMillis},
                 t.${t.textToTranslate}, 
-                t.${t.translation}
+                t.${t.translation},
+                t.${t.direction},
+                t.${t.reversedCardId}
             from
                 (
                     select
@@ -700,6 +738,8 @@ class DataManager(
                     activatesIn = if (nextAccessAt - currTime >= 0) Utils.millisToDurationStr(nextAccessAt - currTime) else "-",
                     textToTranslate = it.getString(),
                     translation = it.getString(),
+                    direction = TranslationCardDirection.fromInt(it.getLong()),
+                    reversedCardId = it.getLongOrNull(),
                 )
             }.rows
             ReadTranslateCardsByFilterResp(cards = result)

@@ -6,6 +6,8 @@ import org.igye.memoryrefresh.common.Utils
 import org.igye.memoryrefresh.common.Utils.MILLIS_IN_HOUR
 import org.igye.memoryrefresh.common.Utils.MILLIS_IN_MINUTE
 import org.igye.memoryrefresh.database.CardType
+import org.igye.memoryrefresh.database.TranslationCardDirection.FOREIGN_NATIVE
+import org.igye.memoryrefresh.database.TranslationCardDirection.NATIVE_FOREIGN
 import org.igye.memoryrefresh.dto.domain.TranslateCard
 import org.igye.memoryrefresh.manager.DataManager.*
 import org.igye.memoryrefresh.manager.SettingsManager
@@ -36,13 +38,15 @@ class DataManagerInstrumentedIntTest: InstrumentedTestBase() {
         //when: create a new translation card
         val timeCrt = testClock.currentMillis()
         val actualCreatedCardId = dm.createTranslateCard(
-            CreateTranslateCardArgs(textToTranslate = expectedTextToTranslate1, translation = expectedTranslation1)
+            CreateTranslateCardArgs(textToTranslate = expectedTextToTranslate1, translation = expectedTranslation1, direction = NATIVE_FOREIGN)
         ).data!!
         val actualCreatedCard = dm.readTranslateCardById(ReadTranslateCardByIdArgs(cardId = actualCreatedCardId)).data!!
 
         //then: a new card is created successfully
         assertEquals(expectedTextToTranslate1, actualCreatedCard.textToTranslate)
         assertEquals(expectedTranslation1, actualCreatedCard.translation)
+        assertEquals(NATIVE_FOREIGN, actualCreatedCard.direction)
+        assertNull(actualCreatedCard.reversedCardId)
         assertEquals("1s", actualCreatedCard.schedule.delay)
         assertEquals(1000, actualCreatedCard.schedule.nextAccessInMillis)
         assertEquals(timeCrt+1000, actualCreatedCard.schedule.nextAccessAt)
@@ -53,7 +57,7 @@ class DataManagerInstrumentedIntTest: InstrumentedTestBase() {
         assertTableContent(repo = repo, table = c.ver, expectedRows = listOf())
 
         assertTableContent(repo = repo, table = t, matchColumn = t.cardId, expectedRows = listOf(
-            listOf(t.cardId to actualCreatedCard.id, t.textToTranslate to expectedTextToTranslate1, t.translation to expectedTranslation1)
+            listOf(t.cardId to actualCreatedCard.id, t.textToTranslate to expectedTextToTranslate1, t.translation to expectedTranslation1, t.direction to NATIVE_FOREIGN.intValue, t.reversedCardId to null)
         ))
         assertTableContent(repo = repo, table = t.ver, expectedRows = listOf())
 
@@ -67,7 +71,7 @@ class DataManagerInstrumentedIntTest: InstrumentedTestBase() {
         //when: edit the card but provide same values
         testClock.plus(5000)
         dm.updateTranslateCard(
-            UpdateTranslateCardArgs(cardId = actualCreatedCard.id, textToTranslate = "$expectedTextToTranslate1  ", translation = "\t$expectedTranslation1")
+            UpdateTranslateCardArgs(cardId = actualCreatedCard.id, textToTranslate = "$expectedTextToTranslate1  ", translation = "\t$expectedTranslation1", direction = NATIVE_FOREIGN)
         )
         val responseAfterEdit1 = dm.readTranslateCardById(ReadTranslateCardByIdArgs(cardId = actualCreatedCard.id))
 
@@ -75,6 +79,8 @@ class DataManagerInstrumentedIntTest: InstrumentedTestBase() {
         val translateCardAfterEdit1: TranslateCard = responseAfterEdit1.data!!
         assertEquals(expectedTextToTranslate1, translateCardAfterEdit1.textToTranslate)
         assertEquals(expectedTranslation1, translateCardAfterEdit1.translation)
+        assertEquals(NATIVE_FOREIGN, actualCreatedCard.direction)
+        assertNull(actualCreatedCard.reversedCardId)
         assertEquals("1s", translateCardAfterEdit1.schedule.delay)
         assertEquals(1000, translateCardAfterEdit1.schedule.nextAccessInMillis)
         assertEquals(timeCrt+1000, translateCardAfterEdit1.schedule.nextAccessAt)
@@ -85,7 +91,7 @@ class DataManagerInstrumentedIntTest: InstrumentedTestBase() {
         assertTableContent(repo = repo, table = c.ver, expectedRows = listOf())
 
         assertTableContent(repo = repo, table = t, matchColumn = t.cardId, expectedRows = listOf(
-            listOf(t.cardId to translateCardAfterEdit1.id, t.textToTranslate to expectedTextToTranslate1, t.translation to expectedTranslation1)
+            listOf(t.cardId to translateCardAfterEdit1.id, t.textToTranslate to expectedTextToTranslate1, t.translation to expectedTranslation1, t.direction to NATIVE_FOREIGN.intValue, t.reversedCardId to null)
         ))
         assertTableContent(repo = repo, table = t.ver, expectedRows = listOf())
 
@@ -99,7 +105,7 @@ class DataManagerInstrumentedIntTest: InstrumentedTestBase() {
         //when: provide new values when editing the card
         val timeEdt2 = testClock.plus(5000)
         dm.updateTranslateCard(
-            UpdateTranslateCardArgs(cardId = actualCreatedCard.id, textToTranslate = "  $expectedTextToTranslate2  ", translation = "\t$expectedTranslation2  ")
+            UpdateTranslateCardArgs(cardId = actualCreatedCard.id, textToTranslate = "  $expectedTextToTranslate2  ", translation = "\t$expectedTranslation2  ", direction = FOREIGN_NATIVE)
         )
         val responseAfterEdit2 = dm.readTranslateCardById(ReadTranslateCardByIdArgs(cardId = actualCreatedCard.id))
 
@@ -107,6 +113,8 @@ class DataManagerInstrumentedIntTest: InstrumentedTestBase() {
         val translateCardAfterEdit2: TranslateCard = responseAfterEdit2.data!!
         assertEquals(expectedTextToTranslate2, translateCardAfterEdit2.textToTranslate)
         assertEquals(expectedTranslation2, translateCardAfterEdit2.translation)
+        assertEquals(FOREIGN_NATIVE, translateCardAfterEdit2.direction)
+        assertNull(translateCardAfterEdit2.reversedCardId)
         assertEquals("1s", translateCardAfterEdit2.schedule.delay)
         assertEquals(1000, translateCardAfterEdit2.schedule.nextAccessInMillis)
         assertEquals(timeCrt+1000, translateCardAfterEdit2.schedule.nextAccessAt)
@@ -117,10 +125,10 @@ class DataManagerInstrumentedIntTest: InstrumentedTestBase() {
         assertTableContent(repo = repo, table = c.ver, expectedRows = listOf())
 
         assertTableContent(repo = repo, table = t, matchColumn = t.cardId, expectedRows = listOf(
-            listOf(t.cardId to translateCardAfterEdit2.id, t.textToTranslate to expectedTextToTranslate2, t.translation to expectedTranslation2)
+            listOf(t.cardId to translateCardAfterEdit2.id, t.textToTranslate to expectedTextToTranslate2, t.translation to expectedTranslation2, t.direction to FOREIGN_NATIVE.intValue, t.reversedCardId to null)
         ))
         assertTableContent(repo = repo, table = t.ver, expectedRows = listOf(
-            listOf(t.cardId to translateCardAfterEdit2.id, t.textToTranslate to expectedTextToTranslate1, t.translation to expectedTranslation1,
+            listOf(t.cardId to translateCardAfterEdit2.id, t.textToTranslate to expectedTextToTranslate1, t.translation to expectedTranslation1, t.direction to NATIVE_FOREIGN.intValue, t.reversedCardId to null,
                 t.ver.timestamp to timeEdt2)
         ))
 
@@ -194,7 +202,7 @@ class DataManagerInstrumentedIntTest: InstrumentedTestBase() {
         //when: 2. create a new card1
         val time2 = testClock.plus(1, ChronoUnit.MINUTES)
         val card1Id = dm.createTranslateCard(
-            CreateTranslateCardArgs(textToTranslate = "karta1", translation = "card1")
+            CreateTranslateCardArgs(textToTranslate = "karta1", translation = "card1", direction = NATIVE_FOREIGN)
         ).data!!
         val createCard1Resp = dm.readTranslateCardById(ReadTranslateCardByIdArgs(cardId = card1Id)).data!!
 
@@ -335,7 +343,7 @@ class DataManagerInstrumentedIntTest: InstrumentedTestBase() {
         //when: 8. create a new card2
         val time8 = testClock.plus(1, ChronoUnit.MINUTES)
         val card2Id = dm.createTranslateCard(
-            CreateTranslateCardArgs(textToTranslate = "karta2", translation = "card2")
+            CreateTranslateCardArgs(textToTranslate = "karta2", translation = "card2", direction = NATIVE_FOREIGN)
         ).data!!
         val createCard2Resp = dm.readTranslateCardById(ReadTranslateCardByIdArgs(cardId = card2Id)).data!!
 
@@ -820,7 +828,7 @@ class DataManagerInstrumentedIntTest: InstrumentedTestBase() {
             listOf(s.cardId to cardId, s.updatedAt to 0, s.delay to "0s", s.randomFactor to 1.0, s.nextAccessInMillis to 0, s.nextAccessAt to 0)
         ))
         insert(repo = repo, table = t, rows = listOf(
-            listOf(t.cardId to cardId, t.textToTranslate to "A", t.translation to "B")
+            listOf(t.cardId to cardId, t.textToTranslate to "A", t.translation to "B", t.direction to NATIVE_FOREIGN)
         ))
 
         val proc = 0.15

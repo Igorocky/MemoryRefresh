@@ -9,6 +9,8 @@ import org.igye.memoryrefresh.common.Utils
 import org.igye.memoryrefresh.database.CardType
 import org.igye.memoryrefresh.database.Repository
 import org.igye.memoryrefresh.database.Table
+import org.igye.memoryrefresh.database.TranslationCardDirection
+import org.igye.memoryrefresh.database.TranslationCardDirection.NATIVE_FOREIGN
 import org.igye.memoryrefresh.database.tables.*
 import org.igye.memoryrefresh.dto.domain.CardSchedule
 import org.igye.memoryrefresh.dto.domain.TranslateCard
@@ -64,6 +66,15 @@ open class InstrumentedTestBase {
                 is Int -> insertStmt.bindLong(++idx, it.toLong())
                 is Double -> insertStmt.bindDouble(++idx, it)
                 is String -> insertStmt.bindString(++idx, it)
+                is TranslationCardDirection -> insertStmt.bindLong(++idx, it.intValue)
+                else -> if (it == null) {
+                    insertStmt.bindNull(++idx)
+                } else {
+                    throw MemoryRefreshException(
+                        msg = "Unexpected type of value being inserted to $table.${rows[0][idx].first}: ${it::class.java}.",
+                        errCode = ERROR_IN_TEST
+                    )
+                }
             }
         }
         insertStmt.executeUpdateDelete()
@@ -107,7 +118,7 @@ open class InstrumentedTestBase {
             )
         ))
         insert(repo = repo, table = t, rows = listOf(
-            listOf(t.cardId to card.id, t.textToTranslate to card.textToTranslate, t.translation to card.translation)
+            listOf(t.cardId to card.id, t.textToTranslate to card.textToTranslate, t.translation to card.translation, t.direction to card.direction.intValue)
         ))
         card.tagIds.forEach {
             insert(repo = repo, table = ctg, rows = listOf(
@@ -141,6 +152,8 @@ open class InstrumentedTestBase {
                 overdue = 0.0,
                 textToTranslate = "textToTranslate-" + cardId,
                 translation = "translation-" + cardId,
+                direction = NATIVE_FOREIGN,
+                reversedCardId = null,
             )
         )
         val finalNextAccessAt = (currTime - modifiedCard.overdue * modifiedCard.schedule.nextAccessInMillis).toLong()

@@ -1,6 +1,7 @@
 package org.igye.memoryrefresh
 
 enum class ErrorCode(val code: Long) {
+    UNEXPECTED_TRANSLATION_CARD_DIRECTION_CODE(53L),
     READ_DEFAULT_DELAY_COEFS(52L),
     UPDATE_DEFAULT_DELAY_COEFS(51L),
     READ_MAX_DELAY(50L),

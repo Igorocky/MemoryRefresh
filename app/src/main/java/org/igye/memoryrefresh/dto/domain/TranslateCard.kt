@@ -1,6 +1,7 @@
 package org.igye.memoryrefresh.dto.domain
 
 import org.igye.memoryrefresh.database.CardType
+import org.igye.memoryrefresh.database.TranslationCardDirection
 
 data class TranslateCard(
     val id: Long,
@@ -12,7 +13,9 @@ data class TranslateCard(
     val activatesIn: String,
     val overdue: Double,
     val textToTranslate:String,
-    val translation:String
+    val translation:String,
+    val direction:TranslationCardDirection,
+    val reversedCardId:Long?,
 ) {
     val type = CardType.TRANSLATION
 }
