@@ -254,6 +254,8 @@ open class InstrumentedTestBase {
     private fun equals(expected: Any?, actual: Any?): Boolean {
         if (expected is Integer && actual is Long) {
             return expected.toLong() == actual
+        } else if (expected is TranslationCardDirection && actual is Long) {
+            return expected.intValue == actual
         } else {
             return Objects.equals(expected, actual)
         }

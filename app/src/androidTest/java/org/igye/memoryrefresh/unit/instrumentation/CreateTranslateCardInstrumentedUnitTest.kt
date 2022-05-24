@@ -181,4 +181,69 @@ class CreateTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
         ))
     }
 
+    @Test
+    fun createTranslateCard_saves_new_translate_card_with_direction_and_inverted_cardId() {
+        //given
+        val expectedDirection = FOREIGN_NATIVE
+        val expectedReversedCardId = dm.createTranslateCard(CreateTranslateCardArgs(textToTranslate = "1", translation = "2", direction = expectedDirection)).data!!
+        val time1 = testClock.currentMillis()
+
+        //when
+        val translateCardId = dm.createTranslateCard(
+            CreateTranslateCardArgs(
+                textToTranslate = "1",
+                translation = "2",
+                direction = expectedDirection,
+                reversedCardId = expectedReversedCardId
+            )
+        ).data!!
+        val translateCard = dm.readTranslateCardById(ReadTranslateCardByIdArgs(cardId = translateCardId)).data!!
+
+        //then
+        assertEquals(expectedDirection, translateCard.direction)
+        assertEquals(expectedReversedCardId, translateCard.reversedCardId)
+
+        assertTableContent(repo = repo, table = c, matchColumn = c.id, expectedRows = listOf(
+            listOf(c.id to expectedReversedCardId, c.type to TR_TP, c.createdAt to time1),
+            listOf(c.id to translateCard.id, c.type to TR_TP, c.createdAt to time1)
+        ))
+        assertTableContent(repo = repo, table = c.ver, expectedRows = listOf())
+
+        assertTableContent(repo = repo, table = tg, expectedRows = listOf())
+        assertTableContent(repo = repo, table = ctg, expectedRows = listOf())
+
+        assertTableContent(repo = repo, table = t, matchColumn = t.cardId, expectedRows = listOf(
+            listOf(t.cardId to expectedReversedCardId),
+            listOf(t.cardId to translateCard.id, t.direction to expectedDirection, t.reversedCardId to expectedReversedCardId),
+        ))
+        assertTableContent(repo = repo, table = t.ver, expectedRows = listOf())
+
+        assertTableContent(repo = repo, table = s, matchColumn = s.cardId, expectedRows = listOf(
+            listOf(s.cardId to expectedReversedCardId),
+            listOf(s.cardId to translateCard.id),
+        ))
+        assertTableContent(repo = repo, table = s.ver, expectedRows = listOf())
+
+        assertTableContent(repo = repo, table = l, expectedRows = listOf())
+    }
+
+    @Test
+    fun createTranslateCard_doesnt_allow_to_save_non_existing_reversed_cerd_id() {
+        //when
+        val err = dm.createTranslateCard(
+            CreateTranslateCardArgs(
+                textToTranslate = "1",
+                translation = "2",
+                direction = NATIVE_FOREIGN,
+                reversedCardId = 123L
+            )
+        ).err!!
+
+        //then
+        assertEquals(
+            "FOREIGN KEY constraint failed (code 787 SQLITE_CONSTRAINT_FOREIGNKEY) " +
+                    "(android.database.sqlite.SQLiteConstraintException)",
+            err.msg
+        )
+    }
 }
