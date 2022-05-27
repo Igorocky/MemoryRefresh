@@ -366,8 +366,6 @@ class DataManager(
         val textToTranslate:String? = null,
         val translation:String? = null,
         val direction: TranslationCardDirection? = null,
-        val updateReversedCardId: Boolean = false,
-        val reversedCardId: Long? = null,
     )
     private val updateTranslateCardQuery = "select ${t.textToTranslate}, ${t.translation}, ${t.direction} from $t where ${t.cardId} = ?"
     private val updateTranslateCardQueryColumnNames = arrayOf(t.textToTranslate, t.translation, t.direction)

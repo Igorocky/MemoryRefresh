@@ -566,4 +566,114 @@ class UpdateTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
         ))
     }
 
+    @Test
+    fun updateTranslateCard_doesnt_modify_direction_if_it_is_not_specified_in_the_request() {
+        //given
+        val textToTranslateBeforeUpdate = "X"
+        val textToTranslateAfterUpdate = "Y"
+        val translationBeforeUpdate = "x"
+        val cardId1 = dm.createTranslateCard(CreateTranslateCardArgs(
+            textToTranslate = textToTranslateBeforeUpdate, translation = translationBeforeUpdate, paused = true, direction = NATIVE_FOREIGN
+        )).data!!
+        val cardId2 = dm.createTranslateCard(CreateTranslateCardArgs(
+            textToTranslate = textToTranslateBeforeUpdate, translation = translationBeforeUpdate, paused = false, direction = FOREIGN_NATIVE
+        )).data!!
+
+        assertTableContent(repo = repo, table = c, expectedRows = listOf(
+            listOf(c.id to cardId1, c.paused to 1),
+            listOf(c.id to cardId2, c.paused to 0),
+        ))
+
+        assertTableContent(repo = repo, table = t, expectedRows = listOf(
+            listOf(t.cardId to cardId1, t.textToTranslate to textToTranslateBeforeUpdate, t.translation to translationBeforeUpdate, t.direction to NATIVE_FOREIGN),
+            listOf(t.cardId to cardId2, t.textToTranslate to textToTranslateBeforeUpdate, t.translation to translationBeforeUpdate, t.direction to FOREIGN_NATIVE),
+        ))
+        assertTableContent(repo = repo, table = t.ver, expectedRows = listOf())
+
+        //when
+        dm.updateTranslateCard(UpdateTranslateCardArgs(
+            cardId = cardId1,
+            textToTranslate = textToTranslateAfterUpdate
+        ))
+        dm.updateTranslateCard(UpdateTranslateCardArgs(
+            cardId = cardId2,
+            textToTranslate = textToTranslateAfterUpdate
+        ))
+
+        //then
+        assertTableContent(repo = repo, table = c, expectedRows = listOf(
+            listOf(c.id to cardId1, c.paused to 1),
+            listOf(c.id to cardId2, c.paused to 0),
+        ))
+        assertTableContent(repo = repo, table = c.ver, expectedRows = listOf())
+
+        assertTableContent(repo = repo, table = t, expectedRows = listOf(
+            listOf(t.cardId to cardId1, t.textToTranslate to textToTranslateAfterUpdate, t.translation to translationBeforeUpdate, t.direction to NATIVE_FOREIGN),
+            listOf(t.cardId to cardId2, t.textToTranslate to textToTranslateAfterUpdate, t.translation to translationBeforeUpdate, t.direction to FOREIGN_NATIVE),
+        ))
+        assertTableContent(repo = repo, table = t.ver, expectedRows = listOf(
+            listOf(t.cardId to cardId1, t.textToTranslate to textToTranslateBeforeUpdate, t.translation to translationBeforeUpdate, t.direction to NATIVE_FOREIGN),
+            listOf(t.cardId to cardId2, t.textToTranslate to textToTranslateBeforeUpdate, t.translation to translationBeforeUpdate, t.direction to FOREIGN_NATIVE),
+        ))
+    }
+
+    @Test
+    fun updateTranslateCard_modifies_direction_from_NATIVE_FOREIGN_to_FOREIGN_NATIVE() {
+        //given
+        val textToTranslateBeforeUpdate = "X"
+        val translationBeforeUpdate = "x"
+        val directionBeforeUpdate = NATIVE_FOREIGN
+        val directionAfterUpdate = FOREIGN_NATIVE
+        val cardId = dm.createTranslateCard(CreateTranslateCardArgs(
+            textToTranslate = textToTranslateBeforeUpdate, translation = translationBeforeUpdate, direction = directionBeforeUpdate
+        )).data!!
+
+        assertTableContent(repo = repo, table = t, expectedRows = listOf(
+            listOf(t.cardId to cardId, t.direction to directionBeforeUpdate),
+        ))
+
+        //when
+        dm.updateTranslateCard(UpdateTranslateCardArgs(
+            cardId = cardId,
+            direction = directionAfterUpdate
+        ))
+
+        //then
+        assertTableContent(repo = repo, table = t, expectedRows = listOf(
+            listOf(t.cardId to cardId, t.direction to directionAfterUpdate),
+        ))
+        assertTableContent(repo = repo, table = t.ver, expectedRows = listOf(
+            listOf(t.cardId to cardId, t.direction to directionBeforeUpdate),
+        ))
+    }
+
+    @Test
+    fun updateTranslateCard_modifies_direction_from_FOREIGN_NATIVE_to_NATIVE_FOREIGN() {
+        //given
+        val textToTranslateBeforeUpdate = "X"
+        val translationBeforeUpdate = "x"
+        val directionBeforeUpdate = FOREIGN_NATIVE
+        val directionAfterUpdate = NATIVE_FOREIGN
+        val cardId = dm.createTranslateCard(CreateTranslateCardArgs(
+            textToTranslate = textToTranslateBeforeUpdate, translation = translationBeforeUpdate, direction = directionBeforeUpdate
+        )).data!!
+
+        assertTableContent(repo = repo, table = t, expectedRows = listOf(
+            listOf(t.cardId to cardId, t.direction to directionBeforeUpdate),
+        ))
+
+        //when
+        dm.updateTranslateCard(UpdateTranslateCardArgs(
+            cardId = cardId,
+            direction = directionAfterUpdate
+        ))
+
+        //then
+        assertTableContent(repo = repo, table = t, expectedRows = listOf(
+            listOf(t.cardId to cardId, t.direction to directionAfterUpdate),
+        ))
+        assertTableContent(repo = repo, table = t.ver, expectedRows = listOf(
+            listOf(t.cardId to cardId, t.direction to directionBeforeUpdate),
+        ))
+    }
 }
