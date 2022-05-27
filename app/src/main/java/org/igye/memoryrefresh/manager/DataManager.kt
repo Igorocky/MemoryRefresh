@@ -587,6 +587,7 @@ class DataManager(
         val tagIdsToInclude: Set<Long>? = null,
         val tagIdsToExclude: Set<Long>? = null,
         val paused: Boolean? = null,
+        val direction: TranslationCardDirection? = null,
         val textToTranslateContains: String? = null,
         val textToTranslateLengthLessThan: Long? = null,
         val textToTranslateLengthGreaterThan: Long? = null,
@@ -634,6 +635,9 @@ class DataManager(
         if (args.paused != null) {
             whereFilters.add("c.${c.paused} = ${if(args.paused) 1 else 0}")
         }
+        if (args.direction != null) {
+            whereFilters.add("t.${t.direction} = ${args.direction.intValue}")
+        }
         if (args.textToTranslateContains != null) {
             whereFilters.add("lower(t.${t.textToTranslate}) like ?")
             queryArgs.add("%${args.textToTranslateContains.lowercase()}%")
@@ -669,14 +673,11 @@ class DataManager(
         if (args.overdueGreaterEq != null) {
             whereFilters.add("$overdueFormula >= ${args.overdueGreaterEq}")
         }
-        var orderBy = ""
-        if (args.sortBy != null) {
-            orderBy = "order by " + when (args.sortBy) {
-                TranslateCardSortBy.TIME_CREATED -> "c.${c.createdAt}"
-                TranslateCardSortBy.OVERDUE -> overdueFormula
-                TranslateCardSortBy.NEXT_ACCESS_AT -> "s.${s.nextAccessAt}"
-            } + " " + (args.sortDir?:SortDirection.ASC)
-        }
+        val orderBy = "order by " + when (args.sortBy?:TranslateCardSortBy.TIME_CREATED) {
+            TranslateCardSortBy.TIME_CREATED -> "c.${c.createdAt}"
+            TranslateCardSortBy.OVERDUE -> overdueFormula
+            TranslateCardSortBy.NEXT_ACCESS_AT -> "s.${s.nextAccessAt}"
+        } + " " + (args.sortDir?:(if (args.sortBy == null) SortDirection.DESC else SortDirection.ASC))
         val rowNumLimit = if (args.rowsLimit == null) "" else "limit ${args.rowsLimit}"
 
         var query = """

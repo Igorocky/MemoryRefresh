@@ -57,6 +57,7 @@ class ReadTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
         val nextAccessAt1 = createTime1 + MILLIS_IN_MINUTE
         val textToTranslate1 = "snsndfhg73456"
         val translation1 = "wegndfg58"
+        val direction1 = NATIVE_FOREIGN
 
         val expectedCardId2 = 2L
         val createTime2 = testClock.plus(2, ChronoUnit.HOURS)
@@ -67,6 +68,7 @@ class ReadTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
         val nextAccessAt2 = createTime2 + MILLIS_IN_HOUR
         val textToTranslate2 = "dfjksd7253df"
         val translation2 = "adfg67455"
+        val direction2 = FOREIGN_NATIVE
 
         insert(repo = repo, table = c, rows = listOf(
             listOf(c.id to expectedCardId1, c.type to TR_TP, c.createdAt to createTime1, c.paused to 0, c.lastCheckedAt to lastCheckedAt1),
@@ -77,8 +79,8 @@ class ReadTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
             listOf(s.cardId to expectedCardId2, s.updatedAt to updatedAt2, s.origDelay to "o-${delay2}", s.delay to delay2, s.randomFactor to 1.0, s.nextAccessInMillis to nextAccessInMillis2, s.nextAccessAt to nextAccessAt2),
         ))
         insert(repo = repo, table = t, rows = listOf(
-            listOf(t.cardId to expectedCardId1, t.textToTranslate to textToTranslate1, t.translation to translation1, t.direction to NATIVE_FOREIGN),
-            listOf(t.cardId to expectedCardId2, t.textToTranslate to textToTranslate2, t.translation to translation2, t.direction to NATIVE_FOREIGN),
+            listOf(t.cardId to expectedCardId1, t.textToTranslate to textToTranslate1, t.translation to translation1, t.direction to direction1),
+            listOf(t.cardId to expectedCardId2, t.textToTranslate to textToTranslate2, t.translation to translation2, t.direction to direction2),
         ))
         insert(repo = repo, table = ctg, rows = listOf(
             listOf(ctg.cardId to expectedCardId1, ctg.tagId to tagId1),
@@ -108,6 +110,7 @@ class ReadTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
         assertEquals( (readTime - nextAccessAt1) / (nextAccessInMillis1 * 1.0), card1.overdue, 0.000001)
         assertEquals(textToTranslate1, card1.textToTranslate)
         assertEquals(translation1, card1.translation)
+        assertEquals(direction1, card1.direction)
 
         assertEquals(expectedCardId2, card2.id)
         assertEquals(createTime2, card2.createdAt)
@@ -124,6 +127,7 @@ class ReadTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
         assertEquals( (readTime - nextAccessAt2) / (nextAccessInMillis2 * 1.0), card2.overdue, 0.000001)
         assertEquals(textToTranslate2, card2.textToTranslate)
         assertEquals(translation2, card2.translation)
+        assertEquals(direction2, card2.direction)
     }
 
     @Test
@@ -1021,6 +1025,28 @@ class ReadTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
     }
 
     @Test
+    fun readTranslateCardsByFilter_filters_by_direction() {
+        val card1 = createCard(cardId = 1L, mapper = {it.copy(direction = FOREIGN_NATIVE)})
+        val card2 = createCard(cardId = 2L, mapper = {it.copy(direction = NATIVE_FOREIGN)})
+        val card3 = createCard(cardId = 3L, mapper = {it.copy(direction = FOREIGN_NATIVE)})
+        val card4 = createCard(cardId = 4L, mapper = {it.copy(direction = NATIVE_FOREIGN)})
+
+        assertSearchResult(
+            listOf(card1, card3),
+            dm.readTranslateCardsByFilter(ReadTranslateCardsByFilterArgs(
+                direction = FOREIGN_NATIVE
+            ))
+        )
+
+        assertSearchResult(
+            listOf(card2, card4),
+            dm.readTranslateCardsByFilter(ReadTranslateCardsByFilterArgs(
+                direction = NATIVE_FOREIGN
+            ))
+        )
+    }
+
+    @Test
     fun readTranslateCardsByFilter_filters_by_textToTranslateContains() {
         val card1 = createCard(cardId = 1L, mapper = {it.copy(textToTranslate = "ubcu")})
         val card2 = createCard(cardId = 2L, mapper = {it.copy(textToTranslate = "dddd")})
@@ -1046,6 +1072,22 @@ class ReadTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
             listOf(card4),
             dm.readTranslateCardsByFilter(ReadTranslateCardsByFilterArgs(
                 paused = false,
+                textToTranslateContains = "Bc"
+            ))
+        )
+    }
+
+    @Test
+    fun readTranslateCardsByFilter_filters_by_direction_and_textToTranslateContains() {
+        val card1 = createCard(cardId = 1L, mapper = {it.copy(direction = FOREIGN_NATIVE, textToTranslate = "ubcu")})
+        val card2 = createCard(cardId = 2L, mapper = {it.copy(direction = NATIVE_FOREIGN, textToTranslate = "dddd")})
+        val card3 = createCard(cardId = 3L, mapper = {it.copy(direction = FOREIGN_NATIVE, textToTranslate = "ffff")})
+        val card4 = createCard(cardId = 4L, mapper = {it.copy(direction = NATIVE_FOREIGN, textToTranslate = "aBCd")})
+
+        assertSearchResult(
+            listOf(card4),
+            dm.readTranslateCardsByFilter(ReadTranslateCardsByFilterArgs(
+                direction = NATIVE_FOREIGN,
                 textToTranslateContains = "Bc"
             ))
         )
@@ -1456,6 +1498,23 @@ class ReadTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
             dm.readTranslateCardsByFilter(ReadTranslateCardsByFilterArgs(
                 sortBy = TranslateCardSortBy.NEXT_ACCESS_AT,
                 sortDir = SortDirection.DESC
+            )),
+            matchOrder = true
+        )
+    }
+
+    @Test
+    fun readTranslateCardsByFilter_sorts_cards_by_date_created_desc_if_sort_by_is_not_specified() {
+        val card1 = createCard(cardId = 1L, mapper = {it.copy(createdAt = 4, textToTranslate = "A")})
+        val card2 = createCard(cardId = 2L, mapper = {it.copy(createdAt = 1, textToTranslate = "A")})
+        val card3 = createCard(cardId = 3L, mapper = {it.copy(createdAt = 5, textToTranslate = "A")})
+        val card4 = createCard(cardId = 4L, mapper = {it.copy(createdAt = 3, textToTranslate = "A")})
+        val card5 = createCard(cardId = 5L, mapper = {it.copy(createdAt = 2, textToTranslate = "B")})
+
+        assertSearchResult(
+            listOf(card3,card1,card4,card2),
+            dm.readTranslateCardsByFilter(ReadTranslateCardsByFilterArgs(
+                textToTranslateContains = "A"
             )),
             matchOrder = true
         )
