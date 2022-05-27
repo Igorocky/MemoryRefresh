@@ -169,6 +169,7 @@ class DataManager(
         val tagIds: Set<Long> = emptySet(),
         val paused: Boolean = false,
         val direction: TranslationCardDirection,
+        val createReversedCard: Boolean = false,
     )
     @BeMethod
     @Synchronized
@@ -191,6 +192,9 @@ class DataManager(
                         translation = translation,
                         direction = args.direction,
                     )
+                    if (args.createReversedCard) {
+                        createTranslateCard(args.copy(direction = args.direction.reverse(), createReversedCard = false))
+                    }
                     cardId
                 }
             }

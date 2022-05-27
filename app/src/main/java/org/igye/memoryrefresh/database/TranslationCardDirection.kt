@@ -7,6 +7,10 @@ enum class TranslationCardDirection(val intValue: Long) {
     FOREIGN_NATIVE(intValue = 0),
     NATIVE_FOREIGN(intValue = 1);
 
+    fun reverse(): TranslationCardDirection {
+        return if (this == FOREIGN_NATIVE) NATIVE_FOREIGN else FOREIGN_NATIVE
+    }
+
     companion object {
         fun fromInt(intValue: Long): TranslationCardDirection {
             for (value in values()) {
