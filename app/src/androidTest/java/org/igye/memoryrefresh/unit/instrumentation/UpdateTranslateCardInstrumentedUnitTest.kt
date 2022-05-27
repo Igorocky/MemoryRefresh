@@ -160,8 +160,6 @@ class UpdateTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
     @Test
     fun updateTranslateCard_updates_all_parameters_simultaneously() {
         //given
-        val existingCardId1 = dm.createTranslateCard(CreateTranslateCardArgs(textToTranslate = "1", translation = "1", direction = NATIVE_FOREIGN)).data!!
-        val existingCardId2 = dm.createTranslateCard(CreateTranslateCardArgs(textToTranslate = "2", translation = "2", direction = NATIVE_FOREIGN)).data!!
         val tagId1 = dm.createTag(CreateTagArgs(name = "A")).data!!
         val tagId2 = dm.createTag(CreateTagArgs(name = "B")).data!!
         val tagId3 = dm.createTag(CreateTagArgs(name = "C")).data!!
@@ -176,8 +174,6 @@ class UpdateTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
         val pausedAfterUpdate = true
         val directionBeforeUpdate = NATIVE_FOREIGN
         val directionAfterUpdate = FOREIGN_NATIVE
-        val reversedCardIdBeforeUpdate = existingCardId1
-        val reversedCardIdAfterUpdate = existingCardId2
         val createTime = testClock.currentMillis()
         val cardId = dm.createTranslateCard(CreateTranslateCardArgs(
             textToTranslate = textToTranslateBeforeUpdate,
@@ -185,26 +181,19 @@ class UpdateTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
             tagIds = setOf(tagId1, tagId2, tagId3, tagId4),
             paused = pausedBeforeUpdate,
             direction = directionBeforeUpdate,
-            reversedCardId = existingCardId1,
         )).data!!
 
         assertTableContent(repo = repo, table = c, expectedRows = listOf(
-            listOf(c.id to existingCardId1, c.paused to 0),
-            listOf(c.id to existingCardId2, c.paused to 0),
             listOf(c.id to cardId, c.paused to (if (pausedBeforeUpdate) 1 else 0)),
         ))
         assertTableContent(repo = repo, table = c.ver, expectedRows = listOf())
 
         assertTableContent(repo = repo, table = t, expectedRows = listOf(
-            listOf(t.cardId to existingCardId1),
-            listOf(t.cardId to existingCardId2),
-            listOf(t.cardId to cardId, t.textToTranslate to textToTranslateBeforeUpdate, t.translation to translationBeforeUpdate, t.direction to directionBeforeUpdate.intValue, t.reversedCardId to reversedCardIdBeforeUpdate),
+            listOf(t.cardId to cardId, t.textToTranslate to textToTranslateBeforeUpdate, t.translation to translationBeforeUpdate, t.direction to directionBeforeUpdate.intValue),
         ))
         assertTableContent(repo = repo, table = t.ver, expectedRows = listOf())
 
         assertTableContent(repo = repo, table = s, expectedRows = listOf(
-            listOf(s.cardId to existingCardId1, s.updatedAt to createTime, s.delay to "1s"),
-            listOf(s.cardId to existingCardId2, s.updatedAt to createTime, s.delay to "1s"),
             listOf(s.cardId to cardId, s.updatedAt to createTime, s.delay to "1s"),
         ))
         assertTableContent(repo = repo, table = s.ver, expectedRows = listOf())
@@ -227,29 +216,22 @@ class UpdateTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
             tagIds = setOf(tagId5,tagId6,tagId3,tagId4),
             paused = pausedAfterUpdate,
             direction = directionAfterUpdate,
-            reversedCardId = reversedCardIdAfterUpdate
         ))
 
         //then
         assertTableContent(repo = repo, table = c, expectedRows = listOf(
-            listOf(c.id to existingCardId1, c.paused to 0),
-            listOf(c.id to existingCardId2, c.paused to 0),
             listOf(c.id to cardId, c.paused to (if (pausedAfterUpdate) 1 else 0)),
         ))
         assertTableContent(repo = repo, table = c.ver, expectedRows = listOf())
 
         assertTableContent(repo = repo, table = t, expectedRows = listOf(
-            listOf(t.cardId to existingCardId1),
-            listOf(t.cardId to existingCardId2),
-            listOf(t.cardId to cardId, t.textToTranslate to textToTranslateAfterUpdate, t.translation to translationAfterUpdate, t.direction to directionAfterUpdate.intValue, t.reversedCardId to reversedCardIdAfterUpdate),
+            listOf(t.cardId to cardId, t.textToTranslate to textToTranslateAfterUpdate, t.translation to translationAfterUpdate, t.direction to directionAfterUpdate.intValue),
         ))
         assertTableContent(repo = repo, table = t.ver, expectedRows = listOf(
             listOf(t.cardId to cardId, t.ver.timestamp to updateTime, t.textToTranslate to textToTranslateBeforeUpdate, t.translation to translationBeforeUpdate, t.direction to directionBeforeUpdate.intValue),
         ))
 
         assertTableContent(repo = repo, table = s, expectedRows = listOf(
-            listOf(s.cardId to existingCardId1, s.updatedAt to createTime, s.delay to "1s"),
-            listOf(s.cardId to existingCardId2, s.updatedAt to createTime, s.delay to "1s"),
             listOf(s.cardId to cardId, s.updatedAt to updateTime, s.origDelay to "5m", s.delay to "5m"),
         ))
         assertTableContent(repo = repo, table = s.ver, expectedRows = listOf(
@@ -277,7 +259,6 @@ class UpdateTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
         val pausedBeforeUpdate = false
         val pausedAfterUpdate = true
         val delayBeforeUpdate = "5m"
-        val delayAfterUpdate = "77"
         val createTime = testClock.currentMillis()
         val cardId = dm.createTranslateCard(CreateTranslateCardArgs(
             textToTranslate = textToTranslateBeforeUpdate,

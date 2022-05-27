@@ -180,8 +180,7 @@ class Repository(
                     ${translationCards.cardId} integer unique references ${cards}(${cards.id}) on update restrict on delete restrict,
                     ${translationCards.textToTranslate} text not null,
                     ${translationCards.translation} text not null,
-                    ${translationCards.direction} integer not null check (${translationCards.direction} in (${FOREIGN_NATIVE.intValue}, ${NATIVE_FOREIGN.intValue})),
-                    ${translationCards.reversedCardId} integer references ${cards}(${cards.id}) on update set null on delete set null
+                    ${translationCards.direction} integer not null check (${translationCards.direction} in (${FOREIGN_NATIVE.intValue}, ${NATIVE_FOREIGN.intValue}))
                 ) """.trimIndent(),
             oldColumnNames = listOf(
                 translationCards.cardId,

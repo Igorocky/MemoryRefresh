@@ -46,7 +46,6 @@ class DataManagerInstrumentedIntTest: InstrumentedTestBase() {
         assertEquals(expectedTextToTranslate1, actualCreatedCard.textToTranslate)
         assertEquals(expectedTranslation1, actualCreatedCard.translation)
         assertEquals(NATIVE_FOREIGN, actualCreatedCard.direction)
-        assertNull(actualCreatedCard.reversedCardId)
         assertEquals("1s", actualCreatedCard.schedule.delay)
         assertEquals(1000, actualCreatedCard.schedule.nextAccessInMillis)
         assertEquals(timeCrt+1000, actualCreatedCard.schedule.nextAccessAt)
@@ -57,7 +56,7 @@ class DataManagerInstrumentedIntTest: InstrumentedTestBase() {
         assertTableContent(repo = repo, table = c.ver, expectedRows = listOf())
 
         assertTableContent(repo = repo, table = t, matchColumn = t.cardId, expectedRows = listOf(
-            listOf(t.cardId to actualCreatedCard.id, t.textToTranslate to expectedTextToTranslate1, t.translation to expectedTranslation1, t.direction to NATIVE_FOREIGN.intValue, t.reversedCardId to null)
+            listOf(t.cardId to actualCreatedCard.id, t.textToTranslate to expectedTextToTranslate1, t.translation to expectedTranslation1, t.direction to NATIVE_FOREIGN.intValue)
         ))
         assertTableContent(repo = repo, table = t.ver, expectedRows = listOf())
 
@@ -80,7 +79,6 @@ class DataManagerInstrumentedIntTest: InstrumentedTestBase() {
         assertEquals(expectedTextToTranslate1, translateCardAfterEdit1.textToTranslate)
         assertEquals(expectedTranslation1, translateCardAfterEdit1.translation)
         assertEquals(NATIVE_FOREIGN, actualCreatedCard.direction)
-        assertNull(actualCreatedCard.reversedCardId)
         assertEquals("1s", translateCardAfterEdit1.schedule.delay)
         assertEquals(1000, translateCardAfterEdit1.schedule.nextAccessInMillis)
         assertEquals(timeCrt+1000, translateCardAfterEdit1.schedule.nextAccessAt)
@@ -91,7 +89,7 @@ class DataManagerInstrumentedIntTest: InstrumentedTestBase() {
         assertTableContent(repo = repo, table = c.ver, expectedRows = listOf())
 
         assertTableContent(repo = repo, table = t, matchColumn = t.cardId, expectedRows = listOf(
-            listOf(t.cardId to translateCardAfterEdit1.id, t.textToTranslate to expectedTextToTranslate1, t.translation to expectedTranslation1, t.direction to NATIVE_FOREIGN.intValue, t.reversedCardId to null)
+            listOf(t.cardId to translateCardAfterEdit1.id, t.textToTranslate to expectedTextToTranslate1, t.translation to expectedTranslation1, t.direction to NATIVE_FOREIGN.intValue)
         ))
         assertTableContent(repo = repo, table = t.ver, expectedRows = listOf())
 
@@ -114,7 +112,6 @@ class DataManagerInstrumentedIntTest: InstrumentedTestBase() {
         assertEquals(expectedTextToTranslate2, translateCardAfterEdit2.textToTranslate)
         assertEquals(expectedTranslation2, translateCardAfterEdit2.translation)
         assertEquals(FOREIGN_NATIVE, translateCardAfterEdit2.direction)
-        assertNull(translateCardAfterEdit2.reversedCardId)
         assertEquals("1s", translateCardAfterEdit2.schedule.delay)
         assertEquals(1000, translateCardAfterEdit2.schedule.nextAccessInMillis)
         assertEquals(timeCrt+1000, translateCardAfterEdit2.schedule.nextAccessAt)
@@ -125,7 +122,7 @@ class DataManagerInstrumentedIntTest: InstrumentedTestBase() {
         assertTableContent(repo = repo, table = c.ver, expectedRows = listOf())
 
         assertTableContent(repo = repo, table = t, matchColumn = t.cardId, expectedRows = listOf(
-            listOf(t.cardId to translateCardAfterEdit2.id, t.textToTranslate to expectedTextToTranslate2, t.translation to expectedTranslation2, t.direction to FOREIGN_NATIVE, t.reversedCardId to null)
+            listOf(t.cardId to translateCardAfterEdit2.id, t.textToTranslate to expectedTextToTranslate2, t.translation to expectedTranslation2, t.direction to FOREIGN_NATIVE)
         ))
         assertTableContent(repo = repo, table = t.ver, expectedRows = listOf(
             listOf(t.cardId to translateCardAfterEdit2.id, t.textToTranslate to expectedTextToTranslate1, t.translation to expectedTranslation1, t.direction to NATIVE_FOREIGN,

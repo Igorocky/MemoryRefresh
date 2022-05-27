@@ -169,7 +169,6 @@ class DataManager(
         val tagIds: Set<Long> = emptySet(),
         val paused: Boolean = false,
         val direction: TranslationCardDirection,
-        val reversedCardId: Long? = null,
     )
     @BeMethod
     @Synchronized
@@ -191,7 +190,6 @@ class DataManager(
                         textToTranslate = textToTranslate,
                         translation = translation,
                         direction = args.direction,
-                        reversedCardId = args.reversedCardId
                     )
                     cardId
                 }
@@ -215,8 +213,7 @@ class DataManager(
             s.${s.nextAccessInMillis},
             t.${t.textToTranslate}, 
             t.${t.translation}, 
-            t.${t.direction}, 
-            t.${t.reversedCardId} 
+            t.${t.direction} 
         from 
             $c c
             left join $s s on c.${c.id} = s.${s.cardId}
@@ -252,7 +249,6 @@ class DataManager(
                         textToTranslate = it.getString(),
                         translation = it.getString(),
                         direction = TranslationCardDirection.fromInt(it.getLong()),
-                        reversedCardId = it.getLongOrNull(),
                     )
                 }.rows[0]
             }
@@ -369,8 +365,8 @@ class DataManager(
         val updateReversedCardId: Boolean = false,
         val reversedCardId: Long? = null,
     )
-    private val updateTranslateCardQuery = "select ${t.textToTranslate}, ${t.translation}, ${t.direction}, ${t.reversedCardId} from $t where ${t.cardId} = ?"
-    private val updateTranslateCardQueryColumnNames = arrayOf(t.textToTranslate, t.translation, t.direction, t.reversedCardId)
+    private val updateTranslateCardQuery = "select ${t.textToTranslate}, ${t.translation}, ${t.direction} from $t where ${t.cardId} = ?"
+    private val updateTranslateCardQueryColumnNames = arrayOf(t.textToTranslate, t.translation, t.direction)
     @BeMethod
     @Synchronized
     fun updateTranslateCard(args: UpdateTranslateCardArgs): BeRespose<Unit> {
@@ -381,7 +377,6 @@ class DataManager(
                 var existingTextToTranslate: String? = null
                 var existingTranslation: String? = null
                 var existingDirection: TranslationCardDirection? = null
-                var existingReversedCardId: Long? = null
                 select(
                     query = updateTranslateCardQuery,
                     args = arrayOf(args.cardId.toString()),
@@ -390,12 +385,10 @@ class DataManager(
                     existingTextToTranslate = it.getString()
                     existingTranslation = it.getString()
                     existingDirection = TranslationCardDirection.fromInt(it.getLong())
-                    existingReversedCardId = it.getLongOrNull()
                 }
                 val newTextToTranslate: String = args.textToTranslate?.trim()?:existingTextToTranslate!!
                 val newTranslation: String = args.translation?.trim()?:existingTranslation!!
                 val newDirection: TranslationCardDirection = args.direction?:existingDirection!!
-                val newReversedCardId: Long? = args.reversedCardId?:existingReversedCardId
                 if (newTextToTranslate.isEmpty()) {
                     throw MemoryRefreshException(errCode = UPDATE_TRANSLATE_CARD_TEXT_TO_TRANSLATE_IS_EMPTY, msg = "Text to translate should not be empty.")
                 } else if (newTranslation.isEmpty()) {
@@ -405,14 +398,12 @@ class DataManager(
                     newTextToTranslate != existingTextToTranslate
                     || newTranslation != existingTranslation
                     || newDirection != existingDirection
-                    || args.updateReversedCardId && newReversedCardId != existingReversedCardId
                 ) {
                     repo.translationCards.update(
                         cardId = args.cardId,
                         textToTranslate = newTextToTranslate,
                         translation = newTranslation,
                         direction = newDirection,
-                        reversedCardId = newReversedCardId
                     )
                 }
             }
@@ -701,8 +692,7 @@ class DataManager(
                 s.${s.nextAccessInMillis},
                 t.${t.textToTranslate}, 
                 t.${t.translation},
-                t.${t.direction},
-                t.${t.reversedCardId}
+                t.${t.direction}
             from
                 (
                     select
@@ -748,7 +738,6 @@ class DataManager(
                     textToTranslate = it.getString(),
                     translation = it.getString(),
                     direction = TranslationCardDirection.fromInt(it.getLong()),
-                    reversedCardId = it.getLongOrNull(),
                 )
             }.rows
             ReadTranslateCardsByFilterResp(cards = result)

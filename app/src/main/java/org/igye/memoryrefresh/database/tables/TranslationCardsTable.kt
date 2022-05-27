@@ -16,7 +16,6 @@ class TranslationCardsTable(
     val textToTranslate = "TEXT_TO_TRANSLATE"
     val translation = "TRANSLATION"
     val direction = "DIRECTION"
-    val reversedCardId = "REVERSED_CARD_ID"
 
     override fun create(db: SQLiteDatabase) {
         db.execSQL("""
@@ -24,8 +23,7 @@ class TranslationCardsTable(
                     $cardId integer unique references ${cards}(${cards.id}) on update restrict on delete restrict,
                     $textToTranslate text not null,
                     $translation text not null,
-                    $direction integer not null check ($direction in (${FOREIGN_NATIVE.intValue}, ${NATIVE_FOREIGN.intValue})),
-                    $reversedCardId integer references ${cards}(${cards.id}) on update set null on delete set null
+                    $direction integer not null check ($direction in (${FOREIGN_NATIVE.intValue}, ${NATIVE_FOREIGN.intValue}))
                 )
         """)
         db.execSQL("""
@@ -41,8 +39,8 @@ class TranslationCardsTable(
         """)
     }
 
-    interface InsertStmt {operator fun invoke(cardId: Long, textToTranslate: String, translation: String, direction: TranslationCardDirection, reversedCardId: Long?): Long } lateinit var insert: InsertStmt
-    interface UpdateStmt {operator fun invoke(cardId: Long, textToTranslate: String, translation: String, direction: TranslationCardDirection, reversedCardId: Long?): Int} lateinit var update: UpdateStmt
+    interface InsertStmt {operator fun invoke(cardId: Long, textToTranslate: String, translation: String, direction: TranslationCardDirection): Long } lateinit var insert: InsertStmt
+    interface UpdateStmt {operator fun invoke(cardId: Long, textToTranslate: String, translation: String, direction: TranslationCardDirection): Int} lateinit var update: UpdateStmt
     interface DeleteStmt {operator fun invoke(cardId: Long): Int } lateinit var delete: DeleteStmt
 
     override fun prepareStatements(db: SQLiteDatabase) {
@@ -55,33 +53,23 @@ class TranslationCardsTable(
             Utils.executeInsert(self.ver, stmtVer)
         }
         insert = object : InsertStmt {
-            val stmt = db.compileStatement("insert into $self ($cardId,$textToTranslate,$translation,$direction,$reversedCardId) values (?,?,?,?,?)")
-            override fun invoke(cardId: Long, textToTranslate: String, translation: String, direction: TranslationCardDirection, reversedCardId: Long?): Long {
+            val stmt = db.compileStatement("insert into $self ($cardId,$textToTranslate,$translation,$direction) values (?,?,?,?)")
+            override fun invoke(cardId: Long, textToTranslate: String, translation: String, direction: TranslationCardDirection): Long {
                 stmt.bindLong(1, cardId)
                 stmt.bindString(2, textToTranslate)
                 stmt.bindString(3, translation)
                 stmt.bindLong(4, direction.intValue)
-                if (reversedCardId == null) {
-                    stmt.bindNull(5)
-                } else {
-                    stmt.bindLong(5, reversedCardId)
-                }
                 return Utils.executeInsert(self, stmt)
             }
         }
         update = object : UpdateStmt {
-            private val stmt = db.compileStatement("update $self set $textToTranslate = ?, $translation = ?, $direction = ?, $reversedCardId = ?  where $cardId = ?")
-            override fun invoke(cardId: Long, textToTranslate: String, translation: String, direction: TranslationCardDirection, reversedCardId: Long?): Int {
+            private val stmt = db.compileStatement("update $self set $textToTranslate = ?, $translation = ?, $direction = ? where $cardId = ?")
+            override fun invoke(cardId: Long, textToTranslate: String, translation: String, direction: TranslationCardDirection): Int {
                 saveCurrentVersion(cardId = cardId)
                 stmt.bindString(1, textToTranslate)
                 stmt.bindString(2, translation)
                 stmt.bindLong(3, direction.intValue)
-                if (reversedCardId == null) {
-                    stmt.bindNull(4)
-                } else {
-                    stmt.bindLong(4, reversedCardId)
-                }
-                stmt.bindLong(5, cardId)
+                stmt.bindLong(4, cardId)
                 return Utils.executeUpdateDelete(self, stmt, 1)
             }
 

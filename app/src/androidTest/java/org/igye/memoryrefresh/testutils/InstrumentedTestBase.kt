@@ -155,7 +155,6 @@ open class InstrumentedTestBase {
                 textToTranslate = "textToTranslate-" + cardId,
                 translation = "translation-" + cardId,
                 direction = NATIVE_FOREIGN,
-                reversedCardId = null,
             )
         )
         val finalNextAccessAt = (currTime - modifiedCard.overdue * modifiedCard.schedule.nextAccessInMillis).toLong()

@@ -15,7 +15,6 @@ data class TranslateCard(
     val textToTranslate:String,
     val translation:String,
     val direction:TranslationCardDirection,
-    val reversedCardId:Long?,
 ) {
     val type = CardType.TRANSLATION
 }
