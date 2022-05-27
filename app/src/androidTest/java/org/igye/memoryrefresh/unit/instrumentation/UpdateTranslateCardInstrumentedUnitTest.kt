@@ -244,7 +244,7 @@ class UpdateTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
             listOf(t.cardId to cardId, t.textToTranslate to textToTranslateAfterUpdate, t.translation to translationAfterUpdate, t.direction to directionAfterUpdate.intValue, t.reversedCardId to reversedCardIdAfterUpdate),
         ))
         assertTableContent(repo = repo, table = t.ver, expectedRows = listOf(
-            listOf(t.cardId to cardId, t.ver.timestamp to updateTime, t.textToTranslate to textToTranslateBeforeUpdate, t.translation to translationBeforeUpdate, t.direction to directionBeforeUpdate.intValue, t.reversedCardId to reversedCardIdBeforeUpdate),
+            listOf(t.cardId to cardId, t.ver.timestamp to updateTime, t.textToTranslate to textToTranslateBeforeUpdate, t.translation to translationBeforeUpdate, t.direction to directionBeforeUpdate.intValue),
         ))
 
         assertTableContent(repo = repo, table = s, expectedRows = listOf(

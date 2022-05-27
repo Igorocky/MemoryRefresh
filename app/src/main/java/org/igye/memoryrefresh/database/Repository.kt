@@ -203,8 +203,7 @@ class Repository(
                     ${translationCards.cardId} integer not null,
                     ${translationCards.textToTranslate} text not null,
                     ${translationCards.translation} text not null,
-                    ${translationCards.direction} integer not null check (${translationCards.direction} in (${FOREIGN_NATIVE.intValue}, ${NATIVE_FOREIGN.intValue})),
-                    ${translationCards.reversedCardId} integer
+                    ${translationCards.direction} integer not null check (${translationCards.direction} in (${FOREIGN_NATIVE.intValue}, ${NATIVE_FOREIGN.intValue}))
                 ) """.trimIndent(),
             oldColumnNames = listOf(
                 translationCards.ver.verId,

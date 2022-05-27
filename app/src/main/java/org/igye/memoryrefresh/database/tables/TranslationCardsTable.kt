@@ -36,8 +36,7 @@ class TranslationCardsTable(
                     $cardId integer not null,
                     $textToTranslate text not null,
                     $translation text not null,
-                    $direction integer not null check ($direction in (${FOREIGN_NATIVE.intValue}, ${NATIVE_FOREIGN.intValue})),
-                    $reversedCardId integer
+                    $direction integer not null check ($direction in (${FOREIGN_NATIVE.intValue}, ${NATIVE_FOREIGN.intValue}))
                 )
         """)
     }
@@ -48,8 +47,8 @@ class TranslationCardsTable(
 
     override fun prepareStatements(db: SQLiteDatabase) {
         val self = this
-        val stmtVer = db.compileStatement("insert into $ver (${ver.timestamp},$cardId,$textToTranslate,$translation,$direction,$reversedCardId) " +
-                "select ?, $cardId, $textToTranslate, $translation, $direction, $reversedCardId from $self where $cardId = ?")
+        val stmtVer = db.compileStatement("insert into $ver (${ver.timestamp},$cardId,$textToTranslate,$translation,$direction) " +
+                "select ?, $cardId, $textToTranslate, $translation, $direction from $self where $cardId = ?")
         fun saveCurrentVersion(cardId: Long) {
             stmtVer.bindLong(1, clock.instant().toEpochMilli())
             stmtVer.bindLong(2, cardId)

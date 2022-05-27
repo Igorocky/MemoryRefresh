@@ -125,10 +125,10 @@ class DataManagerInstrumentedIntTest: InstrumentedTestBase() {
         assertTableContent(repo = repo, table = c.ver, expectedRows = listOf())
 
         assertTableContent(repo = repo, table = t, matchColumn = t.cardId, expectedRows = listOf(
-            listOf(t.cardId to translateCardAfterEdit2.id, t.textToTranslate to expectedTextToTranslate2, t.translation to expectedTranslation2, t.direction to FOREIGN_NATIVE.intValue, t.reversedCardId to null)
+            listOf(t.cardId to translateCardAfterEdit2.id, t.textToTranslate to expectedTextToTranslate2, t.translation to expectedTranslation2, t.direction to FOREIGN_NATIVE, t.reversedCardId to null)
         ))
         assertTableContent(repo = repo, table = t.ver, expectedRows = listOf(
-            listOf(t.cardId to translateCardAfterEdit2.id, t.textToTranslate to expectedTextToTranslate1, t.translation to expectedTranslation1, t.direction to NATIVE_FOREIGN.intValue, t.reversedCardId to null,
+            listOf(t.cardId to translateCardAfterEdit2.id, t.textToTranslate to expectedTextToTranslate1, t.translation to expectedTranslation1, t.direction to NATIVE_FOREIGN,
                 t.ver.timestamp to timeEdt2)
         ))
 
