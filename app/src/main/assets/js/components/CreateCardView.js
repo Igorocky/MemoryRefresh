@@ -11,6 +11,7 @@ const CreateCardView = ({query,openView,setPageTitle}) => {
     const [errorLoadingTags, setErrorLoadingTags] = useState(null)
 
     const [paused, setPaused] = useState(false)
+    const [direction, setDirection] = useState('BOTH')
     const [textToTranslate, setTextToTranslate] = useState('')
     const [translation, setTranslation] = useState('')
     const [tagIds, setTagIds] = useState([])
@@ -74,6 +75,7 @@ const CreateCardView = ({query,openView,setPageTitle}) => {
                 key: cardCounter,
                 allTags, allTagsMap,
                 paused,pausedOnChange:newValue => setPaused(newValue),
+                direction,directionOnChange:newValue => setDirection(newValue),
                 textToTranslate,textToTranslateOnChange: newValue => setTextToTranslate(newValue),textToTranslateId: TEXT_TO_TRANSLATE_ID,
                 textToTranslateOnExtractWords:extractWords,
                 translation,translationOnChange: newValue => setTranslation(newValue),translationId: TRANSLATION_ID,

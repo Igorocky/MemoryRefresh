@@ -3,6 +3,7 @@
 const EditTranslateCardForm = ({
                                     allTags, allTagsMap,
                                     paused,pausedOnChange,pausedBgColor,
+                                    direction,directionOnChange,directionBgColor,
                                     textToTranslate,textToTranslateOnChange,textToTranslateBgColor,textToTranslateId,textToTranslateOnExtractWords,
                                     translation, translationOnChange, translationBgColor, translationId,
                                     delay,delayOnChange,delayBgColor,
@@ -51,6 +52,26 @@ const EditTranslateCardForm = ({
         )
     }
 
+    function getDirectionIconName(direction) {
+        if (direction === 'NATIVE_FOREIGN') {
+            return 'south'
+        } else if (direction === 'FOREIGN_NATIVE') {
+            return 'north'
+        } else if (direction === 'BOTH') {
+            return 'height'
+        }
+    }
+
+    function getNextDirection(direction) {
+        if (direction === 'NATIVE_FOREIGN') {
+            return 'FOREIGN_NATIVE'
+        } else if (direction === 'FOREIGN_NATIVE') {
+            return 'BOTH'
+        } else if (direction === 'BOTH') {
+            return 'NATIVE_FOREIGN'
+        }
+    }
+
     const margin = '30px'
 
     return RE.Container.col.top.left({}, {},
@@ -87,6 +108,11 @@ const EditTranslateCardForm = ({
             }),
             RE.If(hasValue(textToTranslateOnExtractWords), () => iconButton({iconName:'arrow_circle_down', onClick: textToTranslateOnExtractWords,tabIndex:100}))
         )),
+        RE.If(hasValue(direction), () => iconButton({
+            iconName: getDirectionIconName(direction),
+            onClick: () => directionOnChange(getNextDirection(direction)),
+            style: {marginLeft:'100px'}
+        })),
         RE.If(hasValue(translation), () => textField({
             id: translationId,
             value: translation,
@@ -95,7 +121,7 @@ const EditTranslateCardForm = ({
             multiline: true,
             maxRows: 10,
             size: 'small',
-            style: {backgroundColor:translationBgColor, marginTop:margin},
+            style: {backgroundColor:translationBgColor, marginTop:hasValue(direction)?'3px':margin},
             inputProps: {cols:27},
             onChange: event => {
                 const newText = event.nativeEvent.target.value
