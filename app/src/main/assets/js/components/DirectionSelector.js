@@ -10,7 +10,7 @@ function directionToStr(dir) {
 
 const DirectionSelector = ({selectedDirection, onDirectionSelected, minimized = false}) => {
     if (minimized) {
-        return RE.span({style: {marginLeft: '5px', color:'blue'}},`${selectedDirection}`)
+        return null
     } else {
         return RE.Container.row.left.center({},{style:{margin:'5px'}},
             RE.FormControl({variant:"outlined"},

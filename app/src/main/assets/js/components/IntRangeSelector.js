@@ -1,5 +1,7 @@
 'use strict';
 
+const LESS_EQ_CHAR = '\u{2264}'
+
 const IntRangeSelector = ({selectedMin = null, selectedMax = null, onMinSelected, onMaxSelected, parameterName, minimized = false}) => {
 
     function getSelectedMin() {
@@ -19,10 +21,7 @@ const IntRangeSelector = ({selectedMin = null, selectedMax = null, onMinSelected
     }
 
     if (minimized) {
-        return RE.span(
-            {style: {marginLeft: '5px', color:'blue'}},
-            `${(hasValue(selectedMin) ? selectedMin : 0) + ' \u2264 '}${parameterName}${hasValue(selectedMax) ? ' \u2264 ' + selectedMax : ''}`
-        )
+        return null
     } else {
         return RE.Container.row.left.center({},{style:{margin:'5px'}},
             textField({

@@ -184,9 +184,8 @@ const TranslateCardFilterCmp = ({
                                 setSearchInActive(true)
                             }}
                         ),
-                        RE.span({style:{paddingRight:'10px'}, onClick: () => setFocusedFilter(null)}, 'Active or paused:')
+                        RE.span({style:{paddingRight:'10px'}, onClick: () => setFocusedFilter(null)}, `Card is ${searchInActive ? 'active' : 'paused'}`)
                     ),
-                    RE.If(minimized, () => RE.span({style:{padding:'5px', color:'blue'}}, searchInActive ? 'Active' : 'Paused')),
                     RE.IfNot(minimized, () => RE.FormControl({component:'fieldset', style:{marginLeft:'10px'}},
                         RE.RadioGroup({row:true, value: searchInActive, onChange: event => setSearchInActive(event.target.value === 'true')},
                             RE.FormControlLabel({value:true, control:RE.Radio({}), label: 'Active'}),
@@ -194,7 +193,7 @@ const TranslateCardFilterCmp = ({
                         )
                     ))
                 ),
-                renderMinimized: () => `Search in: ${searchInActive ? 'Active' : 'Paused'}`,
+                renderMinimized: () => `Card is ${searchInActive ? 'active' : 'paused'}`,
                 getFilterValues: () => ({paused: !searchInActive})
             }
         }
@@ -297,7 +296,7 @@ const TranslateCardFilterCmp = ({
                                 setDirection('NATIVE_FOREIGN')
                             }
                         }),
-                        RE.span({style:{paddingRight:'10px'}, onClick: () => setFocusedFilter(null)}, 'Direction:')
+                        RE.span({style:{paddingRight:'10px'}, onClick: () => setFocusedFilter(null)}, `Direction: ${directionToStr(direction)}`)
                     ),
                     re(DirectionSelector,{
                         selectedDirection: direction,
@@ -314,9 +313,12 @@ const TranslateCardFilterCmp = ({
     function createCreatedOnOrAfterFilterObject() {
         const filterName = af.CREATED_ON_OR_AFTER
         const minimized = filterName !== focusedFilter
+        const dateStr = `${createdOnOrAfter.getFullYear()} ${ALL_MONTHS[createdOnOrAfter.getMonth()]} ${createdOnOrAfter.getDate()}`
+        const displayName = `date ${LESS_EQ_CHAR} created`
+        const minimizedStr = `${dateStr} ${LESS_EQ_CHAR} created`
         return {
             [filterName]: {
-                displayName: 'Created on or after',
+                displayName,
                 render: () => RE.Container.col.top.left({},{},
                     RE.Container.row.left.center({},{},
                         iconButton({
@@ -326,7 +328,7 @@ const TranslateCardFilterCmp = ({
                                 setCreatedOnOrAfter(new Date())
                             }
                         }),
-                        RE.span({style:{paddingRight:'10px'}, onClick: () => setFocusedFilter(null)}, 'Created on or after:')
+                        RE.span({style:{paddingRight:'10px'}, onClick: () => setFocusedFilter(null)}, minimizedStr)
                     ),
                     re(DateSelector,{
                         selectedDate: createdOnOrAfter,
@@ -334,7 +336,7 @@ const TranslateCardFilterCmp = ({
                         minimized,
                     })
                 ),
-                renderMinimized: () => `Created on or after: ${createdOnOrAfter.getFullYear()} ${ALL_MONTHS[createdOnOrAfter.getMonth()]} ${createdOnOrAfter.getDate()}`,
+                renderMinimized: () => minimizedStr,
                 getFilterValues: () => ({createdFrom: startOfDay(createdOnOrAfter).getTime()})
             }
         }
@@ -343,9 +345,12 @@ const TranslateCardFilterCmp = ({
     function createCreatedOnOrBeforeFilterObject() {
         const filterName = af.CREATED_ON_OR_BEFORE
         const minimized = filterName !== focusedFilter
+        const displayName = `created ${LESS_EQ_CHAR} date`
+        const dateStr = `${createdOnOrBefore.getFullYear()} ${ALL_MONTHS[createdOnOrBefore.getMonth()]} ${createdOnOrBefore.getDate()}`
+        const minimizedStr = `created ${LESS_EQ_CHAR} ${dateStr}`
         return {
             [filterName]: {
-                displayName: 'Created on or before',
+                displayName,
                 render: () => RE.Container.col.top.left({},{},
                     RE.Container.row.left.center({},{},
                         iconButton({
@@ -355,7 +360,7 @@ const TranslateCardFilterCmp = ({
                                 setCreatedOnOrBefore(new Date())
                             }
                         }),
-                        RE.span({style:{paddingRight:'10px'}, onClick: () => setFocusedFilter(null)}, 'Created on or before:')
+                        RE.span({style:{paddingRight:'10px'}, onClick: () => setFocusedFilter(null)}, minimizedStr)
                     ),
                     re(DateSelector,{
                         selectedDate: createdOnOrBefore,
@@ -363,7 +368,7 @@ const TranslateCardFilterCmp = ({
                         minimized,
                     })
                 ),
-                renderMinimized: () => `Created on or before: ${createdOnOrBefore.getFullYear()} ${ALL_MONTHS[createdOnOrBefore.getMonth()]} ${createdOnOrBefore.getDate()}`,
+                renderMinimized: () => minimizedStr,
                 getFilterValues: () => ({createdTill: addDays(startOfDay(createdOnOrBefore),1).getTime()})
             }
         }
@@ -372,9 +377,12 @@ const TranslateCardFilterCmp = ({
     function createBecomesAccessibleOnOrAfterFilterObject() {
         const filterName = af.BECOMES_ACCESSIBLE_ON_OR_AFTER
         const minimized = filterName !== focusedFilter
+        const displayName = `date ${LESS_EQ_CHAR} accessible`
+        const dateStr = `${becomesAccessibleOnOrAfter.getFullYear()} ${ALL_MONTHS[becomesAccessibleOnOrAfter.getMonth()]} ${becomesAccessibleOnOrAfter.getDate()}`
+        const minimizedStr = `${dateStr} ${LESS_EQ_CHAR} accessible`
         return {
             [filterName]: {
-                displayName: 'Accessible on or after',
+                displayName,
                 render: () => RE.Container.col.top.left({},{},
                     RE.Container.row.left.center({},{},
                         iconButton({
@@ -384,7 +392,7 @@ const TranslateCardFilterCmp = ({
                                 setBecomesAccessibleOnOrAfter(new Date())
                             }
                         }),
-                        RE.span({style:{paddingRight:'10px'}, onClick: () => setFocusedFilter(null)}, 'Accessible on or after:')
+                        RE.span({style:{paddingRight:'10px'}, onClick: () => setFocusedFilter(null)}, minimizedStr)
                     ),
                     re(DateSelector,{
                         selectedDate: becomesAccessibleOnOrAfter,
@@ -392,9 +400,7 @@ const TranslateCardFilterCmp = ({
                         minimized,
                     })
                 ),
-                renderMinimized: () =>
-                    'Accessible on or after: '+
-                        `${becomesAccessibleOnOrAfter.getFullYear()} ${ALL_MONTHS[becomesAccessibleOnOrAfter.getMonth()]} ${becomesAccessibleOnOrAfter.getDate()}`,
+                renderMinimized: () => minimizedStr,
                 getFilterValues: () => ({nextAccessFrom: startOfDay(becomesAccessibleOnOrAfter).getTime()})
             }
         }
@@ -403,9 +409,12 @@ const TranslateCardFilterCmp = ({
     function createBecomesAccessibleOnOrBeforeFilterObject() {
         const filterName = af.BECOMES_ACCESSIBLE_ON_OR_BEFORE
         const minimized = filterName !== focusedFilter
+        const displayName = `accessible ${LESS_EQ_CHAR} date`
+        const dateStr = `${becomesAccessibleOnOrBefore.getFullYear()} ${ALL_MONTHS[becomesAccessibleOnOrBefore.getMonth()]} ${becomesAccessibleOnOrBefore.getDate()}`
+        const minimizedStr = `accessible ${LESS_EQ_CHAR} ${dateStr}`
         return {
             [filterName]: {
-                displayName: 'Accessible on or before',
+                displayName,
                 render: () => RE.Container.col.top.left({},{},
                     RE.Container.row.left.center({},{},
                         iconButton({
@@ -415,7 +424,7 @@ const TranslateCardFilterCmp = ({
                                 setBecomesAccessibleOnOrBefore(new Date())
                             }
                         }),
-                        RE.span({style:{paddingRight:'10px'}, onClick: () => setFocusedFilter(null)}, 'Accessible on or before:')
+                        RE.span({style:{paddingRight:'10px'}, onClick: () => setFocusedFilter(null)}, minimizedStr)
                     ),
                     re(DateSelector,{
                         selectedDate: becomesAccessibleOnOrBefore,
@@ -423,9 +432,7 @@ const TranslateCardFilterCmp = ({
                         minimized,
                     })
                 ),
-                renderMinimized: () =>
-                    'Accessible on or before: '+
-                        `${becomesAccessibleOnOrBefore.getFullYear()} ${ALL_MONTHS[becomesAccessibleOnOrBefore.getMonth()]} ${becomesAccessibleOnOrBefore.getDate()}`,
+                renderMinimized: () => minimizedStr,
                 getFilterValues: () => ({nextAccessTill: addDays(startOfDay(becomesAccessibleOnOrBefore),1).getTime()})
             }
         }
@@ -435,6 +442,7 @@ const TranslateCardFilterCmp = ({
         const filterName = af.NATIVE_TEXT_LENGTH
         const minimized = filterName !== focusedFilter
         const parameterName = '(native text length)'
+        const minimizedStr = `${(hasValue(nativeTextMinLength) ? nativeTextMinLength : 0) + ` ${LESS_EQ_CHAR} `}${parameterName}${hasValue(nativeTextMaxLength) ? ` ${LESS_EQ_CHAR} ` + nativeTextMaxLength : ''}`
         return {
             [filterName]: {
                 displayName: 'Native text length',
@@ -448,7 +456,7 @@ const TranslateCardFilterCmp = ({
                                 setNativeTextMaxLength(null)
                             }
                         }),
-                        RE.span({style:{paddingRight:'10px'}, onClick: () => setFocusedFilter(null)}, 'Native text length:')
+                        RE.span({style:{paddingRight:'10px'}, onClick: () => setFocusedFilter(null)}, minimizedStr)
                     ),
                     re(IntRangeSelector,{
                         selectedMin: nativeTextMinLength,
@@ -459,7 +467,7 @@ const TranslateCardFilterCmp = ({
                         minimized,
                     })
                 ),
-                renderMinimized: () => `${(hasValue(nativeTextMinLength) ? nativeTextMinLength : 0) + ' \u2264 '}${parameterName}${hasValue(nativeTextMaxLength) ? ' \u2264 ' + nativeTextMaxLength : ''}`,
+                renderMinimized: () => minimizedStr,
                 getFilterValues: () => ({
                     textToTranslateLengthGreaterThan: hasValue(nativeTextMinLength) ? nativeTextMinLength - 1 : null,
                     textToTranslateLengthLessThan: hasValue(nativeTextMaxLength) ? (nativeTextMaxLength-0) + 1 : null,
@@ -471,6 +479,7 @@ const TranslateCardFilterCmp = ({
     function createNativeTextContainsFilterObject() {
         const filterName = af.NATIVE_TEXT_CONTAINS
         const minimized = filterName !== focusedFilter
+        const minimizedStr = `Native text contains: "${nativeTextContains}"`
         return {
             [filterName]: {
                 displayName: 'Native text contains',
@@ -483,9 +492,8 @@ const TranslateCardFilterCmp = ({
                                 setNativeTextContains('')
                             }
                         }),
-                        RE.span({style:{paddingRight:'10px'}, onClick: () => setFocusedFilter(null)}, 'Native text contains:')
+                        RE.span({style:{paddingRight:'10px'}, onClick: () => setFocusedFilter(null)}, minimizedStr)
                     ),
-                    RE.If(minimized, () => RE.span({style:{padding:'5px', color:'blue'}}, `"${nativeTextContains}"`)),
                     RE.IfNot(minimized, () => textField({
                         value: nativeTextContains,
                         label: 'Native text contains',
@@ -504,7 +512,7 @@ const TranslateCardFilterCmp = ({
                         },
                     }))
                 ),
-                renderMinimized: () => `Native text contains: "${nativeTextContains}"`,
+                renderMinimized: () => minimizedStr,
                 getFilterValues: () => ({textToTranslateContains: nativeTextContains})
             }
         }
@@ -514,6 +522,7 @@ const TranslateCardFilterCmp = ({
         const filterName = af.FOREIGN_TEXT_LENGTH
         const minimized = filterName !== focusedFilter
         const parameterName = '(foreign text length)'
+        const minimizedStr = `${(hasValue(foreignTextMinLength) ? foreignTextMinLength : 0) + ` ${LESS_EQ_CHAR} `}${parameterName}${hasValue(foreignTextMaxLength) ? ` ${LESS_EQ_CHAR} ` + foreignTextMaxLength : ''}`
         return {
             [filterName]: {
                 displayName: 'Foreign text length',
@@ -527,7 +536,7 @@ const TranslateCardFilterCmp = ({
                                 setForeignTextMaxLength(null)
                             }
                         }),
-                        RE.span({style:{paddingRight:'10px'}, onClick: () => setFocusedFilter(null)}, 'Foreign text length:')
+                        RE.span({style:{paddingRight:'10px'}, onClick: () => setFocusedFilter(null)}, minimizedStr)
                     ),
                     re(IntRangeSelector,{
                         selectedMin: foreignTextMinLength,
@@ -538,7 +547,7 @@ const TranslateCardFilterCmp = ({
                         minimized,
                     })
                 ),
-                renderMinimized: () => `${(hasValue(foreignTextMinLength) ? foreignTextMinLength : 0) + ' \u2264 '}${parameterName}${hasValue(foreignTextMaxLength) ? ' \u2264 ' + foreignTextMaxLength : ''}`,
+                renderMinimized: () => minimizedStr,
                 getFilterValues: () => ({
                     translationLengthGreaterThan: hasValue(foreignTextMinLength) ? foreignTextMinLength - 1 : null,
                     translationLengthLessThan: hasValue(foreignTextMaxLength) ? (foreignTextMaxLength-0) + 1 : null,
@@ -550,6 +559,7 @@ const TranslateCardFilterCmp = ({
     function createForeignTextContainsFilterObject() {
         const filterName = af.FOREIGN_TEXT_CONTAINS
         const minimized = filterName !== focusedFilter
+        const minimizedStr = `Foreign text contains: "${foreignTextContains}"`;
         return {
             [filterName]: {
                 displayName: 'Foreign text contains',
@@ -562,9 +572,8 @@ const TranslateCardFilterCmp = ({
                                 setForeignTextContains('')
                             }
                         }),
-                        RE.span({style:{paddingRight:'10px'}, onClick: () => setFocusedFilter(null)}, 'Foreign text contains:')
+                        RE.span({style:{paddingRight:'10px'}, onClick: () => setFocusedFilter(null)}, minimizedStr)
                     ),
-                    RE.If(minimized, () => RE.span({style:{padding:'5px', color:'blue'}}, `"${foreignTextContains}"`)),
                     RE.IfNot(minimized, () => textField({
                         value: foreignTextContains,
                         label: 'Foreign text contains',
@@ -583,7 +592,7 @@ const TranslateCardFilterCmp = ({
                         },
                     }))
                 ),
-                renderMinimized: () => `Foreign text contains: "${foreignTextContains}"`,
+                renderMinimized: () => minimizedStr,
                 getFilterValues: () => ({translationContains: foreignTextContains})
             }
         }
@@ -597,6 +606,7 @@ const TranslateCardFilterCmp = ({
             [sb.NEXT_ACCESS_AT]:{displayName:'Next access at'},
         }
         const possibleDirs = {[sd.ASC]:{displayName:'A-Z'}, [sd.DESC]:{displayName:'Z-A'}}
+        const minimizedStr = `Sort by: ${possibleParams[sortBy].displayName}, ${possibleDirs[sortDir].displayName}`
         return {
             [filterName]: {
                 displayName: 'Sort by',
@@ -610,7 +620,7 @@ const TranslateCardFilterCmp = ({
                                 setSortDir(sd.ASC)
                             }
                         }),
-                        RE.span({style:{paddingRight:'10px'}, onClick: () => setFocusedFilter(null)}, 'Sort by:')
+                        RE.span({style:{paddingRight:'10px'}, onClick: () => setFocusedFilter(null)}, minimizedStr)
                     ),
                     re(SortBySelector,{
                         possibleParams: possibleParams,
@@ -622,7 +632,7 @@ const TranslateCardFilterCmp = ({
                         minimized,
                     })
                 ),
-                renderMinimized: () => `Sort by: ${possibleParams[sortBy].displayName} ${possibleDirs[sortDir].displayName}`,
+                renderMinimized: () => minimizedStr,
                 getFilterValues: () => ({sortBy, sortDir})
             }
         }

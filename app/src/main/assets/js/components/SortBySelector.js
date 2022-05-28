@@ -3,10 +3,7 @@
 const SortBySelector = ({possibleParams, selectedParam, onParamSelected, possibleDirs, selectedDir, onDirSelected, minimized = false}) => {
 
     if (minimized) {
-        return RE.span(
-            {style: {marginLeft: '5px', marginRight: '5px', color:'blue'}},
-            possibleParams[selectedParam].displayName + ' ' + possibleDirs[selectedDir].displayName
-        )
+        return null
     } else {
         return RE.Container.row.left.center({},{style:{margin:'5px'}},
             RE.FormControl({variant:"outlined"},
