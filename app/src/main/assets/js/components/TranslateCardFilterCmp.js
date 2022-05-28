@@ -2,6 +2,7 @@
 
 const AVAILABLE_TRANSLATE_CARD_FILTERS = {
     SEARCH_IN_ACTIVE:'SEARCH_IN_ACTIVE',
+    DIRECTION:'DIRECTION',
     INCLUDE_TAGS:'INCLUDE_TAGS',
     EXCLUDE_TAGS:'EXCLUDE_TAGS',
     CREATED_ON_OR_AFTER:'CREATED_ON_OR_AFTER',
@@ -17,17 +18,18 @@ const AVAILABLE_TRANSLATE_CARD_FILTERS = {
 
 const CARD_FILTER_SORT_ORDER = {
     SEARCH_IN_ACTIVE:1,
-    INCLUDE_TAGS:2,
-    EXCLUDE_TAGS:3,
-    CREATED_ON_OR_AFTER:4,
-    CREATED_ON_OR_BEFORE:5,
-    NATIVE_TEXT_LENGTH:6,
-    NATIVE_TEXT_CONTAINS:7,
-    FOREIGN_TEXT_LENGTH:8,
-    FOREIGN_TEXT_CONTAINS:9,
-    BECOMES_ACCESSIBLE_ON_OR_AFTER:10,
-    BECOMES_ACCESSIBLE_ON_OR_BEFORE:11,
-    SORT_BY:12,
+    DIRECTION:2,
+    INCLUDE_TAGS:3,
+    EXCLUDE_TAGS:4,
+    CREATED_ON_OR_AFTER:5,
+    CREATED_ON_OR_BEFORE:6,
+    NATIVE_TEXT_LENGTH:7,
+    NATIVE_TEXT_CONTAINS:8,
+    FOREIGN_TEXT_LENGTH:9,
+    FOREIGN_TEXT_CONTAINS:10,
+    BECOMES_ACCESSIBLE_ON_OR_AFTER:11,
+    BECOMES_ACCESSIBLE_ON_OR_BEFORE:12,
+    SORT_BY:13,
 }
 
 const AVAILABLE_TRANSLATE_CARD_SORT_BY = {
@@ -58,6 +60,7 @@ const TranslateCardFilterCmp = ({
     const [focusedFilter, setFocusedFilter] = useState(initialState?.focusedFilter??filtersSelected[0])
 
     const [searchInActive, setSearchInActive] = useState(initialState?.searchInActive??true)
+    const [direction, setDirection] = useState(initialState?.direction??'NATIVE_FOREIGN')
 
     const [tagsToInclude, setTagsToInclude] = useState(initialState?.tagsToInclude??[])
     const [tagsToExclude, setTagsToExclude] = useState(initialState?.tagsToExclude??[])
@@ -88,6 +91,7 @@ const TranslateCardFilterCmp = ({
         stateRef.current.filtersSelected = filtersSelected
         stateRef.current.focusedFilter = focusedFilter
         stateRef.current.searchInActive = searchInActive
+        stateRef.current.direction = direction
         stateRef.current.tagsToInclude = tagsToInclude
         stateRef.current.tagsToExclude = tagsToExclude
         stateRef.current.createdOnOrAfter = createdOnOrAfter.getTime()
@@ -274,6 +278,35 @@ const TranslateCardFilterCmp = ({
                     renderListOfTags({tags: tagsToExclude, color:'red'})
                 ),
                 getFilterValues: () => ({tagIdsToExclude: tagsToExclude.map(t=>t.id)})
+            }
+        }
+    }
+
+    function createDirectionFilterObject() {
+        const filterName = af.DIRECTION
+        const minimized = filterName !== focusedFilter
+        return {
+            [filterName]: {
+                displayName: 'Direction',
+                render: () => RE.Container.col.top.left({},{},
+                    RE.Container.row.left.center({},{},
+                        iconButton({
+                            iconName:'cancel',
+                            onClick: () => {
+                                removeFilter(filterName)
+                                setDirection('NATIVE_FOREIGN')
+                            }
+                        }),
+                        RE.span({style:{paddingRight:'10px'}, onClick: () => setFocusedFilter(null)}, 'Direction:')
+                    ),
+                    re(DirectionSelector,{
+                        selectedDirection: direction,
+                        onDirectionSelected: newDirection => setDirection(newDirection),
+                        minimized,
+                    })
+                ),
+                renderMinimized: () => `Direction: ${directionToStr(direction)}`,
+                getFilterValues: () => ({direction})
             }
         }
     }
@@ -597,6 +630,7 @@ const TranslateCardFilterCmp = ({
 
     const allFilterObjects = {
         ...createSearchInActiveFilterObject(),
+        ...createDirectionFilterObject(),
         ...createTagsToIncludeFilterObject(),
         ...createTagsToExcludeFilterObject(),
         ...createCreatedOnOrAfterFilterObject(),
@@ -635,6 +669,7 @@ const TranslateCardFilterCmp = ({
                 af.INCLUDE_TAGS,
                 af.EXCLUDE_TAGS,
                 af.SEARCH_IN_ACTIVE,
+                af.DIRECTION,
                 af.CREATED_ON_OR_AFTER,
                 af.CREATED_ON_OR_BEFORE,
                 af.NATIVE_TEXT_LENGTH,
