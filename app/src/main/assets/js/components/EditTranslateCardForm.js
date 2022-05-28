@@ -87,7 +87,7 @@ const EditTranslateCardForm = ({
                 maxRows: 10,
                 size: 'small',
                 style: {backgroundColor:textToTranslateBgColor},
-                inputProps: {cols:27},
+                inputProps: {cols:27, tabIndex: 1},
                 onChange: event => {
                     const newText = event.nativeEvent.target.value
                     if (newText != textToTranslate) {
@@ -122,7 +122,7 @@ const EditTranslateCardForm = ({
             maxRows: 10,
             size: 'small',
             style: {backgroundColor:translationBgColor, marginTop:hasValue(direction)?'3px':margin},
-            inputProps: {cols:27},
+            inputProps: {cols:27, tabIndex: 2},
             onChange: event => {
                 const newText = event.nativeEvent.target.value
                 if (newText != translation) {

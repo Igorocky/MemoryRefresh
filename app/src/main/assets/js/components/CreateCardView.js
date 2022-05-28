@@ -33,9 +33,17 @@ const CreateCardView = ({query,openView,setPageTitle}) => {
         }
     }, [])
 
+    function getDirectionToSave() {
+        return direction === 'BOTH' ? 'NATIVE_FOREIGN' : direction;
+    }
+
     async function createCard() {
         const closeProgressIndicator = showMessageWithProgress({text: 'Saving new card...'})
-        const res = await be.createTranslateCard({textToTranslate, translation, paused, tagIds})
+        const res = await be.createTranslateCard({
+            textToTranslate, translation, paused, tagIds,
+            direction: direction === 'BOTH' ? 'NATIVE_FOREIGN' : direction,
+            createReversedCard: direction === 'BOTH',
+        })
         closeProgressIndicator()
         if (res.err) {
             await showError(res.err)
