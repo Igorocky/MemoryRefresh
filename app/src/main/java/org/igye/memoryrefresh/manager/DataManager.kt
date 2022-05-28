@@ -313,6 +313,7 @@ class DataManager(
     }
 
     data class SelectTopOverdueTranslateCardsArgs(
+        val direction: TranslationCardDirection? = null,
         val tagIdsToInclude: Set<Long>? = null,
         val tagIdsToExclude: Set<Long>? = null,
         val translationLengthLessThan: Long? = null,
@@ -325,6 +326,7 @@ class DataManager(
         val filterArgs = ReadTranslateCardsByFilterArgs(
             paused = false,
             overdueGreaterEq = 0.0,
+            direction = args.direction,
             tagIdsToInclude = args.tagIdsToInclude,
             tagIdsToExclude = args.tagIdsToExclude,
             translationLengthLessThan = args.translationLengthLessThan,

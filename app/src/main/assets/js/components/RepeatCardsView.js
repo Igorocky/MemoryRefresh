@@ -165,7 +165,7 @@ const RepeatCardsView = ({query,openView,setPageTitle,controlsContainer, cycledM
                 setFilter(filter)
                 reloadCards({filter})
             },
-            allowedFilters:cycledMode?null:[af.INCLUDE_TAGS, af.EXCLUDE_TAGS, af.FOREIGN_TEXT_LENGTH],
+            allowedFilters:cycledMode?null:[af.DIRECTION, af.INCLUDE_TAGS, af.EXCLUDE_TAGS, af.FOREIGN_TEXT_LENGTH],
             minimized: !isFilterMode,
             cardUpdateCounter
         })
