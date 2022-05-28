@@ -233,17 +233,14 @@ function useStateFromLocalStorageBoolean({key, defaultValue, nullable}) {
     })
 }
 
-function iconButton({iconName,onClick,disabled,style,iconStyle,tabIndex,ref}) {
+function iconButton({iconName,onClick,onKeyDown,onKeyUp,disabled,style,iconStyle,tabIndex,ref}) {
     return RE.IconButton(
         {
-            ref,
+            ref, onKeyDown, onKeyUp, disabled, tabIndex, style,
             onClick: e => {
                 e.stopPropagation();
                 onClick?.()
-            },
-            disabled,
-            tabIndex,
-            style
+            }
         },
         RE.Icon({style:{color:'black', ...(iconStyle??{})}}, iconName)
     )

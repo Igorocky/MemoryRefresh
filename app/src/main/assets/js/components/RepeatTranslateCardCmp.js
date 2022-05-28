@@ -272,15 +272,24 @@ const RepeatTranslateCardCmp = ({allTags, allTagsMap, controlsContainer, cardToR
                 })
             }
         } else if (!(card?.direction === 'FOREIGN_NATIVE' && answerFromBEIsShown)) {
+            function showAnswer() {
+                toggleShowAnswerButton()
+                if (card?.direction === 'NATIVE_FOREIGN') {
+                    focusUserTranslation()
+                } else {
+                    setAutoFocusDelay(true)
+                }
+            }
             return iconButton({
                 ref: showAnswerBtnRef,
                 iconName: answerFromBEIsShown ? 'visibility_off' : 'visibility',
-                onClick: () => {
-                    toggleShowAnswerButton()
-                    if (card?.direction === 'NATIVE_FOREIGN') {
-                        focusUserTranslation()
-                    } else {
-                        setAutoFocusDelay(true)
+                onClick: showAnswer,
+                onKeyDown: event => {
+                    event.preventDefault();
+                },
+                onKeyUp: event => {
+                    if (event.ctrlKey && event.keyCode === ENTER_KEY_CODE) {
+                        showAnswer()
                     }
                 },
                 iconStyle: {color: 'blue'}
