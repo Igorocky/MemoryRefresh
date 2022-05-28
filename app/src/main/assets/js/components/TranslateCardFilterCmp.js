@@ -752,7 +752,30 @@ const TranslateCardFilterCmp = ({
         const filtersToRender = getEffectiveSelectedFilterNames().sortBy(n => CARD_FILTER_SORT_ORDER[n])
         return RE.Paper({style:{padding:'5px'}},
             filtersToRender.length ? RE.Container.col.top.left({},{},
-                filtersToRender.map(filterName => allFilterObjects[filterName].renderMinimized())
+                filtersToRender
+                    .filter(filterName => {
+                        if (
+                            filterName === af.CREATED_ON_OR_BEFORE && filtersToRender.includes(af.CREATED_ON_OR_AFTER)
+                            || filterName === af.BECOMES_ACCESSIBLE_ON_OR_BEFORE && filtersToRender.includes(af.BECOMES_ACCESSIBLE_ON_OR_AFTER)
+                        ) {
+                            return false
+                        } else {
+                            return true
+                        }
+                    })
+                    .map(filterName => {
+                        if (filterName === af.CREATED_ON_OR_AFTER && filtersToRender.includes(af.CREATED_ON_OR_BEFORE)) {
+                            const minDateStr = `${createdOnOrAfter.getFullYear()} ${ALL_MONTHS[createdOnOrAfter.getMonth()]} ${createdOnOrAfter.getDate()}`
+                            const maxDateStr = `${createdOnOrBefore.getFullYear()} ${ALL_MONTHS[createdOnOrBefore.getMonth()]} ${createdOnOrBefore.getDate()}`
+                            return `${minDateStr} ${LESS_EQ_CHAR} created ${LESS_EQ_CHAR} ${maxDateStr}`
+                        } else if (filterName === af.BECOMES_ACCESSIBLE_ON_OR_AFTER && filtersToRender.includes(af.BECOMES_ACCESSIBLE_ON_OR_BEFORE)) {
+                            const minDateStr = `${becomesAccessibleOnOrAfter.getFullYear()} ${ALL_MONTHS[becomesAccessibleOnOrAfter.getMonth()]} ${becomesAccessibleOnOrAfter.getDate()}`
+                            const maxDateStr = `${becomesAccessibleOnOrBefore.getFullYear()} ${ALL_MONTHS[becomesAccessibleOnOrBefore.getMonth()]} ${becomesAccessibleOnOrBefore.getDate()}`
+                            return `${minDateStr} ${LESS_EQ_CHAR} accessible ${LESS_EQ_CHAR} ${maxDateStr}`
+                        } else {
+                            return allFilterObjects[filterName].renderMinimized()
+                        }
+                    })
             ) : 'All cards'
         )
     } else {
