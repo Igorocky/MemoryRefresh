@@ -241,10 +241,7 @@ class Repository(
         )
 
         db.execSQL("""
-                ALTER TABLE ${cardsSchedule.ver} ADD COLUMN ${cardsSchedule.origDelay} text
-        """.trimIndent())
-        db.execSQL("""
-                update ${cardsSchedule.ver} set ${cardsSchedule.origDelay} = '-' where ${cardsSchedule.origDelay} is null
+                ALTER TABLE ${cardsSchedule.ver} ADD COLUMN ${cardsSchedule.origDelay} text not null default '-'
         """.trimIndent())
         recreateTable(
             db = db,
@@ -333,7 +330,7 @@ class Repository(
     }
 
     companion object {
-        const val DATABASE_VERSION = 2
+        const val DATABASE_VERSION = 3
     }
 }
 
