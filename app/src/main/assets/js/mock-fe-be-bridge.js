@@ -76,7 +76,7 @@ function createFeBeBridgeForUiTestMode() {
         }
     }
 
-    mockedBeFunctions.createTranslateCard = ({textToTranslate, translation, tagIds, paused}) => {
+    mockedBeFunctions.createTranslateCard = ({textToTranslate, translation, tagIds, paused, direction}) => {
         textToTranslate = textToTranslate?.trim()??''
         translation = translation?.trim()??''
         if (textToTranslate == '') {
@@ -100,7 +100,8 @@ function createFeBeBridgeForUiTestMode() {
                 activatesIn: '5h 23m',
                 overdue: 1.03,
                 textToTranslate,
-                translation
+                translation,
+                direction
             }
             CARDS.push(newCard)
             for (let tagId of tagIds) {
@@ -132,6 +133,7 @@ function createFeBeBridgeForUiTestMode() {
                 overdue: card.overdue,
                 textToTranslate: card.textToTranslate,
                 translation: card.translation,
+                direction: card.direction,
             })
         }
     }
@@ -367,7 +369,8 @@ function createFeBeBridgeForUiTestMode() {
                     textToTranslate: s.toUpperCase(),
                     translation: s.toLowerCase(),
                     tagIds: getRandomTagIds(),
-                    paused: randomInt(0, 1) === 1
+                    paused: randomInt(0, 1) === 1,
+                    direction: randomInt(0, 1) === 1 ? 'NATIVE_FOREIGN' : 'FOREIGN_NATIVE',
                 })
             })
     }

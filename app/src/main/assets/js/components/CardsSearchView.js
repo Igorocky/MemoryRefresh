@@ -98,6 +98,7 @@ const CardsSearchView = ({query,openView,setPageTitle,controlsContainer}) => {
             RE.div(
                 {style:{borderBottom:'solid 1px lightgrey', padding:'3px'}},
                 RE.span({style:{fontWeight:'bold'}},`${idx+1}. `),
+                RE.span({style:{marginRight:'5px'}},card.direction === 'NATIVE_FOREIGN' ? 'N' : 'F'),
                 renderListOfTags({
                     tags: card.tagIds.map(id => allTagsMap[id]),
                     color:card.paused?'grey':'black',

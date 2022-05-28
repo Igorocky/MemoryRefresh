@@ -3,7 +3,7 @@
 const EditTranslateCardForm = ({
                                     allTags, allTagsMap,
                                     paused,pausedOnChange,pausedBgColor,
-                                    direction,directionOnChange,directionBgColor,
+                                    direction,directionOnChange,directionBgColor,directionExtended = false,
                                     textToTranslate,textToTranslateOnChange,textToTranslateBgColor,textToTranslateId,textToTranslateOnExtractWords,
                                     translation, translationOnChange, translationBgColor, translationId,
                                     delay,delayOnChange,delayBgColor,
@@ -66,7 +66,7 @@ const EditTranslateCardForm = ({
         if (direction === 'NATIVE_FOREIGN') {
             return 'FOREIGN_NATIVE'
         } else if (direction === 'FOREIGN_NATIVE') {
-            return 'BOTH'
+            return directionExtended ? 'BOTH' : 'NATIVE_FOREIGN'
         } else if (direction === 'BOTH') {
             return 'NATIVE_FOREIGN'
         }
@@ -111,7 +111,7 @@ const EditTranslateCardForm = ({
         RE.If(hasValue(direction), () => iconButton({
             iconName: getDirectionIconName(direction),
             onClick: () => directionOnChange(getNextDirection(direction)),
-            style: {marginLeft:'100px'}
+            style: {marginLeft:'100px', backgroundColor:directionBgColor}
         })),
         RE.If(hasValue(translation), () => textField({
             id: translationId,

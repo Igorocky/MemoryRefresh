@@ -6,6 +6,7 @@ const EditTranslateCardCmp = ({allTags, allTagsMap, card, reducedMode = false, o
     const [textToTranslate, setTextToTranslate] = useState(card.textToTranslate)
     const [translation, setTranslation] = useState(card.translation)
     const [paused, setPaused] = useState(card.paused)
+    const [direction, setDirection] = useState(card.direction)
     const [tagIds, setTagIds] = useState(card.tagIds)
     const [delay, setDelay] = useState(card.schedule.delay)
     const createdAt = useMemo(() => new Date(card.createdAt), [card.createdAt])
@@ -27,9 +28,10 @@ const EditTranslateCardCmp = ({allTags, allTagsMap, card, reducedMode = false, o
     const textToTranslateIsModified = isModified({initialValue: card.textToTranslate, currValue:textToTranslate})
     const translationIsModified = isModified({initialValue: card.translation, currValue:translation})
     const pausedIsModified = isModified({initialValue: card.paused, currValue:paused})
+    const directionIsModified = isModified({initialValue: card.direction, currValue:direction})
     const tagIdsIsModified = isModified({initialValue: card.tagIds, currValue:tagIds})
     const delayIsModified = isModified({initialValue: card.schedule.delay, currValue:delay})
-    const dataIsModified = textToTranslateIsModified || translationIsModified || pausedIsModified || tagIdsIsModified || delayIsModified
+    const dataIsModified = textToTranslateIsModified || translationIsModified || pausedIsModified || tagIdsIsModified || delayIsModified || directionIsModified
 
     async function doCancel() {
         if (!dataIsModified || dataIsModified && await confirmAction({text: 'Your changes will be lost.'})) {
@@ -47,6 +49,7 @@ const EditTranslateCardCmp = ({allTags, allTagsMap, card, reducedMode = false, o
             tagIds: tagIdsIsModified?tagIds:null,
             textToTranslate: textToTranslateIsModified?textToTranslate:null,
             translation: translationIsModified ? translation : null,
+            direction: directionIsModified ? direction : null,
         })
         closeProgressIndicator()
         if (res.err) {
@@ -82,6 +85,10 @@ const EditTranslateCardCmp = ({allTags, allTagsMap, card, reducedMode = false, o
             paused,
             pausedOnChange: newValue=>setPaused(newValue),
             pausedBgColor: getBgColor(pausedIsModified),
+
+            direction,
+            directionOnChange: newValue=>setDirection(newValue),
+            directionBgColor: getBgColor(directionIsModified),
 
             textToTranslate,
             textToTranslateOnChange: newValue => setTextToTranslate(newValue),
