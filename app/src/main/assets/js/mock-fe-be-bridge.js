@@ -195,7 +195,8 @@ function createFeBeBridgeForUiTestMode() {
         }
     }
 
-    mockedBeFunctions.updateTranslateCard = ({cardId, textToTranslate, translation, delay, recalculateDelay, paused, tagIds}) => {
+    mockedBeFunctions.updateTranslateCard = ({cardId, textToTranslate, translation, delay, recalculateDelay,
+                                                 paused, direction, tagIds}) => {
         const card = CARDS.find(c=>c.id==cardId)
         if (hasNoValue(card)) {
             return errResponse(7, 'Error getting translate card by id.')
@@ -203,6 +204,7 @@ function createFeBeBridgeForUiTestMode() {
             card.paused = paused??card.paused
             card.textToTranslate = textToTranslate??card.textToTranslate
             card.translation = translation??card.translation
+            card.direction = direction??card.direction
             if (hasValue(delay) && (delay != card.schedule.delay || recalculateDelay)) {
                 card.schedule.delay = delay
                 card.schedule.nextAccessInMillis = 1000

@@ -86,15 +86,15 @@ const EditTranslateCardCmp = ({allTags, allTagsMap, card, reducedMode = false, o
             pausedOnChange: newValue=>setPaused(newValue),
             pausedBgColor: getBgColor(pausedIsModified),
 
-            direction,
+            direction: reducedMode ? null : direction,
             directionOnChange: newValue=>setDirection(newValue),
             directionBgColor: getBgColor(directionIsModified),
 
-            textToTranslate,
+            textToTranslate: (reducedMode && card.direction === 'FOREIGN_NATIVE') ? null : textToTranslate,
             textToTranslateOnChange: newValue => setTextToTranslate(newValue),
             textToTranslateBgColor: getBgColor(textToTranslateIsModified),
 
-            translation: reducedMode ? null : translation,
+            translation: (reducedMode && card.direction === 'NATIVE_FOREIGN') ? null : translation,
             translationOnChange: newValue => setTranslation(newValue),
             translationBgColor: getBgColor(translationIsModified),
 

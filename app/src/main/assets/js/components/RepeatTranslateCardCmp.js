@@ -14,7 +14,7 @@ const RepeatTranslateCardCmp = ({allTags, allTagsMap, controlsContainer, cardToR
     const [errorLoadingCard, setErrorLoadingCard] = useState(null)
     const [userInput, setUserInput] = useState('')
     const [validationRequestIsInProgress, setValidationRequestIsInProgress] = useState(false)
-    const [answerFromBE, setAnswerFromBE] = useState(card.direction === 'NATIVE_FOREIGN' ? null : card.textToTranslate)
+    const [answerFromBE, setAnswerFromBE] = useState(() => card.direction === 'NATIVE_FOREIGN' ? null : card.textToTranslate)
     const [answerFromBEIsShown, setAnswerFromBEIsShown] = useState(false)
     const [beValidationResult, setBeValidationResult] = useState(null)
     const [autoFocusDelay, setAutoFocusDelay] = useState(false)
@@ -58,9 +58,12 @@ const RepeatTranslateCardCmp = ({allTags, allTagsMap, controlsContainer, cardToR
             await showError(resp.err)
             setErrorLoadingCard(resp.err)
         } else {
-            setCard(resp.data)
+            const newCard = resp.data
+            setCard(newCard)
             if (editMode && hasValue(answerFromBE)) {
-                setAnswerFromBE(resp.data.translation.trim())
+                const newAnswerFromBe = newCard.direction === 'NATIVE_FOREIGN'
+                    ? newCard.translation : card.textToTranslate
+                setAnswerFromBE(newAnswerFromBe.trim())
             }
         }
     }
@@ -307,7 +310,9 @@ const RepeatTranslateCardCmp = ({allTags, allTagsMap, controlsContainer, cardToR
                 allTags,
                 allTagsMap,
                 card,
-                reducedMode: hasNoValue(answerFromBE),
+                reducedMode:
+                    (card?.direction === 'NATIVE_FOREIGN' && hasNoValue(answerFromBE))
+                    || (card?.direction === 'FOREIGN_NATIVE' && !answerFromBEIsShown),
                 onCancelled: () => setEditMode(false),
                 onSaved: () => {
                     onCardWasUpdated()
