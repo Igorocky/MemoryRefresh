@@ -215,10 +215,7 @@ class Repository(
         )
 
         db.execSQL("""
-                ALTER TABLE $cardsSchedule ADD COLUMN ${cardsSchedule.origDelay} text
-        """.trimIndent())
-        db.execSQL("""
-                update $cardsSchedule set ${cardsSchedule.origDelay} = '-' where ${cardsSchedule.origDelay} is null
+                ALTER TABLE $cardsSchedule ADD COLUMN ${cardsSchedule.origDelay} text not null default '-'
         """.trimIndent())
         recreateTable(
             db = db,
