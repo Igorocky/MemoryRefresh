@@ -14,10 +14,11 @@ const RepeatTranslateCardCmp = ({allTags, allTagsMap, controlsContainer, cardToR
     const [errorLoadingCard, setErrorLoadingCard] = useState(null)
     const [userInput, setUserInput] = useState('')
     const [validationRequestIsInProgress, setValidationRequestIsInProgress] = useState(false)
-    const [answerFromBE, setAnswerFromBE] = useState(null)
+    const [answerFromBE, setAnswerFromBE] = useState(card.direction === 'NATIVE_FOREIGN' ? null : card.textToTranslate)
     const [answerFromBEIsShown, setAnswerFromBEIsShown] = useState(false)
     const [beValidationResult, setBeValidationResult] = useState(null)
     const [autoFocusDelay, setAutoFocusDelay] = useState(false)
+    const showAnswerBtnRef = useRef(null)
     const delayTextField = useRef(null)
     const setDelayRef = useRef(null)
     const delayResultRef = useRef(null)
@@ -30,7 +31,8 @@ const RepeatTranslateCardCmp = ({allTags, allTagsMap, controlsContainer, cardToR
 
     const [textReaderConfigOpened, setTextReaderConfigOpened] = useState(false)
 
-    const userInputIsCorrect = hasValue(answerFromBE) && answerFromBE === userInput.trim()
+    const userInputIsCorrect = hasValue(answerFromBE)
+        && (answerFromBE === userInput.trim() || card?.direction === 'FOREIGN_NATIVE' && answerFromBEIsShown)
 
     useEffect(() => {
         if (autoFocusDelay && delayTextField.current) {
@@ -40,7 +42,13 @@ const RepeatTranslateCardCmp = ({allTags, allTagsMap, controlsContainer, cardToR
             delayInput?.scrollIntoView?.()
             setAutoFocusDelay(false)
         }
-    }, [delayTextField.current])
+    }, [delayTextField.current, autoFocusDelay])
+
+    useEffect(() => {
+        if (showAnswerBtnRef.current && card?.direction === 'FOREIGN_NATIVE') {
+            showAnswerBtnRef.current.focus()
+        }
+    }, [showAnswerBtnRef.current, autoFocusDelay])
 
     async function reloadCard() {
         setCard(null)
@@ -59,11 +67,12 @@ const RepeatTranslateCardCmp = ({allTags, allTagsMap, controlsContainer, cardToR
 
     function renderQuestion() {
         if (card) {
-            if (card.textToTranslate.indexOf('\n') >= 0) {
-                return multilineTextToTable({text:card.textToTranslate, tableStyle:{marginTop:'10px'}})
+            const questionText = card.direction === 'NATIVE_FOREIGN' ? card.textToTranslate : card.translation
+            if (questionText.indexOf('\n') >= 0) {
+                return multilineTextToTable({text:questionText, tableStyle:{marginTop:'10px'}})
             } else {
                 return RE.div({style:{border:'1px solid lightgrey', borderRadius:'5px', marginTop:'10px', padding:'3px'}},
-                    card.textToTranslate
+                    questionText
                 )
             }
         }
@@ -80,7 +89,7 @@ const RepeatTranslateCardCmp = ({allTags, allTagsMap, controlsContainer, cardToR
             return RE.Container.col.top.left({},{},
                 RE.div({style:{fontWeight:'bold',marginBottom:'10px'}}, 'Expected:',),
                 expected,
-                RE.If(window.speechSynthesis, () => RE.Container.row.left.center({},{},
+                RE.If(card?.direction === 'NATIVE_FOREIGN' && window.speechSynthesis, () => RE.Container.row.left.center({},{},
                     iconButton({
                         iconName:'equalizer', onClick: () => {
                             if (!textReaderConfigOpened) {
@@ -103,49 +112,51 @@ const RepeatTranslateCardCmp = ({allTags, allTagsMap, controlsContainer, cardToR
     }
 
     function renderUserTranslation() {
-        return textField({
-            id: USER_INPUT_TEXT_FIELD,
-            autoFocus: true,
-            value: userInput,
-            label: 'Translation',
-            variant: 'outlined',
-            multiline: true,
-            maxRows: 10,
-            size: 'small',
-            inputProps: {cols:24, tabIndex:1},
-            style: {backgroundColor:getUserInputBackgroundColor()},
-            onChange: event => {
-                onUserInputChange({newUserInput:event.nativeEvent.target.value})
-            },
-            onKeyDown: event => {
-                if (event.keyCode === F9_KEY_CODE && hasValue(answerFromBE)) {
-                    event.preventDefault();
-                    say(answerFromBE)
-                } else {
-                    const newDelay = getDelayCoefByKeyCode({event, coefs:delayCoefs, currDelay:delayResultRef.current, initialDelay:card?.schedule?.delay??''})
-                    if (hasValue(newDelay) && setDelayRef.current) {
-                        setDelayRef.current(newDelay)
-                    }
-                }
-            },
-            onKeyUp: event => {
-                if (event.ctrlKey && event.keyCode === ENTER_KEY_CODE) {
-                    if (!event.shiftKey) {
-                        validateTranslation()
-                    } else if (hasValue(answerFromBE)) {
-                        toggleShowAnswerButton()
-                    }
-                } else if (event.altKey && event.keyCode === ENTER_KEY_CODE) {
-                    if (userInputIsCorrect) {
-                        if (cycledMode) {
-                            proceedToNextCard()
-                        } else if (hasValue(delayResultRef.current)) {
-                            updateSchedule({delay:delayResultRef.current})
+        if (card?.direction === 'NATIVE_FOREIGN') {
+            return textField({
+                id: USER_INPUT_TEXT_FIELD,
+                autoFocus: true,
+                value: userInput,
+                label: 'Translation',
+                variant: 'outlined',
+                multiline: true,
+                maxRows: 10,
+                size: 'small',
+                inputProps: {cols:24, tabIndex:1},
+                style: {backgroundColor:getUserInputBackgroundColor()},
+                onChange: event => {
+                    onUserInputChange({newUserInput:event.nativeEvent.target.value})
+                },
+                onKeyDown: event => {
+                    if (event.keyCode === F9_KEY_CODE && hasValue(answerFromBE)) {
+                        event.preventDefault();
+                        say(answerFromBE)
+                    } else {
+                        const newDelay = getDelayCoefByKeyCode({event, coefs:delayCoefs, currDelay:delayResultRef.current, initialDelay:card?.schedule?.delay??''})
+                        if (hasValue(newDelay) && setDelayRef.current) {
+                            setDelayRef.current(newDelay)
                         }
                     }
-                }
-            },
-        })
+                },
+                onKeyUp: event => {
+                    if (event.ctrlKey && event.keyCode === ENTER_KEY_CODE) {
+                        if (!event.shiftKey) {
+                            validateTranslation()
+                        } else if (hasValue(answerFromBE)) {
+                            toggleShowAnswerButton()
+                        }
+                    } else if (event.altKey && event.keyCode === ENTER_KEY_CODE) {
+                        if (userInputIsCorrect) {
+                            if (cycledMode) {
+                                proceedToNextCard()
+                            } else if (hasValue(delayResultRef.current)) {
+                                updateSchedule({delay:delayResultRef.current})
+                            }
+                        }
+                    }
+                },
+            })
+        }
     }
 
     async function validateTranslation() {
@@ -260,12 +271,17 @@ const RepeatTranslateCardCmp = ({allTags, allTagsMap, controlsContainer, cardToR
                     iconStyle:{color:disabled?'lightgrey':'blue'}
                 })
             }
-        } else {
+        } else if (!(card?.direction === 'FOREIGN_NATIVE' && answerFromBEIsShown)) {
             return iconButton({
+                ref: showAnswerBtnRef,
                 iconName: answerFromBEIsShown ? 'visibility_off' : 'visibility',
                 onClick: () => {
                     toggleShowAnswerButton()
-                    focusUserTranslation()
+                    if (card?.direction === 'NATIVE_FOREIGN') {
+                        focusUserTranslation()
+                    } else {
+                        setAutoFocusDelay(true)
+                    }
                 },
                 iconStyle: {color: 'blue'}
             })
@@ -304,10 +320,14 @@ const RepeatTranslateCardCmp = ({allTags, allTagsMap, controlsContainer, cardToR
                     renderUserTranslation(),
                     renderValidateButton(),
                 ),
-                RE.If(hasValue(answerFromBE) && userInputIsCorrect, () => RE.Container.col.top.left({},{},
-                    renderDelay(),
-                    renderValidationHistory()
-                )),
+                RE.If(
+                    hasValue(answerFromBE) && userInputIsCorrect
+                        || card?.direction === 'FOREIGN_NATIVE' && answerFromBEIsShown,
+                    () => RE.Container.col.top.left({},{},
+                        renderDelay(),
+                        RE.If(card?.direction === 'NATIVE_FOREIGN', () => renderValidationHistory()),
+                    )
+                ),
             )
         }
     }

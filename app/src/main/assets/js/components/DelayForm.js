@@ -3,6 +3,8 @@
 const DelayForm = ({actualDelay, initialDelay, delay, delayOnChange, result, onSubmit, onKeyDown,
                        delayTextFieldRef, delayTextFieldId, delayTextFieldTabIndex, updateDelayRequestIsInProgress}) => {
 
+    const [enterPressed, setEnterPressed] = useState(false)
+
     function renderSubmitButton() {
         if (updateDelayRequestIsInProgress) {
             return RE.span({}, RE.CircularProgress({size:24, style: {marginLeft: '5px'}}))
@@ -32,8 +34,20 @@ const DelayForm = ({actualDelay, initialDelay, delay, delayOnChange, result, onS
             color: hasValue(result)?'primary':'secondary',
             size:'small',
             onChange: event => delayOnChange(event.nativeEvent.target.value.trim()),
-            onKeyUp: event => (event.keyCode === ENTER_KEY_CODE) ? onSubmit() : null,
-            onKeyDown: onKeyDown,
+            onKeyUp: event => {
+                if (event.keyCode === ENTER_KEY_CODE) {
+                    setEnterPressed(false)
+                    if (enterPressed) {
+                        onSubmit()
+                    }
+                }
+            },
+            onKeyDown: event => {
+                if (event.keyCode === ENTER_KEY_CODE) {
+                    setEnterPressed(true)
+                }
+                onKeyDown?.(event)
+            },
         }),
         RE.span({style:{fontSize: '15px', fontFamily:'monospace', fontWeight:'bold'}}, result),
         renderSubmitButton()
