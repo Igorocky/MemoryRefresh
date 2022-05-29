@@ -164,6 +164,7 @@ const CardsSearchView = ({query,openView,setPageTitle,controlsContainer}) => {
             contentRenderer: resolve => {
                 return re(BulkEditTranslateCardsCmp, {
                     allTags,
+                    usedTags: allCards.flatMap(c=>c.tagIds).distinct().map(id=>allTagsMap[id]),
                     onApplied: result => resolve(result),
                     onCancelled: () => resolve(null),
                 })

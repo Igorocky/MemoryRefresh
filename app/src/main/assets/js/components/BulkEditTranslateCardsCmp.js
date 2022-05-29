@@ -1,13 +1,26 @@
 "use strict";
 
-const BulkEditTranslateCardsCmp = ({allTags, onApplied, onCancelled}) => {
+const BulkEditTranslateCardsCmp = ({allTags, usedTags, onApplied, onCancelled}) => {
 
     const [paused, setPaused] = useState(null)
     const [tagsToAdd, setTagsToAdd] = useState(null)
     const [tagsToRemove, setTagsToRemove] = useState(null)
+    const [deleteCards, setDeleteCards] = useState(false)
 
     function pausedToStr(paused) {
         return paused?'Paused':'Active'
+    }
+
+    function renderDeleteCardsControls() {
+        return RE.FormGroup({style:{}},
+            RE.FormControlLabel({
+                control: RE.Checkbox({
+                    checked: deleteCards,
+                    onChange: event => setDeleteCards(event.target.checked)
+                }),
+                label: 'Delete selected cards'
+            })
+        )
     }
 
     function renderActivenessControls() {
@@ -45,7 +58,7 @@ const BulkEditTranslateCardsCmp = ({allTags, onApplied, onCancelled}) => {
         )
     }
 
-    function renderTagsControls({label, tags, setTags}) {
+    function renderTagsControls({allTags, label, tags, setTags}) {
         return RE.Container.row.left.center({},{},
             RE.FormGroup({style:{}},
                 RE.FormControlLabel({
@@ -74,18 +87,26 @@ const BulkEditTranslateCardsCmp = ({allTags, onApplied, onCancelled}) => {
     }
 
     function renderTagsToAddControls() {
-        return renderTagsControls({label: 'Add tags', tags: tagsToAdd, setTags: arg => setTagsToAdd(arg)})
+        return renderTagsControls({
+            label: 'Add tags', allTags, tags: tagsToAdd, setTags: arg => setTagsToAdd(arg)
+        })
     }
 
     function renderTagsToRemoveControls() {
-        return renderTagsControls({label: 'Remove tags', tags: tagsToRemove, setTags: arg => setTagsToRemove(arg)})
+        return renderTagsControls({
+            label: 'Remove tags', allTags: usedTags, tags: tagsToRemove, setTags: arg => setTagsToRemove(arg)
+        })
     }
 
     function prepareResult() {
-        return {
-            paused,
-            addTags: tagsToAdd?.map(t=>t.id),
-            removeTags: tagsToRemove?.map(t=>t.id),
+        if (deleteCards) {
+            return {['delete']:true}
+        } else {
+            return {
+                paused,
+                addTags: tagsToAdd?.map(t=>t.id),
+                removeTags: tagsToRemove?.map(t=>t.id),
+            }
         }
     }
 
@@ -97,9 +118,10 @@ const BulkEditTranslateCardsCmp = ({allTags, onApplied, onCancelled}) => {
     }
 
     return RE.Container.col.top.left({},{},
-        renderActivenessControls(),
-        renderTagsToAddControls(),
-        renderTagsToRemoveControls(),
+        RE.If(!deleteCards, () => renderActivenessControls()),
+        RE.If(!deleteCards, () => renderTagsToAddControls()),
+        RE.If(!deleteCards, () => renderTagsToRemoveControls()),
+        renderDeleteCardsControls(),
         renderButtons()
     )
 }

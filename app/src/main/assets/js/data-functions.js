@@ -177,15 +177,7 @@ Array.prototype.removeAtIdx = function (idx) {
 }
 
 Array.prototype.distinct = function () {
-    const res = []
-    const set = new Set()
-    for (const elem of this) {
-        if (!set.has(elem)) {
-            set.add(elem)
-            res.push(elem)
-        }
-    }
-    return res
+    return [...new Set(this)]
 }
 
 function removeAtIdx(arr,idx) {

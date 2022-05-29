@@ -2,11 +2,11 @@ package org.igye.memoryrefresh.unit.instrumentation
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import org.igye.memoryrefresh.database.TranslationCardDirection.FOREIGN_NATIVE
+import org.igye.memoryrefresh.manager.DataManager
 import org.igye.memoryrefresh.manager.DataManager.CreateTranslateCardArgs
 import org.igye.memoryrefresh.manager.DataManager.DeleteTranslateCardArgs
 import org.igye.memoryrefresh.testutils.InstrumentedTestBase
-import org.junit.Assert.assertNotEquals
-import org.junit.Assert.assertNotNull
+import org.junit.Assert.*
 import org.junit.Test
 import org.junit.runner.RunWith
 
@@ -93,6 +93,44 @@ class DeleteTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
         ))
 
         assertTableContent(repo = repo, table = l, expectedRows = listOf())
+    }
+
+    @Test
+    fun bulkEditTranslateCards_deletes_cards() {
+        //given
+        val cardId1 = dm.createTranslateCard(
+            CreateTranslateCardArgs(
+                textToTranslate = "AAA",
+                translation = "BBB",
+                direction = FOREIGN_NATIVE
+            )
+        ).data!!
+        val cardId2 = dm.createTranslateCard(
+            CreateTranslateCardArgs(
+                textToTranslate = "AAA2",
+                translation = "BBB2",
+                direction = FOREIGN_NATIVE
+            )
+        ).data!!
+        val numberOfCardsBeforeDelete = dm.readTranslateCardsByFilter(
+            DataManager.ReadTranslateCardsByFilterArgs()
+        ).data!!.cards.size
+
+        //when
+        dm.bulkEditTranslateCards(DataManager.BulkEditTranslateCardsArgs(
+            cardIds = setOf(cardId1, cardId2),
+            delete = true
+        ))
+
+        //then
+        val numberOfCardsAfterDelete = dm.readTranslateCardsByFilter(
+            DataManager.ReadTranslateCardsByFilterArgs()
+        ).data!!.cards.size
+
+        assertEquals(
+            2,
+            numberOfCardsBeforeDelete - numberOfCardsAfterDelete
+        )
     }
 
 }

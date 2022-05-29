@@ -444,22 +444,27 @@ class DataManager(
         val paused: Boolean? = null,
         val addTags: Set<Long>? = null,
         val removeTags: Set<Long>? = null,
+        val delete: Boolean? = null,
     )
     @BeMethod
     @Synchronized
     fun bulkEditTranslateCards(args: BulkEditTranslateCardsArgs): BeRespose<Unit> {
         tagsStat.tagsCouldChange()
         args.cardIds.forEach { cardId ->
-            val card = readCardById(cardId)
-            if (args.paused != null || args.addTags != null || args.removeTags != null) {
-                val removeTags = args.removeTags?:emptySet()
-                updateTranslateCard(UpdateTranslateCardArgs(
-                    cardId = cardId,
-                    paused = args.paused,
-                    tagIds = (args.addTags?: emptySet()) +
-                            card.tagIds.asSequence().filter { !removeTags.contains(it) }.toSet()
+            if (args.delete?:false) {
+                deleteTranslateCard(DeleteTranslateCardArgs(cardId))
+            } else {
+                val card = readCardById(cardId)
+                if (args.paused != null || args.addTags != null || args.removeTags != null) {
+                    val removeTags = args.removeTags?:emptySet()
+                    updateTranslateCard(UpdateTranslateCardArgs(
+                        cardId = cardId,
+                        paused = args.paused,
+                        tagIds = (args.addTags?: emptySet()) +
+                                card.tagIds.asSequence().filter { !removeTags.contains(it) }.toSet()
 
-                ))
+                    ))
+                }
             }
         }
         return BeRespose()
