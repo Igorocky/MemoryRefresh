@@ -1,7 +1,7 @@
 "use strict";
 
 const SharedFileReceiver = ({}) => {
-    const {renderMessagePopup, showError, showMessage, showMessageWithProgress} = useMessagePopup()
+    const {renderMessagePopup, showError, showMessage, showMessageWithProgress, showDialog} = useMessagePopup()
 
     const BACKUP = 'BACKUP'
     const KEYSTORE = 'KEYSTORE'
@@ -38,20 +38,49 @@ const SharedFileReceiver = ({}) => {
     }
 
     async function saveFile() {
-        const closeProgressWindow = showMessageWithProgress({text: `Saving ${fileType.toLowerCase()} '${fileName}'....`})
+        const closeProgressWindow = showMessageWithProgress({text: `Saving the file '${fileName}'....`})
         const res = await be.saveSharedFile({fileUri, fileType, fileName})
         closeProgressWindow()
         if (res.err) {
             await showError(res.err)
         } else {
-            await showMessage({text:`${fileType.toLowerCase()} '${fileName}' was saved.`})
+            if (fileType === EXPORTED_CARDS) {
+                await importCards()
+            } else {
+                await showMessage({text:`${fileType.toLowerCase()} '${fileName}' was saved.`})
+            }
         }
         closeActivity()
     }
 
+    async function importCards() {
+        const importOptions = await showDialog({
+            title: `Importing cards`,
+            contentRenderer: resolve => {
+                return re(ImportTranslateCardsCmp, {
+                    importFileName: fileName,
+                    onImport: importOptions => resolve(importOptions),
+                    onCancelled: () => resolve(null),
+                })
+            }
+        })
+        if (hasNoValue(importOptions)) {
+            await showMessage({text: 'Import was cancelled.'})
+        } else {
+            const closeProgressIndicator = showMessageWithProgress({text: 'Importing cards...'})
+            const res = await be.importTranslateCards({fileName, ...importOptions})
+            closeProgressIndicator()
+            if (res.err) {
+                await showError(res.err)
+            } else {
+                await showMessage({text:`Successfully imported ${res.data} new cards.`})
+            }
+        }
+    }
+
     if (hasValue(fileName)) {
         return RE.Container.col.top.left({},{style:{margin:'10px'}},
-            `Receiving the file '${fileName}'`,
+            `Received the file '${fileName}'`,
             RE.span({}, `File type: ${getFileTypeDescription()}`),
             RE.Container.row.left.center({},{style:{marginRight:'50px'}},
                 RE.Button({variant:'contained', color:'primary', onClick: saveFile}, 'Save'),

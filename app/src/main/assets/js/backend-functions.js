@@ -6,6 +6,8 @@ const be = {
     restoreFromBackup: createBeFunction('restoreFromBackup'),
     deleteBackup: createBeFunction('deleteBackup'),
     exportTranslateCards: createBeFunction('exportTranslateCards'),
+    importTranslateCards: createBeFunction('importTranslateCards'),
+    getImportTranslateCardsInfo: createBeFunction('getImportTranslateCardsInfo'),
     shareFile: createBeFunction('shareFile'),
     getAppInfo: createBeFunction('getAppInfo'),
 

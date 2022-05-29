@@ -555,23 +555,31 @@ class DataManager(
         }
     }
 
+    data class GetImportTranslateCardsInfoArgs(val fileName: String)
+    @BeMethod
+    @Synchronized
+    fun getImportTranslateCardsInfo(args: ImportTranslateCardsArgs): BeRespose<ImportTranslateCardsInfoDto> {
+        return BeRespose(GET_IMPORT_TRANSLATE_CARDS_INFO) {
+            val cardsCollection = parseImportCardsCollection(args.fileName)
+            val cards = cardsCollection.cards
+            val existingTagNames = readAllTags().data!!.asSequence().map { it.name }.toSet()
+            val newTags = cards.asSequence().flatMap { it.tags }.toSet().subtract(existingTagNames)
+            ImportTranslateCardsInfoDto(
+                numberOfCards = cards.size,
+                newTags = newTags.sorted()
+            )
+        }
+    }
+
     data class ImportTranslateCardsArgs(val fileName: String, val additionalTags: Set<Long>)
     @BeMethod
     @Synchronized
     fun importTranslateCards(args: ImportTranslateCardsArgs): BeRespose<Int> {
         return BeRespose(IMPORT_TRANSLATE_CARDS) {
-            tagsStat.reset()
-            val importFile = File(Utils.getExportDir(context), args.fileName)
-            val zipFile = ZipFile(importFile)
-            val entries = zipFile.entries()
-            val entry = entries.nextElement()
-            val cardsContainer = zipFile.getInputStream(entry).use { inp ->
-                Utils.strToObj(
-                    inp.readBytes().toString(java.nio.charset.StandardCharsets.UTF_8),
-                    TranslateCardContainerExpImpDto::class.java
-                )
-            }
-            importTranslateCardsInternal(cardsContainer = cardsContainer, additionalTags = args.additionalTags)
+            importTranslateCardsInternal(
+                cardsContainer = parseImportCardsCollection(args.fileName),
+                additionalTags = args.additionalTags
+            )
         }
     }
 
@@ -581,22 +589,10 @@ class DataManager(
         additionalTags: Set<Long>
     ): Int {
         tagsStat.reset()
-        if (cardsContainer.version != 1) {
-            throw MemoryRefreshException(
-                msg = "cards.version != 1",
-                errCode = IMPORT_TRANSLATE_CARDS_UNSUPPORTED_VERSION
-            )
-        }
         val cards = cardsContainer.cards
-        val cardTypes = cards.asSequence().map { it.type }.toSet()
-        if (cardTypes.size != 1 || cardTypes.first() != CardType.TRANSLATION) {
-            throw MemoryRefreshException(
-                msg = "Unsupported card type: ${cardTypes.first()}",
-                errCode = IMPORT_TRANSLATE_CARDS_UNSUPPORTED_CARD_TYPE
-            )
-        }
         val existingTagNames = readAllTags().data!!.asSequence().map { it.name }.toSet()
-        cards.asSequence().flatMap { it.tags }.toSet().subtract(existingTagNames).forEach {
+        val newTags = cards.asSequence().flatMap { it.tags }.toSet().subtract(existingTagNames)
+        newTags.forEach {
             createTag(CreateTagArgs(name = it))
         }
         val allTags = readAllTags().data!!.asSequence().map { it.name to it.id }.toMap()
@@ -942,6 +938,35 @@ class DataManager(
             isHistoryFull = true,
             dataHistory = dataHistory
         )
+    }
+
+    @BeMethod
+    @Synchronized
+    private fun parseImportCardsCollection(fileName: String): TranslateCardContainerExpImpDto {
+        val importFile = File(Utils.getExportDir(context), fileName)
+        val zipFile = ZipFile(importFile)
+        val entries = zipFile.entries()
+        val entry = entries.nextElement()
+        val cardsContainer = zipFile.getInputStream(entry).use { inp ->
+            Utils.strToObj(
+                inp.readBytes().toString(java.nio.charset.StandardCharsets.UTF_8),
+                TranslateCardContainerExpImpDto::class.java
+            )
+        }
+        if (cardsContainer.version != 1) {
+            throw MemoryRefreshException(
+                msg = "cards.version != 1",
+                errCode = IMPORT_TRANSLATE_CARDS_UNSUPPORTED_VERSION
+            )
+        }
+        val cardTypes = cardsContainer.cards.asSequence().map { it.type }.toSet()
+        if (cardTypes.size != 1 || cardTypes.first() != CardType.TRANSLATION) {
+            throw MemoryRefreshException(
+                msg = "Unsupported card type: ${cardTypes.first()}",
+                errCode = IMPORT_TRANSLATE_CARDS_UNSUPPORTED_CARD_TYPE
+            )
+        }
+        return cardsContainer
     }
 
 }

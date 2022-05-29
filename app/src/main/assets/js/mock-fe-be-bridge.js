@@ -302,6 +302,17 @@ function createFeBeBridgeForUiTestMode() {
         return okResponse('file-name.zip')
     }
 
+    mockedBeFunctions.importTranslateCards = () => {
+        return okResponse(12)
+    }
+
+    mockedBeFunctions.getImportTranslateCardsInfo = () => {
+        return okResponse({
+            numberOfCards: 27,
+            newTags: ['aa','bbb']
+        })
+    }
+
     mockedBeFunctions.shareFile = ({fileType, fileName}) => {
         return okResponse({})
     }
