@@ -61,7 +61,7 @@ const ExportCardsCmp = ({usedTags, onExport, onCancelled}) => {
     function renderButtons() {
         return RE.Container.row.right.center({style:{marginTop:'15px'}},{},
             RE.Button({
-                onClick: () => onExport({fileName, skipTags:tagsToSkip.map(t=>t.id)}),
+                onClick: () => onExport({fileName, skipTags:(tagsToSkip??[]).map(t=>t.id)}),
                 disabled: fileName.trim() === ''
             }, 'export'),
             RE.Button({onClick: () => onCancelled()}, 'cancel'),
