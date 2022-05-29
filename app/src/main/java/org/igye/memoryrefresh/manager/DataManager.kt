@@ -432,6 +432,31 @@ class DataManager(
         }
     }
 
+    data class BulkEditTranslateCardsArgs(
+        val cardIds: Set<Long>,
+        val paused: Boolean? = null,
+        val addTags: Set<Long>? = null,
+        val removeTags: Set<Long>? = null,
+    )
+    @BeMethod
+    @Synchronized
+    fun bulkEditTranslateCards(args: BulkEditTranslateCardsArgs): BeRespose<Unit> {
+        args.cardIds.forEach { cardId ->
+            val card = readCardById(cardId)
+            if (args.paused != null || args.addTags != null || args.removeTags != null) {
+                val removeTags = args.removeTags?:emptySet()
+                updateTranslateCard(UpdateTranslateCardArgs(
+                    cardId = cardId,
+                    paused = args.paused,
+                    tagIds = (args.addTags?: emptySet()) +
+                            card.tagIds.asSequence().filter { !removeTags.contains(it) }.toSet()
+
+                ))
+            }
+        }
+        return BeRespose()
+    }
+
     data class ValidateTranslateCardArgs(val cardId:Long, val userProvidedTranslation:String)
     private val validateTranslateCardQuery = "select ${t.translation} expectedTranslation from $t where ${t.cardId} = ?"
     private val validateTranslateCardQueryColumnNames = arrayOf("expectedTranslation")

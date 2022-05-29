@@ -11,6 +11,7 @@ import org.igye.memoryrefresh.testutils.InstrumentedTestBase
 import org.junit.Assert.*
 import org.junit.Test
 import org.junit.runner.RunWith
+import java.time.temporal.ChronoUnit
 
 @RunWith(AndroidJUnit4::class)
 class UpdateTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
@@ -675,5 +676,353 @@ class UpdateTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
         assertTableContent(repo = repo, table = t.ver, expectedRows = listOf(
             listOf(t.cardId to cardId, t.direction to directionBeforeUpdate),
         ))
+    }
+
+    @Test
+    fun bulkEditTranslateCards_modifies_paused_flag_from_false_to_true() {
+        //given
+        val tagId1 = dm.createTag(CreateTagArgs("t1")).data!!
+        val tagId2 = dm.createTag(CreateTagArgs("t2")).data!!
+        val tagId3 = dm.createTag(CreateTagArgs("t3")).data!!
+        val tagId4 = dm.createTag(CreateTagArgs("t4")).data!!
+
+        val createTime1 = testClock.currentMillis()
+        val cardId1 = dm.createTranslateCard(
+            CreateTranslateCardArgs(
+                textToTranslate = "AAA",
+                translation = "BBB",
+                tagIds = setOf(tagId1, tagId3),
+                paused = false,
+                direction = FOREIGN_NATIVE
+            )
+        ).data!!
+        testClock.plus(1, ChronoUnit.MINUTES)
+        val createTime2 = testClock.currentMillis()
+        val cardId2 = dm.createTranslateCard(
+            CreateTranslateCardArgs(
+                textToTranslate = "CCC",
+                translation = "DDD",
+                tagIds = setOf(tagId2, tagId4),
+                paused = false,
+                direction = NATIVE_FOREIGN
+            )
+        ).data!!
+        testClock.plus(1, ChronoUnit.MINUTES)
+
+        //when
+        dm.bulkEditTranslateCards(BulkEditTranslateCardsArgs(
+            cardIds = setOf(cardId1, cardId2),
+            paused = true,
+        ))
+
+        //then
+        val card1 = dm.readTranslateCardById(ReadTranslateCardByIdArgs(cardId = cardId1)).data!!
+        val card2 = dm.readTranslateCardById(ReadTranslateCardByIdArgs(cardId = cardId2)).data!!
+
+        assertEquals(createTime1, card1.createdAt)
+        assertEquals(true, card1.paused)
+        assertEquals(setOf(tagId1, tagId3), card1.tagIds.toSet())
+        assertEquals(cardId1, card1.schedule.cardId)
+        assertEquals("1s", card1.schedule.origDelay)
+        assertEquals("1s", card1.schedule.delay)
+        assertEquals(1000, card1.schedule.nextAccessInMillis)
+        assertEquals(createTime1+1000, card1.schedule.nextAccessAt)
+        assertEquals("-", card1.activatesIn)
+        assertEquals("AAA", card1.textToTranslate)
+        assertEquals("BBB", card1.translation)
+        assertEquals(FOREIGN_NATIVE, card1.direction)
+
+        assertEquals(createTime2, card2.createdAt)
+        assertEquals(true, card2.paused)
+        assertEquals(setOf(tagId2, tagId4), card2.tagIds.toSet())
+        assertEquals(cardId2, card2.schedule.cardId)
+        assertEquals("1s", card2.schedule.origDelay)
+        assertEquals("1s", card2.schedule.delay)
+        assertEquals(1000, card2.schedule.nextAccessInMillis)
+        assertEquals(createTime2+1000, card2.schedule.nextAccessAt)
+        assertEquals("-", card2.activatesIn)
+        assertEquals("CCC", card2.textToTranslate)
+        assertEquals("DDD", card2.translation)
+        assertEquals(NATIVE_FOREIGN, card2.direction)
+    }
+
+    @Test
+    fun bulkEditTranslateCards_modifies_paused_flag_from_true_to_false() {
+        //given
+        val tagId1 = dm.createTag(CreateTagArgs("t1")).data!!
+        val tagId2 = dm.createTag(CreateTagArgs("t2")).data!!
+        val tagId3 = dm.createTag(CreateTagArgs("t3")).data!!
+        val tagId4 = dm.createTag(CreateTagArgs("t4")).data!!
+
+        val createTime1 = testClock.currentMillis()
+        val cardId1 = dm.createTranslateCard(
+            CreateTranslateCardArgs(
+                textToTranslate = "AAA",
+                translation = "BBB",
+                tagIds = setOf(tagId1, tagId3),
+                paused = true,
+                direction = FOREIGN_NATIVE
+            )
+        ).data!!
+        testClock.plus(1, ChronoUnit.MINUTES)
+        val createTime2 = testClock.currentMillis()
+        val cardId2 = dm.createTranslateCard(
+            CreateTranslateCardArgs(
+                textToTranslate = "CCC",
+                translation = "DDD",
+                tagIds = setOf(tagId2, tagId4),
+                paused = true,
+                direction = NATIVE_FOREIGN
+            )
+        ).data!!
+        testClock.plus(1, ChronoUnit.MINUTES)
+
+        //when
+        dm.bulkEditTranslateCards(BulkEditTranslateCardsArgs(
+            cardIds = setOf(cardId1, cardId2),
+            paused = false,
+        ))
+
+        //then
+        val card1 = dm.readTranslateCardById(ReadTranslateCardByIdArgs(cardId = cardId1)).data!!
+        val card2 = dm.readTranslateCardById(ReadTranslateCardByIdArgs(cardId = cardId2)).data!!
+
+        assertEquals(createTime1, card1.createdAt)
+        assertEquals(false, card1.paused)
+        assertEquals(setOf(tagId1, tagId3), card1.tagIds.toSet())
+        assertEquals(cardId1, card1.schedule.cardId)
+        assertEquals("1s", card1.schedule.origDelay)
+        assertEquals("1s", card1.schedule.delay)
+        assertEquals(1000, card1.schedule.nextAccessInMillis)
+        assertEquals(createTime1+1000, card1.schedule.nextAccessAt)
+        assertEquals("-", card1.activatesIn)
+        assertEquals("AAA", card1.textToTranslate)
+        assertEquals("BBB", card1.translation)
+        assertEquals(FOREIGN_NATIVE, card1.direction)
+
+        assertEquals(createTime2, card2.createdAt)
+        assertEquals(false, card2.paused)
+        assertEquals(setOf(tagId2, tagId4), card2.tagIds.toSet())
+        assertEquals(cardId2, card2.schedule.cardId)
+        assertEquals("1s", card2.schedule.origDelay)
+        assertEquals("1s", card2.schedule.delay)
+        assertEquals(1000, card2.schedule.nextAccessInMillis)
+        assertEquals(createTime2+1000, card2.schedule.nextAccessAt)
+        assertEquals("-", card2.activatesIn)
+        assertEquals("CCC", card2.textToTranslate)
+        assertEquals("DDD", card2.translation)
+        assertEquals(NATIVE_FOREIGN, card2.direction)
+    }
+
+    @Test
+    fun bulkEditTranslateCards_adds_few_tags() {
+        //given
+        val tagId1 = dm.createTag(CreateTagArgs("t1")).data!!
+        val tagId2 = dm.createTag(CreateTagArgs("t2")).data!!
+        val tagId3 = dm.createTag(CreateTagArgs("t3")).data!!
+        val tagId4 = dm.createTag(CreateTagArgs("t4")).data!!
+        val tagId5 = dm.createTag(CreateTagArgs("t5")).data!!
+        val tagId6 = dm.createTag(CreateTagArgs("t6")).data!!
+
+        val createTime1 = testClock.currentMillis()
+        val cardId1 = dm.createTranslateCard(
+            CreateTranslateCardArgs(
+                textToTranslate = "AAA",
+                translation = "BBB",
+                tagIds = setOf(tagId1, tagId3),
+                paused = false,
+                direction = FOREIGN_NATIVE
+            )
+        ).data!!
+        testClock.plus(1, ChronoUnit.MINUTES)
+        val createTime2 = testClock.currentMillis()
+        val cardId2 = dm.createTranslateCard(
+            CreateTranslateCardArgs(
+                textToTranslate = "CCC",
+                translation = "DDD",
+                tagIds = setOf(tagId2, tagId4),
+                paused = true,
+                direction = NATIVE_FOREIGN
+            )
+        ).data!!
+        testClock.plus(1, ChronoUnit.MINUTES)
+
+        //when
+        dm.bulkEditTranslateCards(BulkEditTranslateCardsArgs(
+            cardIds = setOf(cardId1, cardId2),
+            addTags = setOf(tagId5,tagId6),
+        ))
+
+        //then
+        val card1 = dm.readTranslateCardById(ReadTranslateCardByIdArgs(cardId = cardId1)).data!!
+        val card2 = dm.readTranslateCardById(ReadTranslateCardByIdArgs(cardId = cardId2)).data!!
+
+        assertEquals(createTime1, card1.createdAt)
+        assertEquals(false, card1.paused)
+        assertEquals(setOf(tagId1, tagId3, tagId5, tagId6), card1.tagIds.toSet())
+        assertEquals(cardId1, card1.schedule.cardId)
+        assertEquals("1s", card1.schedule.origDelay)
+        assertEquals("1s", card1.schedule.delay)
+        assertEquals(1000, card1.schedule.nextAccessInMillis)
+        assertEquals(createTime1+1000, card1.schedule.nextAccessAt)
+        assertEquals("-", card1.activatesIn)
+        assertEquals("AAA", card1.textToTranslate)
+        assertEquals("BBB", card1.translation)
+        assertEquals(FOREIGN_NATIVE, card1.direction)
+
+        assertEquals(createTime2, card2.createdAt)
+        assertEquals(true, card2.paused)
+        assertEquals(setOf(tagId2, tagId4, tagId5, tagId6), card2.tagIds.toSet())
+        assertEquals(cardId2, card2.schedule.cardId)
+        assertEquals("1s", card2.schedule.origDelay)
+        assertEquals("1s", card2.schedule.delay)
+        assertEquals(1000, card2.schedule.nextAccessInMillis)
+        assertEquals(createTime2+1000, card2.schedule.nextAccessAt)
+        assertEquals("-", card2.activatesIn)
+        assertEquals("CCC", card2.textToTranslate)
+        assertEquals("DDD", card2.translation)
+        assertEquals(NATIVE_FOREIGN, card2.direction)
+    }
+
+    @Test
+    fun bulkEditTranslateCards_removes_few_tags() {
+        //given
+        val tagId1 = dm.createTag(CreateTagArgs("t1")).data!!
+        val tagId2 = dm.createTag(CreateTagArgs("t2")).data!!
+        val tagId3 = dm.createTag(CreateTagArgs("t3")).data!!
+        val tagId4 = dm.createTag(CreateTagArgs("t4")).data!!
+        val tagId5 = dm.createTag(CreateTagArgs("t5")).data!!
+        val tagId6 = dm.createTag(CreateTagArgs("t6")).data!!
+
+        val createTime1 = testClock.currentMillis()
+        val cardId1 = dm.createTranslateCard(
+            CreateTranslateCardArgs(
+                textToTranslate = "AAA",
+                translation = "BBB",
+                tagIds = setOf(tagId1, tagId3, tagId5),
+                paused = false,
+                direction = FOREIGN_NATIVE
+            )
+        ).data!!
+        testClock.plus(1, ChronoUnit.MINUTES)
+        val createTime2 = testClock.currentMillis()
+        val cardId2 = dm.createTranslateCard(
+            CreateTranslateCardArgs(
+                textToTranslate = "CCC",
+                translation = "DDD",
+                tagIds = setOf(tagId2, tagId4, tagId6),
+                paused = true,
+                direction = NATIVE_FOREIGN
+            )
+        ).data!!
+        testClock.plus(1, ChronoUnit.MINUTES)
+
+        //when
+        dm.bulkEditTranslateCards(BulkEditTranslateCardsArgs(
+            cardIds = setOf(cardId1, cardId2),
+            removeTags = setOf(tagId1,tagId2),
+        ))
+
+        //then
+        val card1 = dm.readTranslateCardById(ReadTranslateCardByIdArgs(cardId = cardId1)).data!!
+        val card2 = dm.readTranslateCardById(ReadTranslateCardByIdArgs(cardId = cardId2)).data!!
+
+        assertEquals(createTime1, card1.createdAt)
+        assertEquals(false, card1.paused)
+        assertEquals(setOf(tagId3, tagId5), card1.tagIds.toSet())
+        assertEquals(cardId1, card1.schedule.cardId)
+        assertEquals("1s", card1.schedule.origDelay)
+        assertEquals("1s", card1.schedule.delay)
+        assertEquals(1000, card1.schedule.nextAccessInMillis)
+        assertEquals(createTime1+1000, card1.schedule.nextAccessAt)
+        assertEquals("-", card1.activatesIn)
+        assertEquals("AAA", card1.textToTranslate)
+        assertEquals("BBB", card1.translation)
+        assertEquals(FOREIGN_NATIVE, card1.direction)
+
+        assertEquals(createTime2, card2.createdAt)
+        assertEquals(true, card2.paused)
+        assertEquals(setOf(tagId4, tagId6), card2.tagIds.toSet())
+        assertEquals(cardId2, card2.schedule.cardId)
+        assertEquals("1s", card2.schedule.origDelay)
+        assertEquals("1s", card2.schedule.delay)
+        assertEquals(1000, card2.schedule.nextAccessInMillis)
+        assertEquals(createTime2+1000, card2.schedule.nextAccessAt)
+        assertEquals("-", card2.activatesIn)
+        assertEquals("CCC", card2.textToTranslate)
+        assertEquals("DDD", card2.translation)
+        assertEquals(NATIVE_FOREIGN, card2.direction)
+    }
+
+    @Test
+    fun bulkEditTranslateCards_modifies_few_parameters_simultaneously() {
+        //given
+        val tagId1 = dm.createTag(CreateTagArgs("t1")).data!!
+        val tagId2 = dm.createTag(CreateTagArgs("t2")).data!!
+        val tagId3 = dm.createTag(CreateTagArgs("t3")).data!!
+        val tagId4 = dm.createTag(CreateTagArgs("t4")).data!!
+        val tagId5 = dm.createTag(CreateTagArgs("t5")).data!!
+        val tagId6 = dm.createTag(CreateTagArgs("t6")).data!!
+
+        val createTime1 = testClock.currentMillis()
+        val cardId1 = dm.createTranslateCard(
+            CreateTranslateCardArgs(
+                textToTranslate = "AAA",
+                translation = "BBB",
+                tagIds = setOf(tagId1, tagId3),
+                paused = false,
+                direction = FOREIGN_NATIVE
+            )
+        ).data!!
+        testClock.plus(1, ChronoUnit.MINUTES)
+        val createTime2 = testClock.currentMillis()
+        val cardId2 = dm.createTranslateCard(
+            CreateTranslateCardArgs(
+                textToTranslate = "CCC",
+                translation = "DDD",
+                tagIds = setOf(tagId2, tagId4),
+                paused = true,
+                direction = NATIVE_FOREIGN
+            )
+        ).data!!
+        testClock.plus(1, ChronoUnit.MINUTES)
+
+        //when
+        dm.bulkEditTranslateCards(BulkEditTranslateCardsArgs(
+            cardIds = setOf(cardId1, cardId2),
+            paused = false,
+            addTags = setOf(tagId5, tagId6),
+            removeTags = setOf(tagId3, tagId4),
+        ))
+
+        //then
+        val card1 = dm.readTranslateCardById(ReadTranslateCardByIdArgs(cardId = cardId1)).data!!
+        val card2 = dm.readTranslateCardById(ReadTranslateCardByIdArgs(cardId = cardId2)).data!!
+
+        assertEquals(createTime1, card1.createdAt)
+        assertEquals(false, card1.paused)
+        assertEquals(setOf(tagId1, tagId5, tagId6), card1.tagIds.toSet())
+        assertEquals(cardId1, card1.schedule.cardId)
+        assertEquals("1s", card1.schedule.origDelay)
+        assertEquals("1s", card1.schedule.delay)
+        assertEquals(1000, card1.schedule.nextAccessInMillis)
+        assertEquals(createTime1+1000, card1.schedule.nextAccessAt)
+        assertEquals("-", card1.activatesIn)
+        assertEquals("AAA", card1.textToTranslate)
+        assertEquals("BBB", card1.translation)
+        assertEquals(FOREIGN_NATIVE, card1.direction)
+
+        assertEquals(createTime2, card2.createdAt)
+        assertEquals(false, card2.paused)
+        assertEquals(setOf(tagId2, tagId5, tagId6), card2.tagIds.toSet())
+        assertEquals(cardId2, card2.schedule.cardId)
+        assertEquals("1s", card2.schedule.origDelay)
+        assertEquals("1s", card2.schedule.delay)
+        assertEquals(1000, card2.schedule.nextAccessInMillis)
+        assertEquals(createTime2+1000, card2.schedule.nextAccessAt)
+        assertEquals("-", card2.activatesIn)
+        assertEquals("CCC", card2.textToTranslate)
+        assertEquals("DDD", card2.translation)
+        assertEquals(NATIVE_FOREIGN, card2.direction)
     }
 }

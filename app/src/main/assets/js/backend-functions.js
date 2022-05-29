@@ -29,6 +29,7 @@ const be = {
     readTranslateCardHistory: createBeFunction('readTranslateCardHistory'),
     validateTranslateCard: createBeFunction('validateTranslateCard'),
     updateTranslateCard: createBeFunction('updateTranslateCard'),
+    bulkEditTranslateCards: createBeFunction('bulkEditTranslateCards'),
     deleteTranslateCard: createBeFunction('deleteTranslateCard'),
     readDelayCoefs: createBeFunction('readDelayCoefs'),
     updateDelayCoefs: createBeFunction('updateDelayCoefs'),

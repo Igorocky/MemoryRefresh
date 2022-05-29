@@ -214,6 +214,10 @@ function createFeBeBridgeForUiTestMode() {
         }
     }
 
+    mockedBeFunctions.bulkEditTranslateCards = (args) => {
+        return okResponse()
+    }
+
     mockedBeFunctions.getNextCardToRepeat = () => {
         if (!CARDS.length) {
             return okResponse({cardsRemain: 0, nextCardIn: ''})

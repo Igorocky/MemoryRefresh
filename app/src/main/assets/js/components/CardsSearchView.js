@@ -3,7 +3,7 @@
 const CARDS_FILTER_LOCAL_STOR_KEY = 'cards-filter'
 
 const CardsSearchView = ({query,openView,setPageTitle,controlsContainer}) => {
-    const {renderMessagePopup, showMessage, confirmAction, showError, showMessageWithProgress} = useMessagePopup()
+    const {renderMessagePopup, confirmAction, showError, showMessageWithProgress, showDialog} = useMessagePopup()
 
     const [isFilterMode, setIsFilterMode] = useState(true)
     const filterStateRef = useRef(null)
@@ -52,7 +52,10 @@ const CardsSearchView = ({query,openView,setPageTitle,controlsContainer}) => {
                 return 'There are no cards matching the search criteria.'
             } else {
                 return RE.Container.col.top.left({},{style:{marginTop: '10px'}},
-                    RE.If(allCards.length > pageSize, () => renderPaginationControls({})),
+                    RE.Container.row.left.center({},{},
+                        iconButton({iconName:'edit', onClick: openBulkEditDialog}),
+                        RE.If(allCards.length > pageSize, () => renderPaginationControls({})),
+                    ),
                     re(ListOfObjectsCmp,{
                         objects: allCards,
                         beginIdx: pageFirstItemIdx,
@@ -154,6 +157,33 @@ const CardsSearchView = ({query,openView,setPageTitle,controlsContainer}) => {
         }})
     }
 
+    async function openBulkEditDialog() {
+        const selectedEditActions = await showDialog({
+            title: `Bulk edit ${allCards.length} cards`,
+            contentRenderer: resolve => {
+                return re(BulkEditTranslateCardsCmp, {
+                    allTags,
+                    onApplied: result => resolve(result),
+                    onCancelled: () => resolve(null),
+                })
+            }
+        })
+        if (hasValue(selectedEditActions)) {
+            const closeProgressIndicator = showMessageWithProgress({text: 'Updating cards...'})
+            const res = await be.bulkEditTranslateCards({
+                cardIds: allCards.map(c=>c.id),
+                ...selectedEditActions
+            })
+            closeProgressIndicator()
+            if (res.err) {
+                showError(res.err)
+            } else {
+                setCardUpdateCounter(prev => prev + 1)
+                openFilter()
+            }
+        }
+    }
+
     function renderPageContent() {
         if (errorLoadingTags) {
             return RE.Fragment({},
@@ -205,6 +235,6 @@ const CardsSearchView = ({query,openView,setPageTitle,controlsContainer}) => {
             RE.If(!isFilterMode && hasNoValue(cardToEdit) && allCards?.length, () => renderFastRepeatButton())
         )),
         renderPageContent(),
-        renderMessagePopup()
+        renderMessagePopup(),
     )
 }
