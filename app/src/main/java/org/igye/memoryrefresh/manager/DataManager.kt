@@ -518,7 +518,11 @@ class DataManager(
         }
     }
 
-    data class ExportTranslateCardsArgs(val cardIds: Set<Long>, val fileName: String)
+    data class ExportTranslateCardsArgs(
+        val cardIds: Set<Long>,
+        val skipTags: Set<Long> = emptySet(),
+        val fileName: String
+        )
     @BeMethod
     @Synchronized
     fun exportTranslateCards(args: ExportTranslateCardsArgs): BeRespose<String> {
@@ -549,7 +553,10 @@ class DataManager(
                             textToTranslate = it.textToTranslate,
                             translation = it.translation,
                             direction = it.direction,
-                            tags = it.tagIds.map { allTags[it]!! }.toSet()
+                            tags = it.tagIds.asSequence()
+                                .filter { !args.skipTags.contains(it) }
+                                .map { allTags[it]!! }
+                                .toSet()
                         ) }
                     )
                 ))

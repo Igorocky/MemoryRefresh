@@ -158,13 +158,15 @@ const CardsSearchView = ({query,openView,setPageTitle,controlsContainer}) => {
         }})
     }
 
+    const usedTags = (allCards??[]).flatMap(c=>c.tagIds).distinct().map(id=>allTagsMap[id])
+
     async function openBulkEditDialog() {
         const selectedEditActions = await showDialog({
             title: `Bulk edit ${allCards.length} cards`,
             contentRenderer: resolve => {
                 return re(BulkEditTranslateCardsCmp, {
                     allTags,
-                    usedTags: allCards.flatMap(c=>c.tagIds).distinct().map(id=>allTagsMap[id]),
+                    usedTags,
                     onApplied: result => resolve(result),
                     onCancelled: () => resolve(null),
                 })
@@ -187,20 +189,21 @@ const CardsSearchView = ({query,openView,setPageTitle,controlsContainer}) => {
     }
 
     async function openShareCardsDialog() {
-        const fileName = await showDialog({
+        const exportOptions = await showDialog({
             title: `Exporting ${allCards.length} cards`,
             contentRenderer: resolve => {
                 return re(ExportCardsCmp, {
-                    onExport: fileName => resolve(fileName),
+                    usedTags,
+                    onExport: exportOptions => resolve(exportOptions),
                     onCancelled: () => resolve(null),
                 })
             }
         })
-        if (hasValue(fileName)) {
+        if (hasValue(exportOptions)) {
             const closeProgressIndicator = showMessageWithProgress({text: 'Exporting cards...'})
             const res = await be.exportTranslateCards({
                 cardIds: allCards.map(c=>c.id),
-                fileName
+                ...exportOptions
             })
             closeProgressIndicator()
             if (res.err) {
