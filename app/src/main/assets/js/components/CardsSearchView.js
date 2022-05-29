@@ -54,6 +54,7 @@ const CardsSearchView = ({query,openView,setPageTitle,controlsContainer}) => {
                 return RE.Container.col.top.left({},{style:{marginTop: '10px'}},
                     RE.Container.row.left.center({},{},
                         iconButton({iconName:'edit', onClick: openBulkEditDialog}),
+                        iconButton({iconName:'share', onClick: openShareCardsDialog}),
                         RE.If(allCards.length > pageSize, () => renderPaginationControls({})),
                     ),
                     re(ListOfObjectsCmp,{
@@ -180,6 +181,34 @@ const CardsSearchView = ({query,openView,setPageTitle,controlsContainer}) => {
             } else {
                 setCardUpdateCounter(prev => prev + 1)
                 openFilter()
+            }
+        }
+    }
+
+    async function openShareCardsDialog() {
+        const fileName = await showDialog({
+            title: `Exporting ${allCards.length} cards`,
+            contentRenderer: resolve => {
+                return re(ExportCardsCmp, {
+                    onExport: fileName => resolve(fileName),
+                    onCancelled: () => resolve(null),
+                })
+            }
+        })
+        if (hasValue(fileName)) {
+            const closeProgressIndicator = showMessageWithProgress({text: 'Exporting cards...'})
+            const res = await be.exportTranslateCards({
+                cardIds: allCards.map(c=>c.id),
+                fileName
+            })
+            closeProgressIndicator()
+            if (res.err) {
+                showError(res.err)
+            } else {
+                const res2 = await be.shareFile({fileType: 'EXPORTED_CARDS', fileName: res.data})
+                if (res2.err) {
+                    showError(res2.err)
+                }
             }
         }
     }

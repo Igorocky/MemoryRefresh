@@ -298,7 +298,11 @@ function createFeBeBridgeForUiTestMode() {
         return await mockedBeFunctions.listAvailableBackups()
     }
 
-    mockedBeFunctions.shareBackup = ({backupName}) => {
+    mockedBeFunctions.exportTranslateCards = () => {
+        return okResponse('file-name.zip')
+    }
+
+    mockedBeFunctions.shareFile = ({fileType, fileName}) => {
         return okResponse({})
     }
 

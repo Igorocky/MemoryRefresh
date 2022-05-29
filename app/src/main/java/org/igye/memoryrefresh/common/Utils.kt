@@ -26,6 +26,7 @@ object Utils {
     fun <E> isNotEmpty(col: Collection<E>?): Boolean = !isEmpty(col)
     fun getBackupsDir(context: Context): File = createDirIfNotExists(File(context.filesDir, "backup"))
     fun getKeystoreDir(context: Context): File = createDirIfNotExists(File(context.filesDir, "keystore"))
+    fun getExportDir(context: Context): File = createDirIfNotExists(File(context.filesDir, "export"))
     fun <T> strToObj(str:String, classOfT: Class<T>): T = gson.fromJson(str, classOfT)
     fun objToStr(obj:Any): String = gson.toJson(obj)
 

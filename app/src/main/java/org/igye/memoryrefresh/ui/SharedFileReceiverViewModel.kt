@@ -71,6 +71,7 @@ class SharedFileReceiverViewModel(appContext: Context, beThreadPool: ExecutorSer
         val destinationDir = when(fileType) {
             SharedFileType.BACKUP -> Utils.getBackupsDir(appContext)
             SharedFileType.KEYSTORE -> Utils.getKeystoreDir(appContext)
+            SharedFileType.EXPORTED_CARDS -> Utils.getExportDir(appContext)
         }
         if (fileType == SharedFileType.KEYSTORE) {
             Utils.getKeystoreDir(appContext).listFiles().forEach(File::delete)

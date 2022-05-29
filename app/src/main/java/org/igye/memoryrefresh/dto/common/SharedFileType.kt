@@ -1,5 +1,5 @@
 package org.igye.memoryrefresh.dto.common
 
 enum class SharedFileType {
-    BACKUP, KEYSTORE
+    BACKUP, KEYSTORE, EXPORTED_CARDS
 }

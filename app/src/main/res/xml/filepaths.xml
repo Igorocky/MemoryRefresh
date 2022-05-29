@@ -1,3 +1,4 @@
 <paths>
     <files-path path="backup/" name="backup" />
+    <files-path path="export/" name="export" />
 </paths>

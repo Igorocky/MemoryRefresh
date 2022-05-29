@@ -5,7 +5,8 @@ const be = {
     listAvailableBackups: createBeFunction('listAvailableBackups'),
     restoreFromBackup: createBeFunction('restoreFromBackup'),
     deleteBackup: createBeFunction('deleteBackup'),
-    shareBackup: createBeFunction('shareBackup'),
+    exportTranslateCards: createBeFunction('exportTranslateCards'),
+    shareFile: createBeFunction('shareFile'),
     getAppInfo: createBeFunction('getAppInfo'),
 
     getHttpServerState: createBeFunction('getHttpServerState'),

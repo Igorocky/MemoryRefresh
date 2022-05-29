@@ -36,7 +36,7 @@ class AppContainer(
 
     val repositoryManager = RepositoryManager(context = context, clock = clock, repositoryProvider = {createNewRepo()})
     val settingsManager = SettingsManager(context = context)
-    val dataManager = DataManager(clock = clock, repositoryManager = repositoryManager, settingsManager = settingsManager)
+    val dataManager = DataManager(context = context, clock = clock, repositoryManager = repositoryManager, settingsManager = settingsManager)
     val httpsServerManager = HttpsServerManager(
         appContext = context,
         settingsManager = settingsManager,

@@ -76,7 +76,7 @@ const BackupsView = ({query,openView,setPageTitle}) => {
     }
 
     async function shareBackup({backupName}) {
-        const res = await be.shareBackup({backupName})
+        const res = await be.shareFile({fileType: 'BACKUP', fileName: backupName})
         if (res.err) {
             showError(res.err)
         }

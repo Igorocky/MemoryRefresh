@@ -5,12 +5,13 @@ import android.net.Uri
 import androidx.core.content.FileProvider
 import org.igye.memoryrefresh.ErrorCode
 import org.igye.memoryrefresh.common.BeMethod
-import org.igye.memoryrefresh.common.Try
+import org.igye.memoryrefresh.common.MemoryRefreshException
 import org.igye.memoryrefresh.common.Utils
 import org.igye.memoryrefresh.database.Repository
 import org.igye.memoryrefresh.database.TagsStat
 import org.igye.memoryrefresh.dto.common.Backup
 import org.igye.memoryrefresh.dto.common.BeRespose
+import org.igye.memoryrefresh.dto.common.SharedFileType
 import java.io.File
 import java.io.FileOutputStream
 import java.time.Clock
@@ -110,15 +111,24 @@ class RepositoryManager(
         return listAvailableBackups()
     }
 
-    data class ShareBackupArgs(val backupName:String)
+    data class ShareFileArgs(val fileType: SharedFileType, val fileName:String)
     @BeMethod
     @Synchronized
-    fun shareBackup(args: ShareBackupArgs): BeRespose<Unit?> {
-        return BeRespose(ErrorCode.SHARE_BACKUP) {
+    fun shareFile(args: ShareFileArgs): BeRespose<Unit?> {
+        return BeRespose(ErrorCode.SHARE_FILE) {
             val fileUri: Uri = FileProvider.getUriForFile(
                 context,
                 "org.igye.memoryrefresh.fileprovider.dev",
-                File(backupDir, args.backupName)
+                File(
+                    when (args.fileType) {
+                        SharedFileType.BACKUP -> backupDir
+                        SharedFileType.EXPORTED_CARDS -> exportDir
+                        else -> throw MemoryRefreshException(
+                            "Unexpected share file type: '${args.fileType}'", ErrorCode.SHARE_FILE
+                        )
+                    },
+                    args.fileName
+                )
             )
             shareFile.get()?.invoke(fileUri)
         }
@@ -130,6 +140,7 @@ class RepositoryManager(
     }
 
     private val backupDir = Utils.getBackupsDir(context)
+    private val exportDir = Utils.getExportDir(context)
 
     private fun createBackupFileName(dbPath: File, dbVersionNumber: Int): String {
         return "${dbPath.name}-v${dbVersionNumber}-backup-${dateTimeFormatter.format(clock.instant()).replace(":","-")}"

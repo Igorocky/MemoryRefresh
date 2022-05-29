@@ -1,5 +1,6 @@
 package org.igye.memoryrefresh.manager
 
+import android.content.Context
 import android.database.sqlite.SQLiteConstraintException
 import org.igye.memoryrefresh.ErrorCode.*
 import org.igye.memoryrefresh.common.BeMethod
@@ -14,11 +15,16 @@ import org.igye.memoryrefresh.database.select
 import org.igye.memoryrefresh.dto.common.BeErr
 import org.igye.memoryrefresh.dto.common.BeRespose
 import org.igye.memoryrefresh.dto.domain.*
+import java.io.File
+import java.io.FileOutputStream
 import java.time.Clock
+import java.util.zip.ZipEntry
+import java.util.zip.ZipOutputStream
 import kotlin.random.Random
 
 
 class DataManager(
+    private val context: Context,
     private val clock: Clock,
     private val repositoryManager: RepositoryManager,
     private val settingsManager: SettingsManager,
@@ -501,6 +507,48 @@ class DataManager(
             repo.writableDatabase.doInTransaction {
                 repo.translationCards.delete(cardId = args.cardId)
                 deleteCard(cardId = args.cardId)
+            }
+        }
+    }
+
+    data class ExportTranslateCardsArgs(val cardIds: Set<Long>, val fileName: String)
+    @BeMethod
+    @Synchronized
+    fun exportTranslateCards(args: ExportTranslateCardsArgs): BeRespose<String> {
+        return BeRespose(EXPORT_TRANSLATE_CARDS) {
+            val fileName = args.fileName.replace("[^a-zA-Z0-9]".toRegex(), "_")
+            if (!Utils.getExportDir(context).deleteRecursively()) {
+                throw MemoryRefreshException(
+                    errCode = COULD_NOT_DELETE_EXPORT_DIR,
+                    msg = "Could not delete export directory."
+                )
+            }
+            val exportDir = Utils.getExportDir(context)
+            val zipFileName = fileName + ".mrz"
+            val exportFile = File(exportDir, zipFileName)
+            val cards = args.cardIds.asSequence()
+                .map { readTranslateCardById(ReadTranslateCardByIdArgs(cardId = it)).data!! }
+                .toList()
+            val allTags = readAllTags().data!!.asSequence().map { it.id to it.name }.toMap()
+            ZipOutputStream(FileOutputStream(exportFile)).use { zipOut ->
+                val backupZipEntry = ZipEntry(fileName + ".json")
+                zipOut.putNextEntry(backupZipEntry)
+                val bufferedWriter = zipOut.bufferedWriter()
+                bufferedWriter.write(Utils.objToStr(
+                    TranslateCardContainerExpImpDto(
+                        version = 1,
+                        cards = cards.map { TranslateCardExpImpDto(
+                            paused = it.paused,
+                            textToTranslate = it.textToTranslate,
+                            translation = it.translation,
+                            direction = it.direction,
+                            tags = it.tagIds.map { allTags[it]!! }.toSet()
+                        ) }
+                    )
+                ))
+                bufferedWriter.flush()
+                zipOut.closeEntry()
+                zipFileName
             }
         }
     }
