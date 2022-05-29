@@ -62,7 +62,7 @@ const RepeatTranslateCardCmp = ({allTags, allTagsMap, controlsContainer, cardToR
             setCard(newCard)
             if (editMode && hasValue(answerFromBE)) {
                 const newAnswerFromBe = newCard.direction === 'NATIVE_FOREIGN'
-                    ? newCard.translation : card.textToTranslate
+                    ? newCard.translation : newCard.textToTranslate
                 setAnswerFromBE(newAnswerFromBe.trim())
             }
         }
