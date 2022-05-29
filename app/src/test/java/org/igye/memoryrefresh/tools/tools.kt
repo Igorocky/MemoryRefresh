@@ -152,7 +152,7 @@ object Tools {
         var numOfMatches = 0
         replace(
             srcFile = appContainerFile,
-            pattern = compile("private val appVersion = \"([\\d\\.]+)\""),
+            pattern = compile("val appVersion = \"([\\d\\.]+)\""),
             dstFile = appContainerFile
         ) { matcher ->
             numOfMatches++
