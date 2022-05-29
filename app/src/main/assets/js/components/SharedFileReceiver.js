@@ -5,10 +5,11 @@ const SharedFileReceiver = ({}) => {
 
     const BACKUP = 'BACKUP'
     const KEYSTORE = 'KEYSTORE'
+    const EXPORTED_CARDS = 'EXPORTED_CARDS'
 
     const [fileName, setFileName] = useState(null)
     const [fileUri, setFileUri] = useState(null)
-    const [fileType, setFileType] = useState(BACKUP)
+    const [fileType, setFileType] = useState(null)
 
     useEffect(async () => {
         const res = await be.getSharedFileInfo()
@@ -26,6 +27,16 @@ const SharedFileReceiver = ({}) => {
         be.closeSharedFileReceiver()
     }
 
+    function getFileTypeDescription() {
+        if (fileType === BACKUP) {
+            return 'Database backup'
+        } else if (fileType === KEYSTORE) {
+            return 'Keystore'
+        } else if (fileType === EXPORTED_CARDS) {
+            return 'Collection of translation cards'
+        }
+    }
+
     async function saveFile() {
         const closeProgressWindow = showMessageWithProgress({text: `Saving ${fileType.toLowerCase()} '${fileName}'....`})
         const res = await be.saveSharedFile({fileUri, fileType, fileName})
@@ -40,21 +51,8 @@ const SharedFileReceiver = ({}) => {
 
     if (hasValue(fileName)) {
         return RE.Container.col.top.left({},{style:{margin:'10px'}},
-            `Saving the file '${fileName}'`,
-            RE.FormControl({},
-                RE.FormLabel({},'File type:'),
-                RE.RadioGroup(
-                    {
-                        value: fileType,
-                        onChange: event => {
-                            const newValue = event.nativeEvent.target.value
-                            setFileType(newValue)
-                        }
-                    },
-                    RE.FormControlLabel({label: BACKUP, value: BACKUP, disabled:fileType!=BACKUP, control:RE.Radio({})}),
-                    RE.FormControlLabel({label: KEYSTORE, value: KEYSTORE, disabled:fileType!=KEYSTORE, control:RE.Radio({})}),
-                )
-            ),
+            `Receiving the file '${fileName}'`,
+            RE.span({}, `File type: ${getFileTypeDescription()}`),
             RE.Container.row.left.center({},{style:{marginRight:'50px'}},
                 RE.Button({variant:'contained', color:'primary', onClick: saveFile}, 'Save'),
                 RE.Button({variant:'text', color:'default', onClick: closeActivity}, 'Cancel'),

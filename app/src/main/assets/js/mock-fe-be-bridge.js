@@ -311,7 +311,11 @@ function createFeBeBridgeForUiTestMode() {
     }
 
     mockedBeFunctions.getSharedFileInfo = () => {
-        return okResponse({name: 'shared-file-name-111', uri: 'file://shared-file-name-111', type: 'BACKUP'})
+        return okResponse({
+            name: 'shared-file-name-111',
+            uri: 'file://shared-file-name-111',
+            type: 'EXPORTED_CARDS',
+        })
     }
 
     mockedBeFunctions.closeSharedFileReceiver = () => {
