@@ -66,14 +66,14 @@ const TranslateCardFilterCmp = ({
     const [tagsToExclude, setTagsToExclude] = useState(initialState?.tagsToExclude??[])
     const [remainingTags, setRemainingTags] = useState([])
 
-    const [createdOnOrAfter, setCreatedOnOrAfter] = useState(() => initialState?.createdOnOrAfter ? new Date(initialState?.createdOnOrAfter) : new Date())
-    const [createdOnOrBefore, setCreatedOnOrBefore] = useState(() => initialState?.createdOnOrBefore ? new Date(initialState?.createdOnOrBefore) : new Date())
+    const [createdOnOrAfter, setCreatedOnOrAfter] = useState(() => initialState?.createdOnOrAfter ? new Date(initialState?.createdOnOrAfter) : startOfDay(new Date()))
+    const [createdOnOrBefore, setCreatedOnOrBefore] = useState(() => initialState?.createdOnOrBefore ? new Date(initialState?.createdOnOrBefore) : startOfDay(new Date()))
 
     const [becomesAccessibleOnOrAfter, setBecomesAccessibleOnOrAfter] = useState(
-        () => initialState?.becomesAccessibleOnOrAfter ? new Date(initialState?.becomesAccessibleOnOrAfter) : new Date()
+        () => initialState?.becomesAccessibleOnOrAfter ? new Date(initialState?.becomesAccessibleOnOrAfter) : startOfDay(new Date())
     )
     const [becomesAccessibleOnOrBefore, setBecomesAccessibleOnOrBefore] = useState(
-        () => initialState?.becomesAccessibleOnOrBefore ? new Date(initialState?.becomesAccessibleOnOrBefore) : new Date()
+        () => initialState?.becomesAccessibleOnOrBefore ? new Date(initialState?.becomesAccessibleOnOrBefore) : startOfDay(new Date())
     )
 
     const [nativeTextMinLength, setNativeTextMinLength] = useState(initialState?.nativeTextMinLength??null)
@@ -167,6 +167,14 @@ const TranslateCardFilterCmp = ({
 
     function removeFilter(name) {
         setFiltersSelected(prev => prev.filter(n => n !== name))
+    }
+
+    function pad2(val) {
+        return val.toString().padStart(2, '0')
+    }
+
+    function dateToStr(date) {
+        return `${date.getFullYear()} ${ALL_MONTHS[date.getMonth()]} ${date.getDate()} ${pad2(date.getHours())}:${pad2(date.getMinutes())}:${pad2(date.getSeconds())}`
     }
 
     function createSearchInActiveFilterObject() {
@@ -313,8 +321,8 @@ const TranslateCardFilterCmp = ({
     function createCreatedOnOrAfterFilterObject() {
         const filterName = af.CREATED_ON_OR_AFTER
         const minimized = filterName !== focusedFilter
-        const dateStr = `${createdOnOrAfter.getFullYear()} ${ALL_MONTHS[createdOnOrAfter.getMonth()]} ${createdOnOrAfter.getDate()}`
-        const displayName = `date ${LESS_EQ_CHAR} created`
+        const dateStr = dateToStr(createdOnOrAfter)
+        const displayName = `? ${LESS_EQ_CHAR} created`
         const minimizedStr = `${dateStr} ${LESS_EQ_CHAR} created`
         return {
             [filterName]: {
@@ -337,7 +345,7 @@ const TranslateCardFilterCmp = ({
                     })
                 ),
                 renderMinimized: () => minimizedStr,
-                getFilterValues: () => ({createdFrom: startOfDay(createdOnOrAfter).getTime()})
+                getFilterValues: () => ({createdFrom: createdOnOrAfter.getTime()})
             }
         }
     }
@@ -345,8 +353,8 @@ const TranslateCardFilterCmp = ({
     function createCreatedOnOrBeforeFilterObject() {
         const filterName = af.CREATED_ON_OR_BEFORE
         const minimized = filterName !== focusedFilter
-        const displayName = `created ${LESS_EQ_CHAR} date`
-        const dateStr = `${createdOnOrBefore.getFullYear()} ${ALL_MONTHS[createdOnOrBefore.getMonth()]} ${createdOnOrBefore.getDate()}`
+        const displayName = `created ${LESS_EQ_CHAR} ?`
+        const dateStr = dateToStr(createdOnOrBefore)
         const minimizedStr = `created ${LESS_EQ_CHAR} ${dateStr}`
         return {
             [filterName]: {
@@ -369,7 +377,7 @@ const TranslateCardFilterCmp = ({
                     })
                 ),
                 renderMinimized: () => minimizedStr,
-                getFilterValues: () => ({createdTill: addDays(startOfDay(createdOnOrBefore),1).getTime()})
+                getFilterValues: () => ({createdTill: createdOnOrBefore.getTime()})
             }
         }
     }
@@ -377,8 +385,8 @@ const TranslateCardFilterCmp = ({
     function createBecomesAccessibleOnOrAfterFilterObject() {
         const filterName = af.BECOMES_ACCESSIBLE_ON_OR_AFTER
         const minimized = filterName !== focusedFilter
-        const displayName = `date ${LESS_EQ_CHAR} accessible`
-        const dateStr = `${becomesAccessibleOnOrAfter.getFullYear()} ${ALL_MONTHS[becomesAccessibleOnOrAfter.getMonth()]} ${becomesAccessibleOnOrAfter.getDate()}`
+        const displayName = `? ${LESS_EQ_CHAR} accessible`
+        const dateStr = dateToStr(becomesAccessibleOnOrAfter)
         const minimizedStr = `${dateStr} ${LESS_EQ_CHAR} accessible`
         return {
             [filterName]: {
@@ -401,7 +409,7 @@ const TranslateCardFilterCmp = ({
                     })
                 ),
                 renderMinimized: () => minimizedStr,
-                getFilterValues: () => ({nextAccessFrom: startOfDay(becomesAccessibleOnOrAfter).getTime()})
+                getFilterValues: () => ({nextAccessFrom: becomesAccessibleOnOrAfter.getTime()})
             }
         }
     }
@@ -409,8 +417,8 @@ const TranslateCardFilterCmp = ({
     function createBecomesAccessibleOnOrBeforeFilterObject() {
         const filterName = af.BECOMES_ACCESSIBLE_ON_OR_BEFORE
         const minimized = filterName !== focusedFilter
-        const displayName = `accessible ${LESS_EQ_CHAR} date`
-        const dateStr = `${becomesAccessibleOnOrBefore.getFullYear()} ${ALL_MONTHS[becomesAccessibleOnOrBefore.getMonth()]} ${becomesAccessibleOnOrBefore.getDate()}`
+        const displayName = `accessible ${LESS_EQ_CHAR} ?`
+        const dateStr = dateToStr(becomesAccessibleOnOrBefore)
         const minimizedStr = `accessible ${LESS_EQ_CHAR} ${dateStr}`
         return {
             [filterName]: {
@@ -433,7 +441,7 @@ const TranslateCardFilterCmp = ({
                     })
                 ),
                 renderMinimized: () => minimizedStr,
-                getFilterValues: () => ({nextAccessTill: addDays(startOfDay(becomesAccessibleOnOrBefore),1).getTime()})
+                getFilterValues: () => ({nextAccessTill: becomesAccessibleOnOrBefore.getTime()})
             }
         }
     }
@@ -765,12 +773,12 @@ const TranslateCardFilterCmp = ({
                     })
                     .map(filterName => {
                         if (filterName === af.CREATED_ON_OR_AFTER && filtersToRender.includes(af.CREATED_ON_OR_BEFORE)) {
-                            const minDateStr = `${createdOnOrAfter.getFullYear()} ${ALL_MONTHS[createdOnOrAfter.getMonth()]} ${createdOnOrAfter.getDate()}`
-                            const maxDateStr = `${createdOnOrBefore.getFullYear()} ${ALL_MONTHS[createdOnOrBefore.getMonth()]} ${createdOnOrBefore.getDate()}`
+                            const minDateStr = dateToStr(createdOnOrAfter)
+                            const maxDateStr = dateToStr(createdOnOrBefore)
                             return `${minDateStr} ${LESS_EQ_CHAR} created ${LESS_EQ_CHAR} ${maxDateStr}`
                         } else if (filterName === af.BECOMES_ACCESSIBLE_ON_OR_AFTER && filtersToRender.includes(af.BECOMES_ACCESSIBLE_ON_OR_BEFORE)) {
-                            const minDateStr = `${becomesAccessibleOnOrAfter.getFullYear()} ${ALL_MONTHS[becomesAccessibleOnOrAfter.getMonth()]} ${becomesAccessibleOnOrAfter.getDate()}`
-                            const maxDateStr = `${becomesAccessibleOnOrBefore.getFullYear()} ${ALL_MONTHS[becomesAccessibleOnOrBefore.getMonth()]} ${becomesAccessibleOnOrBefore.getDate()}`
+                            const minDateStr = dateToStr(becomesAccessibleOnOrAfter)
+                            const maxDateStr = dateToStr(becomesAccessibleOnOrBefore)
                             return `${minDateStr} ${LESS_EQ_CHAR} accessible ${LESS_EQ_CHAR} ${maxDateStr}`
                         } else {
                             return allFilterObjects[filterName].renderMinimized()
