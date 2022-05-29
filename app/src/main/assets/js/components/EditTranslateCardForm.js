@@ -72,6 +72,26 @@ const EditTranslateCardForm = ({
         }
     }
 
+    function getNativeTextLabel() {
+        if (direction === 'NATIVE_FOREIGN') {
+            return '(question)'
+        } else if (direction === 'FOREIGN_NATIVE') {
+            return '(verbal answer)'
+        } else {
+            return ''
+        }
+    }
+
+    function getForeignTextLabel() {
+        if (direction === 'NATIVE_FOREIGN') {
+            return '(written answer)'
+        } else if (direction === 'FOREIGN_NATIVE') {
+            return '(question)'
+        } else {
+            return ''
+        }
+    }
+
     const margin = '30px'
 
     return RE.Container.col.top.left({}, {},
@@ -80,7 +100,7 @@ const EditTranslateCardForm = ({
             textField({
                 id: textToTranslateId,
                 value: textToTranslate,
-                label: 'Native text',
+                label: `Native text ${getNativeTextLabel()}`,
                 variant: 'outlined',
                 autoFocus: true,
                 multiline: true,
@@ -116,7 +136,7 @@ const EditTranslateCardForm = ({
         RE.If(hasValue(translation), () => textField({
             id: translationId,
             value: translation,
-            label: 'Foreign text',
+            label: `Foreign text ${getForeignTextLabel()}`,
             variant: 'outlined',
             multiline: true,
             maxRows: 10,
