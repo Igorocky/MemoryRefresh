@@ -400,7 +400,7 @@ function createFeBeBridgeForUiTestMode() {
                     translation: s.toLowerCase(),
                     tagIds: getRandomTagIds(),
                     paused: randomInt(0, 1) === 1,
-                    direction: randomInt(0, 1) === 1 ? 'NATIVE_FOREIGN' : 'FOREIGN_NATIVE',
+                    direction: randomInt(0, 1) === 0 ? 'NATIVE_FOREIGN' : 'FOREIGN_NATIVE',
                 })
             })
     }
