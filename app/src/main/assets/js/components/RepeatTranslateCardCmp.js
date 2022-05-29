@@ -71,13 +71,15 @@ const RepeatTranslateCardCmp = ({allTags, allTagsMap, controlsContainer, cardToR
     function renderQuestion() {
         if (card) {
             const questionText = card.direction === 'NATIVE_FOREIGN' ? card.textToTranslate : card.translation
+            let content = null
             if (questionText.indexOf('\n') >= 0) {
-                return multilineTextToTable({text:questionText, tableStyle:{marginTop:'10px'}})
+                content = multilineTextToTable({text:questionText, tableStyle:{marginTop:'10px'}})
             } else {
-                return RE.div({style:{border:'1px solid lightgrey', borderRadius:'5px', marginTop:'10px', padding:'3px'}},
+                content = RE.div({style:{border:'1px solid lightgrey', borderRadius:'5px', marginTop:'10px', padding:'3px'}},
                     questionText
                 )
             }
+            return RE.Paper({style:{backgroundColor: 'rgb(255, 249, 230)'}}, content)
         }
     }
 
