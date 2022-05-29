@@ -5,6 +5,8 @@ import org.igye.memoryrefresh.ErrorCode
 import org.igye.memoryrefresh.common.BeMethod
 import org.igye.memoryrefresh.common.Try
 import org.igye.memoryrefresh.common.Utils
+import org.igye.memoryrefresh.config.AppContainer
+import org.igye.memoryrefresh.dto.common.AppInfo
 import org.igye.memoryrefresh.dto.common.AppSettings
 import org.igye.memoryrefresh.dto.common.BeRespose
 import org.igye.memoryrefresh.dto.common.HttpServerSettings
@@ -131,6 +133,11 @@ class SettingsManager(
             }
             maxDelay.get()!!
         }
+    }
+
+    @BeMethod
+    fun getAppInfo(): BeRespose<AppInfo> {
+        return BeRespose(AppInfo(version = AppContainer.appVersion))
     }
 
     private fun createDefaultKeyStorFile(): File {

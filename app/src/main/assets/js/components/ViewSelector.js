@@ -13,6 +13,7 @@ const CARDS_SEARCH_VIEW = 'CARDS_SEARCH_VIEW'
 const CREATE_CARD_VIEW = 'CREATE_CARD_VIEW'
 const REPEAT_CARDS_VIEW = 'REPEAT_CARDS_VIEW'
 const FAST_REPEAT_CARDS_VIEW = 'FAST_REPEAT_CARDS_VIEW'
+const APP_INFO_VIEW = 'APP_INFO_VIEW'
 
 const VIEWS = {}
 function addView({name, component, params}) {
@@ -25,6 +26,7 @@ function addView({name, component, params}) {
 }
 addView({name: BACKUPS_VIEW, component: BackupsView})
 addView({name: HTTP_SERVER_VIEW, component: HttpServerView})
+addView({name: APP_INFO_VIEW, component: AppInfoView})
 
 addView({name: TAGS_VIEW, component: TagsView})
 addView({name: CARDS_SEARCH_VIEW, component: CardsSearchView})
@@ -83,6 +85,7 @@ const ViewSelector = ({}) => {
                 {key:CARDS_SEARCH_VIEW, viewName:CARDS_SEARCH_VIEW, iconName:'search'},
                 {key:BACKUPS_VIEW, viewName:BACKUPS_VIEW, iconName:'archive'},
                 IS_IN_WEBVIEW?{key:HTTP_SERVER_VIEW, viewName:HTTP_SERVER_VIEW, iconName:'reset_tv'}:null,
+                {key:APP_INFO_VIEW, viewName:APP_INFO_VIEW, iconName:'info_outline'},
             ].filter(e=>hasValue(e))
         ]
         const buttons = [[

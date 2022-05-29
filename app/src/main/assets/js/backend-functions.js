@@ -6,6 +6,7 @@ const be = {
     restoreFromBackup: createBeFunction('restoreFromBackup'),
     deleteBackup: createBeFunction('deleteBackup'),
     shareBackup: createBeFunction('shareBackup'),
+    getAppInfo: createBeFunction('getAppInfo'),
 
     getHttpServerState: createBeFunction('getHttpServerState'),
     saveHttpServerSettings: createBeFunction('saveHttpServerSettings'),

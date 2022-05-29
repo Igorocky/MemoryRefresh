@@ -314,6 +314,11 @@ function createFeBeBridgeForUiTestMode() {
         return okResponse(12)
     }
 
+    mockedBeFunctions.getAppInfo = () => {
+        // return errResponse(2345, 'asdfgagsdg sdfgs dfg')
+        return okResponse({version:'1.4'})
+    }
+
     const HTTP_SERVER_STATE = {
         isRunning: false,
         url: "URL",
