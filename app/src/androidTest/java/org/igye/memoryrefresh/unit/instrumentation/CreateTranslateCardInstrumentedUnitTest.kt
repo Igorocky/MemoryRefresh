@@ -3,12 +3,15 @@ package org.igye.memoryrefresh.unit.instrumentation
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import org.igye.memoryrefresh.database.TranslationCardDirection.FOREIGN_NATIVE
 import org.igye.memoryrefresh.database.TranslationCardDirection.NATIVE_FOREIGN
+import org.igye.memoryrefresh.dto.domain.TranslateCardContainerExpImpDto
+import org.igye.memoryrefresh.dto.domain.TranslateCardExpImpDto
 import org.igye.memoryrefresh.manager.DataManager.*
 import org.igye.memoryrefresh.testutils.InstrumentedTestBase
 import org.junit.Assert
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import org.junit.runner.RunWith
+import java.time.temporal.ChronoUnit
 
 @RunWith(AndroidJUnit4::class)
 class CreateTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
@@ -311,5 +314,84 @@ class CreateTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
             textToTranslateContains = expectedTextToTranslate
         )).data!!.cards
         assertEquals(1, cards.size)
+    }
+
+    @Test
+    fun importTranslateCardsInternal_imports_translate_cards() {
+        //given
+        val tagId1 = dm.createTag(CreateTagArgs("t1")).data!!
+        val tagId2 = dm.createTag(CreateTagArgs("t2")).data!!
+        val tagId3 = dm.createTag(CreateTagArgs("t3")).data!!
+        val tagId4 = dm.createTag(CreateTagArgs("t4")).data!!
+
+        val existingTags = dm.readAllTags().data!!.map { it.name }.toSet()
+        assertEquals(setOf("t1","t2","t3","t4"), existingTags)
+
+        val exitingCardIds = dm.readTranslateCardsByFilter(ReadTranslateCardsByFilterArgs()).data!!.cards.map { it.id }.toSet()
+
+        val cardsContainer = TranslateCardContainerExpImpDto(
+            version = 1,
+            cards = listOf(
+                TranslateCardExpImpDto(
+                    paused = false,
+                    direction = FOREIGN_NATIVE,
+                    textToTranslate = "AA",
+                    translation = "BB",
+                    tags = setOf("t1")
+                ),
+                TranslateCardExpImpDto(
+                    paused = true,
+                    direction = NATIVE_FOREIGN,
+                    textToTranslate = "CC",
+                    translation = "DD",
+                    tags = setOf("t2", "t10")
+                ),
+            )
+        )
+
+        //when
+        val createTime1 = testClock.currentMillis()
+        val importedCardsCnt =
+            dm.importTranslateCardsInternal(cardsContainer = cardsContainer, additionalTags = setOf(tagId3))
+        testClock.plus(1, ChronoUnit.MINUTES)
+
+        //then
+        assertEquals(2, importedCardsCnt)
+
+        val newTags = dm.readAllTags().data!!.filter { !existingTags.contains(it.name) }
+        assertEquals(setOf("t10"), newTags.map { it.name }.toSet())
+
+        val newCards = dm.readTranslateCardsByFilter(ReadTranslateCardsByFilterArgs()).data!!.cards.asSequence()
+            .filter { !exitingCardIds.contains(it.id) }
+            .sortedBy { it.id }
+            .toList()
+
+        assertEquals(2, newCards.size)
+
+        val card1 = newCards[0]
+        assertEquals(createTime1, card1.createdAt)
+        assertEquals(false, card1.paused)
+        assertEquals(setOf(tagId1, tagId3), card1.tagIds.toSet())
+        assertEquals("1s", card1.schedule.origDelay)
+        assertEquals("1s", card1.schedule.delay)
+        assertEquals(1000, card1.schedule.nextAccessInMillis)
+        assertEquals(createTime1+1000, card1.schedule.nextAccessAt)
+        assertEquals("-", card1.activatesIn)
+        assertEquals("AA", card1.textToTranslate)
+        assertEquals("BB", card1.translation)
+        assertEquals(FOREIGN_NATIVE, card1.direction)
+
+        val card2 = newCards[1]
+        assertEquals(createTime1, card2.createdAt)
+        assertEquals(true, card2.paused)
+        assertEquals(setOf(tagId2, tagId3, newTags.first().id), card2.tagIds.toSet())
+        assertEquals("1s", card2.schedule.origDelay)
+        assertEquals("1s", card2.schedule.delay)
+        assertEquals(1000, card2.schedule.nextAccessInMillis)
+        assertEquals(createTime1+1000, card2.schedule.nextAccessAt)
+        assertEquals("-", card2.activatesIn)
+        assertEquals("CC", card2.textToTranslate)
+        assertEquals("DD", card2.translation)
+        assertEquals(NATIVE_FOREIGN, card2.direction)
     }
 }

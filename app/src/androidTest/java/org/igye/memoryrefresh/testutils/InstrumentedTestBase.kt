@@ -301,6 +301,7 @@ open class InstrumentedTestBase {
         val cardToTag = CardToTagTable(clock = testClock, cards = cards, tags = tags)
 
         return DataManager(
+            context = appContext,
             clock = testClock,
             repositoryManager = RepositoryManager(
                 context = appContext,
