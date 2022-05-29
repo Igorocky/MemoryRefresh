@@ -176,10 +176,6 @@ class DataManager(
     fun createTranslateCard(args: CreateTranslateCardArgs): BeRespose<Long> {
         val textToTranslate = args.textToTranslate.trim()
         val translation = args.translation.trim()
-//        if ("create new cards" == textToTranslate && "create new cards" == translation) {
-//            createCards()
-//            return BeRespose(data = 0)
-//        }
         if (textToTranslate.isBlank()) {
             return BeRespose(err = BeErr(code = SAVE_NEW_TRANSLATE_CARD_TEXT_TO_TRANSLATE_IS_EMPTY.code, msg = "Text to translate should not be empty."))
         } else if (translation.isBlank()) {
@@ -205,19 +201,22 @@ class DataManager(
         }
     }
 
-//    fun createCards() {
-//        val allCards: BeRespose<ReadTranslateCardsByFilterResp> = readTranslateCardsByFilter(ReadTranslateCardsByFilterArgs())
+//    @BeMethod
+//    @Synchronized
+//    fun createInvertedCards(filter: ReadTranslateCardsByFilterArgs): BeRespose<Unit> {
+//        val allCards: BeRespose<ReadTranslateCardsByFilterResp> = readTranslateCardsByFilter(filter)
 //        allCards.data!!.cards.asSequence()
-//            .filter { it.direction == NATIVE_FOREIGN }
+//            .filter { it.direction == TranslationCardDirection.NATIVE_FOREIGN }
 //            .forEach {
 //                createTranslateCard(
 //                    CreateTranslateCardArgs(
 //                        textToTranslate = it.textToTranslate,
 //                        translation = it.translation,
-//                        direction = FOREIGN_NATIVE
+//                        direction = TranslationCardDirection.FOREIGN_NATIVE
 //                    )
 //                )
 //            }
+//        return BeRespose()
 //    }
 
     data class ReadTranslateCardByIdArgs(val cardId: Long)
