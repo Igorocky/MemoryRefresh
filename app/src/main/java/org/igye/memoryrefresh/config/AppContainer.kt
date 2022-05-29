@@ -82,7 +82,8 @@ class AppContainer(
     private fun createSharedFileReceiverViewModel(): SharedFileReceiverViewModel {
         return SharedFileReceiverViewModel(
             appContext = context,
-            beThreadPool = beThreadPool
+            beThreadPool = beThreadPool,
+            dataManager = dataManager,
         )
     }
 }

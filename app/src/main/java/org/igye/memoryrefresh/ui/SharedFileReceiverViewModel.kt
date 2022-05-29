@@ -10,15 +10,17 @@ import org.igye.memoryrefresh.common.Utils
 import org.igye.memoryrefresh.dto.common.BeErr
 import org.igye.memoryrefresh.dto.common.BeRespose
 import org.igye.memoryrefresh.dto.common.SharedFileType
+import org.igye.memoryrefresh.manager.DataManager
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.util.concurrent.ExecutorService
 
-class SharedFileReceiverViewModel(appContext: Context, beThreadPool: ExecutorService): WebViewViewModel(
+class SharedFileReceiverViewModel(appContext: Context, beThreadPool: ExecutorService, dataManager: DataManager): WebViewViewModel(
     appContext = appContext,
     rootReactComponent = "SharedFileReceiver",
-    beThreadPool = beThreadPool
+    beThreadPool = beThreadPool,
+    javascriptInterface = listOf(dataManager)
 ) {
     @Volatile lateinit var sharedFileUri: String
     @Volatile lateinit var onClose: () -> Unit
