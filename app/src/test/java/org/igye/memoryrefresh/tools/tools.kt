@@ -156,7 +156,7 @@ object Tools {
             dstFile = appContainerFile
         ) { matcher ->
             numOfMatches++
-            "private val appVersion = \"$newVersion\""
+            "val appVersion = \"$newVersion\""
         }
         if (numOfMatches != 1) {
             throw RuntimeException("Failed to increase project version in AppContainer.")
