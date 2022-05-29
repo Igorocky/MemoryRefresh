@@ -54,7 +54,7 @@ const CardsSearchView = ({query,openView,setPageTitle,controlsContainer}) => {
                 return RE.Container.col.top.left({},{style:{marginTop: '10px'}},
                     RE.Container.row.left.center({},{},
                         iconButton({iconName:'edit', onClick: openBulkEditDialog}),
-                        iconButton({iconName:'share', onClick: openShareCardsDialog}),
+                        RE.If(IS_IN_WEBVIEW, () => iconButton({iconName:'share', onClick: openShareCardsDialog})),
                         RE.If(allCards.length > pageSize, () => renderPaginationControls({})),
                     ),
                     re(ListOfObjectsCmp,{
