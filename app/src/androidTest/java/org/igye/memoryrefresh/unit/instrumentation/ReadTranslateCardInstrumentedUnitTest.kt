@@ -466,7 +466,7 @@ class ReadTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
     fun readTranslateCardHistory_when_there_are_few_data_and_validation_history_records() {
         //given
         val createTime1 = testClock.currentMillis()
-        val cardId = dm.createTranslateCard(CreateTranslateCardArgs(textToTranslate = "A", translation = "a", direction = FOREIGN_NATIVE)).data!!
+        val cardId = dm.createTranslateCard(CreateTranslateCardArgs(textToTranslate = "A", translation = "a", direction = NATIVE_FOREIGN)).data!!
 
         val validationTime2 = testClock.plus(2, ChronoUnit.MINUTES)
         assertTrue(dm.validateTranslateCard(ValidateTranslateCardArgs(cardId = cardId, userProvidedTranslation = "a")).data!!.isCorrect)
@@ -615,7 +615,7 @@ class ReadTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
     fun readTranslateCardHistory_when_there_are_no_data_changes_and_two_validations() {
         //given
         val createTime1 = testClock.currentMillis()
-        val cardId = dm.createTranslateCard(CreateTranslateCardArgs(textToTranslate = "A", translation = "a", direction = FOREIGN_NATIVE)).data!!
+        val cardId = dm.createTranslateCard(CreateTranslateCardArgs(textToTranslate = "A", translation = "a", direction = NATIVE_FOREIGN)).data!!
 
         val validationTime2 = testClock.plus(2, ChronoUnit.MINUTES)
         assertTrue(dm.validateTranslateCard(ValidateTranslateCardArgs(cardId = cardId, userProvidedTranslation = "a")).data!!.isCorrect)
@@ -673,7 +673,7 @@ class ReadTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
     fun readTranslateCardHistory_when_there_is_one_data_change_and_no_validations_for_first_data_change_and_one_validation_for_second_data_change() {
         //given
         val createTime1 = testClock.currentMillis()
-        val cardId = dm.createTranslateCard(CreateTranslateCardArgs(textToTranslate = "A", translation = "a", direction = FOREIGN_NATIVE)).data!!
+        val cardId = dm.createTranslateCard(CreateTranslateCardArgs(textToTranslate = "A", translation = "a", direction = NATIVE_FOREIGN)).data!!
 
         val updateTime5 = testClock.plus(5, ChronoUnit.MINUTES)
         dm.updateTranslateCard(UpdateTranslateCardArgs(cardId = cardId, textToTranslate = "B", translation = "b"))
@@ -706,7 +706,7 @@ class ReadTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
     fun readTranslateCardHistory_when_there_is_one_data_change_and_no_validations_for_first_data_change_and_two_validations_for_second_data_change() {
         //given
         val createTime1 = testClock.currentMillis()
-        val cardId = dm.createTranslateCard(CreateTranslateCardArgs(textToTranslate = "A", translation = "a", direction = FOREIGN_NATIVE)).data!!
+        val cardId = dm.createTranslateCard(CreateTranslateCardArgs(textToTranslate = "A", translation = "a", direction = NATIVE_FOREIGN)).data!!
 
         val updateTime5 = testClock.plus(5, ChronoUnit.MINUTES)
         dm.updateTranslateCard(UpdateTranslateCardArgs(cardId = cardId, textToTranslate = "B", translation = "b"))
@@ -779,7 +779,7 @@ class ReadTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
     fun readTranslateCardHistory_when_there_is_one_data_change_and_no_validations_for_second_data_change_and_two_validations_for_first_data_change() {
         //given
         val createTime1 = testClock.currentMillis()
-        val cardId = dm.createTranslateCard(CreateTranslateCardArgs(textToTranslate = "A", translation = "a", direction = FOREIGN_NATIVE)).data!!
+        val cardId = dm.createTranslateCard(CreateTranslateCardArgs(textToTranslate = "A", translation = "a", direction = NATIVE_FOREIGN)).data!!
 
         val validationTime2 = testClock.plus(2, ChronoUnit.MINUTES)
         assertTrue(dm.validateTranslateCard(ValidateTranslateCardArgs(cardId = cardId, userProvidedTranslation = "a")).data!!.isCorrect)
@@ -819,7 +819,7 @@ class ReadTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
     fun readTranslateCardHistory_when_there_are_two_data_changes_and_no_validations_for_middle_data_change_and_one_validation_for_each_of_other_data_changes() {
         //given
         val createTime1 = testClock.currentMillis()
-        val cardId = dm.createTranslateCard(CreateTranslateCardArgs(textToTranslate = "A", translation = "a", direction = FOREIGN_NATIVE)).data!!
+        val cardId = dm.createTranslateCard(CreateTranslateCardArgs(textToTranslate = "A", translation = "a", direction = NATIVE_FOREIGN)).data!!
 
         val validationTime2 = testClock.plus(2, ChronoUnit.MINUTES)
         assertTrue(dm.validateTranslateCard(ValidateTranslateCardArgs(cardId = cardId, userProvidedTranslation = "a")).data!!.isCorrect)

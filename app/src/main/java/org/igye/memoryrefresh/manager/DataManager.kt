@@ -10,6 +10,8 @@ import org.igye.memoryrefresh.common.Utils.delayStrToMillis
 import org.igye.memoryrefresh.common.Utils.multiplyDelay
 import org.igye.memoryrefresh.database.CardType
 import org.igye.memoryrefresh.database.TranslationCardDirection
+import org.igye.memoryrefresh.database.TranslationCardDirection.FOREIGN_NATIVE
+import org.igye.memoryrefresh.database.TranslationCardDirection.NATIVE_FOREIGN
 import org.igye.memoryrefresh.database.doInTransaction
 import org.igye.memoryrefresh.database.select
 import org.igye.memoryrefresh.dto.common.BeErr
@@ -470,36 +472,41 @@ class DataManager(
     }
 
     data class ValidateTranslateCardArgs(val cardId:Long, val userProvidedTranslation:String)
-    private val validateTranslateCardQuery = "select ${t.translation} expectedTranslation from $t where ${t.cardId} = ?"
-    private val validateTranslateCardQueryColumnNames = arrayOf("expectedTranslation")
+    private val validateTranslateCardQuery = "select ${t.translation} expectedTranslation, ${t.direction} direction, ${t.textToTranslate} nativeText from $t where ${t.cardId} = ?"
+    private val validateTranslateCardQueryColumnNames = arrayOf("expectedTranslation", "direction", "nativeText")
     @BeMethod
     @Synchronized
     fun validateTranslateCard(args: ValidateTranslateCardArgs): BeRespose<ValidateTranslateCardAnswerResp> {
-        val userProvidedTranslation = args.userProvidedTranslation.trim()
-        return if (userProvidedTranslation.isBlank()) {
-            BeRespose(err = BeErr(code = VALIDATE_TRANSLATE_CARD_TRANSLATION_IS_EMPTY.code, msg = "Translation should not be empty."))
-        } else {
-            return BeRespose(VALIDATE_TRANSLATE_CARD_EXCEPTION) {
-                val repo = getRepo()
-                repo.writableDatabase.doInTransaction {
-                    val expectedTranslation = select(
-                        query = validateTranslateCardQuery,
-                        args = arrayOf(args.cardId.toString()),
-                        columnNames = validateTranslateCardQueryColumnNames,
-                        rowMapper = {it.getString()}
-                    ).rows[0].trim()
-                    val translationIsCorrect = userProvidedTranslation == expectedTranslation
-                    repo.translationCardsLog.insert(
-                        cardId = args.cardId,
-                        translation = userProvidedTranslation,
-                        matched = translationIsCorrect
-                    )
-                    repo.cards.updateLastChecked(id = args.cardId, lastCheckedAt = clock.instant().toEpochMilli())
-                    ValidateTranslateCardAnswerResp(
-                        isCorrect = translationIsCorrect,
-                        answer = expectedTranslation
-                    )
+        return BeRespose(VALIDATE_TRANSLATE_CARD_EXCEPTION) {
+            val userProvidedTranslation = args.userProvidedTranslation.trim()
+            val repo = getRepo()
+            repo.writableDatabase.doInTransaction {
+                val res = select(
+                    query = validateTranslateCardQuery,
+                    args = arrayOf(args.cardId.toString()),
+                    columnNames = validateTranslateCardQueryColumnNames,
+                    rowMapper = { listOf(it.getString(), TranslationCardDirection.fromInt(it.getLong()), it.getString()) }
+                ).rows[0]
+                val direction: TranslationCardDirection = res[1] as TranslationCardDirection
+                if (userProvidedTranslation.isBlank() && direction == NATIVE_FOREIGN) {
+                    throw MemoryRefreshException(errCode = VALIDATE_TRANSLATE_CARD_TRANSLATION_IS_EMPTY, msg = "Translation should not be empty.")
                 }
+                val expectedTranslation: String = (res[0] as String).trim()
+                val nativeText: String = (res[2] as String).trim()
+                val translationIsCorrect = userProvidedTranslation == expectedTranslation || direction == FOREIGN_NATIVE
+                repo.translationCardsLog.insert(
+                    cardId = args.cardId,
+                    translation = userProvidedTranslation,
+                    matched = translationIsCorrect
+                )
+                repo.cards.updateLastChecked(id = args.cardId, lastCheckedAt = clock.instant().toEpochMilli())
+                ValidateTranslateCardAnswerResp(
+                    isCorrect = translationIsCorrect,
+                    answer = when (direction) {
+                        NATIVE_FOREIGN -> expectedTranslation
+                        FOREIGN_NATIVE -> nativeText
+                    }
+                )
             }
         }
     }

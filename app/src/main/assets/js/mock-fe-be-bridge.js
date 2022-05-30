@@ -187,6 +187,11 @@ function createFeBeBridgeForUiTestMode() {
         const card = CARDS.find(c=>c.id==cardId)
         if (hasNoValue(card)) {
             return errResponse(11, 'Error getting translate card by id.')
+        } else if (card.direction === 'FOREIGN_NATIVE') {
+            return okResponse({
+                answer: card.textToTranslate,
+                isCorrect: true
+            })
         } else {
             return okResponse({
                 answer: card.translation,
@@ -398,6 +403,8 @@ function createFeBeBridgeForUiTestMode() {
                     tagIds: getRandomTagIds(),
                     paused: randomInt(0, 1) === 1,
                     direction: randomInt(0, 1) === 0 ? 'NATIVE_FOREIGN' : 'FOREIGN_NATIVE',
+                    // direction: 'FOREIGN_NATIVE',
+                    // direction: 'NATIVE_FOREIGN',
                 })
             })
     }

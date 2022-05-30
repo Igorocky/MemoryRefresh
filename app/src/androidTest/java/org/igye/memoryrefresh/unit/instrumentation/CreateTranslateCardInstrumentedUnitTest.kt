@@ -333,14 +333,12 @@ class CreateTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
             version = 1,
             cards = listOf(
                 TranslateCardExpImpDto(
-                    paused = false,
                     direction = FOREIGN_NATIVE,
                     textToTranslate = "AA",
                     translation = "BB",
                     tags = setOf("t1")
                 ),
                 TranslateCardExpImpDto(
-                    paused = true,
                     direction = NATIVE_FOREIGN,
                     textToTranslate = "CC",
                     translation = "DD",

@@ -568,6 +568,33 @@ class UpdateTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
     }
 
     @Test
+    fun validateTranslateCard_returns_expected_response_for_FOREIGN_NATIVE_card() {
+        //given
+        val expectedCardId = 1236L
+        val baseTime = 1_000
+        insert(repo = repo, table = c, rows = listOf(
+            listOf(c.id to expectedCardId, c.type to TR_TP, c.createdAt to 0),
+        ))
+        insert(repo = repo, table = t, rows = listOf(
+            listOf(t.cardId to expectedCardId, t.textToTranslate to "nat-wfgdfv", t.translation to "for-67234f", t.direction to FOREIGN_NATIVE),
+        ))
+        assertTableContent(repo = repo, table = l, expectedRows = listOf())
+
+        //when
+        testClock.setFixedTime(baseTime)
+        val time1 = testClock.instant().toEpochMilli()
+        val actualResp = dm.validateTranslateCard(ValidateTranslateCardArgs(cardId = expectedCardId, userProvidedTranslation = "user-provided-7456rghs"))
+
+        //then
+        val actualValidationResults = actualResp.data!!
+        assertTrue(actualValidationResults.isCorrect)
+        assertEquals("nat-wfgdfv", actualValidationResults.answer)
+        assertTableContent(repo = repo, table = l, expectedRows = listOf(
+            listOf(l.timestamp to time1, l.cardId to expectedCardId, l.translation to "user-provided-7456rghs", l.matched to 1L)
+        ))
+    }
+
+    @Test
     fun updateTranslateCard_doesnt_modify_direction_if_it_is_not_specified_in_the_request() {
         //given
         val textToTranslateBeforeUpdate = "X"

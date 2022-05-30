@@ -14,11 +14,11 @@ const RepeatTranslateCardCmp = ({allTags, allTagsMap, controlsContainer, cardToR
     const [errorLoadingCard, setErrorLoadingCard] = useState(null)
     const [userInput, setUserInput] = useState('')
     const [validationRequestIsInProgress, setValidationRequestIsInProgress] = useState(false)
-    const [answerFromBE, setAnswerFromBE] = useState(() => card.direction === 'NATIVE_FOREIGN' ? null : card.textToTranslate)
+    const [answerFromBE, setAnswerFromBE] = useState(null)
     const [answerFromBEIsShown, setAnswerFromBEIsShown] = useState(false)
     const [beValidationResult, setBeValidationResult] = useState(null)
     const [autoFocusDelay, setAutoFocusDelay] = useState(false)
-    const showAnswerBtnRef = useRef(null)
+    const validateBtnRef = useRef(null)
     const delayTextField = useRef(null)
     const setDelayRef = useRef(null)
     const delayResultRef = useRef(null)
@@ -32,7 +32,7 @@ const RepeatTranslateCardCmp = ({allTags, allTagsMap, controlsContainer, cardToR
     const [textReaderConfigOpened, setTextReaderConfigOpened] = useState(false)
 
     const userInputIsCorrect = hasValue(answerFromBE)
-        && (answerFromBE === userInput.trim() || card?.direction === 'FOREIGN_NATIVE' && answerFromBEIsShown)
+        && (answerFromBE === userInput.trim() || card?.direction === 'FOREIGN_NATIVE')
 
     useEffect(() => {
         if (autoFocusDelay && delayTextField.current) {
@@ -45,10 +45,10 @@ const RepeatTranslateCardCmp = ({allTags, allTagsMap, controlsContainer, cardToR
     }, [delayTextField.current, autoFocusDelay])
 
     useEffect(() => {
-        if (showAnswerBtnRef.current && card?.direction === 'FOREIGN_NATIVE') {
-            showAnswerBtnRef.current.focus()
+        if (validateBtnRef.current && card?.direction === 'FOREIGN_NATIVE') {
+            validateBtnRef.current.focus()
         }
-    }, [showAnswerBtnRef.current, autoFocusDelay])
+    }, [validateBtnRef.current])
 
     async function reloadCard() {
         setCard(null)
@@ -166,11 +166,11 @@ const RepeatTranslateCardCmp = ({allTags, allTagsMap, controlsContainer, cardToR
 
     async function validateTranslation() {
         if (hasNoValue(beValidationResult) && !validationRequestIsInProgress) {
-            if (userInput.trim().length === 0) {
+            if (card?.direction === 'NATIVE_FOREIGN' && userInput.trim().length === 0) {
                 showMessage({text: 'Translation must not be empty.'})
             } else {
                 setValidationRequestIsInProgress(true)
-                const res = await be.validateTranslateCard({cardId:card.id, userProvidedTranslation: userInput})
+                const res = await be.validateTranslateCard({cardId:card.id, userProvidedTranslation: userInput.trim()})
                 setValidationRequestIsInProgress(false)
                 if (res.err) {
                     await showError(res.err)
@@ -180,6 +180,9 @@ const RepeatTranslateCardCmp = ({allTags, allTagsMap, controlsContainer, cardToR
                     setAnswerFromBE(res.data.answer)
                     if (res.data.isCorrect) {
                         setAutoFocusDelay(true)
+                    }
+                    if (card?.direction === 'FOREIGN_NATIVE') {
+                        toggleShowAnswerButton()
                     }
                     return res.data.isCorrect
                 }
@@ -264,38 +267,32 @@ const RepeatTranslateCardCmp = ({allTags, allTagsMap, controlsContainer, cardToR
             if (validationRequestIsInProgress) {
                 return RE.span({}, RE.CircularProgress({size:24, style: {marginLeft: '5px'}}))
             } else {
-                const disabled = hasValue(answerFromBE)
+                async function validateAnswer() {
+                    if (!(await validateTranslation())) {
+                        focusUserTranslation()
+                    }
+                }
                 return iconButton({
-                    iconName:'send',
-                    onClick: async () => {
-                        if (!(await validateTranslation())) {
-                            focusUserTranslation()
+                    ref: validateBtnRef,
+                    iconName:card?.direction === 'NATIVE_FOREIGN'?'send':'visibility',
+                    onClick: validateAnswer,
+                    onKeyDown: event => {
+                        event.preventDefault();
+                    },
+                    onKeyUp: event => {
+                        if (event.ctrlKey && event.keyCode === ENTER_KEY_CODE) {
+                            validateAnswer()
                         }
                     },
-                    disabled,
-                    iconStyle:{color:disabled?'lightgrey':'blue'}
+                    iconStyle: {color: 'blue'}
                 })
             }
-        } else if (!(card?.direction === 'FOREIGN_NATIVE' && answerFromBEIsShown)) {
-            function showAnswer() {
-                toggleShowAnswerButton()
-                if (card?.direction === 'NATIVE_FOREIGN') {
-                    focusUserTranslation()
-                } else {
-                    setAutoFocusDelay(true)
-                }
-            }
+        } else if (card?.direction === 'NATIVE_FOREIGN') {
             return iconButton({
-                ref: showAnswerBtnRef,
                 iconName: answerFromBEIsShown ? 'visibility_off' : 'visibility',
-                onClick: showAnswer,
-                onKeyDown: event => {
-                    event.preventDefault();
-                },
-                onKeyUp: event => {
-                    if (event.ctrlKey && event.keyCode === ENTER_KEY_CODE) {
-                        showAnswer()
-                    }
+                onClick: () => {
+                    toggleShowAnswerButton()
+                    focusUserTranslation()
                 },
                 iconStyle: {color: 'blue'}
             })
@@ -337,11 +334,10 @@ const RepeatTranslateCardCmp = ({allTags, allTagsMap, controlsContainer, cardToR
                     renderValidateButton(),
                 ),
                 RE.If(
-                    hasValue(answerFromBE) && userInputIsCorrect
-                        || card?.direction === 'FOREIGN_NATIVE' && answerFromBEIsShown,
+                    hasValue(answerFromBE) && userInputIsCorrect,
                     () => RE.Container.col.top.left({},{},
                         renderDelay(),
-                        RE.If(card?.direction === 'NATIVE_FOREIGN', () => renderValidationHistory()),
+                        renderValidationHistory(),
                     )
                 ),
             )
