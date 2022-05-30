@@ -42,8 +42,8 @@ abstract class WebViewViewModel(
             webView.webChromeClient = object : WebChromeClient() {
                 override fun onConsoleMessage(consoleMessage: ConsoleMessage): Boolean {
                     log.info(
-                        consoleMessage.message() + " -- From line " +
-                                consoleMessage.lineNumber() + " of " + consoleMessage.sourceId()
+                        "${consoleMessage.sourceId().split("/").last()}:${consoleMessage.lineNumber()} " +
+                                consoleMessage.message()
                     )
                     return true
                 }

@@ -18,8 +18,13 @@ const SharedFileReceiver = ({}) => {
             closeActivity()
         } else {
             setFileName(res.data.name)
-            setFileUri(res.data.uri)
+            const fileUri = res.data.uri;
+            setFileUri(fileUri)
             setFileType(res.data.type)
+            const importTranslateCardsInfo = res.data.importTranslateCardsInfo
+            if (importTranslateCardsInfo != null) {
+                await importCards({fileUri, ...importTranslateCardsInfo})
+            }
         }
     }, [])
 
@@ -53,12 +58,14 @@ const SharedFileReceiver = ({}) => {
         closeActivity()
     }
 
-    async function importCards() {
+    async function importCards({fileUri, numberOfCards, newTags}) {
         const importOptions = await showDialog({
             title: `Importing cards`,
             contentRenderer: resolve => {
                 return re(ImportTranslateCardsCmp, {
-                    importFileName: fileName,
+                    fileUri,
+                    numberOfCards,
+                    newTags,
                     onImport: importOptions => resolve(importOptions),
                     onCancelled: () => resolve(null),
                 })
@@ -68,7 +75,7 @@ const SharedFileReceiver = ({}) => {
             await showMessage({text: 'Import was cancelled.'})
         } else {
             const closeProgressIndicator = showMessageWithProgress({text: 'Importing cards...'})
-            const res = await be.importTranslateCards({fileName, ...importOptions})
+            const res = await be.importTranslateCards(importOptions)
             closeProgressIndicator()
             if (res.err) {
                 await showError(res.err)
@@ -76,19 +83,28 @@ const SharedFileReceiver = ({}) => {
                 await showMessage({text:`Successfully imported ${res.data} new cards.`})
             }
         }
+        closeActivity()
     }
 
-    if (hasValue(fileName)) {
-        return RE.Container.col.top.left({},{style:{margin:'10px'}},
-            `Received the file '${fileName}'`,
-            RE.span({}, `File type: ${getFileTypeDescription()}`),
-            RE.Container.row.left.center({},{style:{marginRight:'50px'}},
-                RE.Button({variant:'contained', color:'primary', onClick: saveFile}, 'Save'),
-                RE.Button({variant:'text', color:'default', onClick: closeActivity}, 'Cancel'),
-            ),
-            renderMessagePopup()
-        )
-    } else {
-        return "Waiting for the file..."
+    function renderPageContent() {
+        if (hasNoValue(fileUri)) {
+            return "Waiting for the file..."
+        } else if (fileType === EXPORTED_CARDS) {
+            return ''
+        } else {
+            return RE.Container.col.top.left({}, {style: {margin: '10px'}},
+                `Received the file '${fileName}'`,
+                RE.span({}, `File type: ${getFileTypeDescription()}`),
+                RE.Container.row.left.center({}, {style: {marginRight: '50px'}},
+                    RE.Button({variant: 'contained', color: 'primary', onClick: saveFile}, 'Save'),
+                    RE.Button({variant: 'text', color: 'default', onClick: closeActivity}, 'Cancel'),
+                ),
+            )
+        }
     }
+
+    return RE.Fragment({},
+        renderPageContent(),
+        renderMessagePopup()
+    )
 }

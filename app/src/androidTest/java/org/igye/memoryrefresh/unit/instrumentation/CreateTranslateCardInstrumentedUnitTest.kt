@@ -352,7 +352,7 @@ class CreateTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
         //when
         val createTime1 = testClock.currentMillis()
         val importedCardsCnt =
-            dm.importTranslateCardsInternal(cardsContainer = cardsContainer, additionalTags = setOf(tagId3))
+            dm.importTranslateCards(cardsContainer = cardsContainer, additionalTags = setOf(tagId3), paused = true)
         testClock.plus(1, ChronoUnit.MINUTES)
 
         //then
@@ -370,7 +370,7 @@ class CreateTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
 
         val card1 = newCards[0]
         assertEquals(createTime1, card1.createdAt)
-        assertEquals(false, card1.paused)
+        assertEquals(true, card1.paused)
         assertEquals(setOf(tagId1, tagId3), card1.tagIds.toSet())
         assertEquals("1s", card1.schedule.origDelay)
         assertEquals("1s", card1.schedule.delay)

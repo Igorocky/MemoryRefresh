@@ -7,16 +7,20 @@ import org.igye.memoryrefresh.ErrorCode
 import org.igye.memoryrefresh.common.BeMethod
 import org.igye.memoryrefresh.common.MemoryRefreshException
 import org.igye.memoryrefresh.common.Utils
+import org.igye.memoryrefresh.database.CardType
 import org.igye.memoryrefresh.dto.common.BeErr
 import org.igye.memoryrefresh.dto.common.BeRespose
 import org.igye.memoryrefresh.dto.common.SharedFileType
+import org.igye.memoryrefresh.dto.common.SharedFileType.*
+import org.igye.memoryrefresh.dto.domain.TranslateCardContainerExpImpDto
 import org.igye.memoryrefresh.manager.DataManager
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.util.concurrent.ExecutorService
+import java.util.zip.ZipInputStream
 
-class SharedFileReceiverViewModel(appContext: Context, beThreadPool: ExecutorService, dataManager: DataManager): WebViewViewModel(
+class SharedFileReceiverViewModel(appContext: Context, beThreadPool: ExecutorService, val dataManager: DataManager): WebViewViewModel(
     appContext = appContext,
     rootReactComponent = "SharedFileReceiver",
     beThreadPool = beThreadPool,
@@ -32,13 +36,20 @@ class SharedFileReceiverViewModel(appContext: Context, beThreadPool: ExecutorSer
     }
 
     @BeMethod
-    fun getSharedFileInfo(): BeRespose<Map<String, Any>> {
-        val fileName = getFileName(sharedFileUri)
-        return BeRespose(data = mapOf(
-            "uri" to sharedFileUri,
-            "name" to fileName,
-            "type" to getFileType(fileName),
-        ))
+    fun getSharedFileInfo(): BeRespose<Map<String, Any?>> {
+        return BeRespose(ErrorCode.GET_SHARED_FILE_INFO) {
+            val fileName = getFileName(sharedFileUri)
+            val fileType = getFileType(fileName)
+            mapOf(
+                "uri" to sharedFileUri,
+                "name" to fileName,
+                "type" to fileType,
+                "importTranslateCardsInfo" to when (fileType) {
+                    EXPORTED_CARDS -> dataManager.getImportTranslateCardsInfo(parseImportCardsCollection(sharedFileUri))
+                    else -> null
+                }
+            )
+        }
     }
 
     data class SaveSharedFileArgs(val fileUri: String, val fileType: SharedFileType, val fileName: String)
@@ -48,6 +59,19 @@ class SharedFileReceiverViewModel(appContext: Context, beThreadPool: ExecutorSer
             BeRespose(err = BeErr(code = ErrorCode.UNEXPECTED_SHARED_FILE_URI.code, msg = "fileInfo.uri != sharedFileUri"))
         } else {
             BeRespose(data = copyFile(fileUri = args.fileUri, fileName = args.fileName, fileType = args.fileType))
+        }
+    }
+
+    data class ImportTranslateCardsArgs(val fileUri: String, val paused: Boolean = false, val additionalTags: Set<Long>)
+    @BeMethod
+    @Synchronized
+    fun importTranslateCards(args: ImportTranslateCardsArgs): BeRespose<Int> {
+        return BeRespose(ErrorCode.IMPORT_TRANSLATE_CARDS) {
+            dataManager.importTranslateCards(
+                cardsContainer = parseImportCardsCollection(args.fileUri),
+                paused = args.paused,
+                additionalTags = args.additionalTags
+            )
         }
     }
 
@@ -61,11 +85,11 @@ class SharedFileReceiverViewModel(appContext: Context, beThreadPool: ExecutorSer
 
     private fun getFileType(fileName: String): SharedFileType {
         return if (fileName.endsWith(".bks")) {
-            SharedFileType.KEYSTORE
+            KEYSTORE
         } else if (fileName.endsWith(".zip")) {
-            SharedFileType.BACKUP
+            BACKUP
         } else if (fileName.endsWith(".mrz")) {
-            SharedFileType.EXPORTED_CARDS
+            EXPORTED_CARDS
         } else {
             throw MemoryRefreshException(msg = "unsupported file type.", errCode = ErrorCode.UNSUPPORTED_FILE_TYPE)
         }
@@ -73,17 +97,44 @@ class SharedFileReceiverViewModel(appContext: Context, beThreadPool: ExecutorSer
 
     private fun copyFile(fileUri: String, fileType: SharedFileType, fileName: String): Long {
         val destinationDir = when(fileType) {
-            SharedFileType.BACKUP -> Utils.getBackupsDir(appContext)
-            SharedFileType.KEYSTORE -> Utils.getKeystoreDir(appContext)
-            SharedFileType.EXPORTED_CARDS -> Utils.getExportDir(appContext)
+            BACKUP -> Utils.getBackupsDir(appContext)
+            KEYSTORE -> Utils.getKeystoreDir(appContext)
+            EXPORTED_CARDS -> Utils.getExportDir(appContext)
         }
-        if (fileType == SharedFileType.KEYSTORE) {
+        if (fileType == KEYSTORE) {
             Utils.getKeystoreDir(appContext).listFiles().forEach(File::delete)
         }
         FileInputStream(appContext.contentResolver.openFileDescriptor(Uri.parse(fileUri), "r")!!.fileDescriptor).use{ inp ->
             FileOutputStream(File(destinationDir, fileName)).use { out ->
                 return inp.copyTo(out)
             }
+        }
+    }
+
+    @Synchronized
+    private fun parseImportCardsCollection(fileUri: String): TranslateCardContainerExpImpDto {
+        return FileInputStream(appContext.contentResolver.openFileDescriptor(Uri.parse(fileUri), "r")!!.fileDescriptor).use{ inp ->
+            val cardsContainer = ZipInputStream(inp).use { zipFile ->
+                zipFile.nextEntry
+                Utils.strToObj(
+                    zipFile.readBytes().toString(java.nio.charset.StandardCharsets.UTF_8),
+                    TranslateCardContainerExpImpDto::class.java
+                )
+            }
+            if (cardsContainer.version != 1) {
+                throw MemoryRefreshException(
+                    msg = "cards.version != 1",
+                    errCode = ErrorCode.IMPORT_TRANSLATE_CARDS_UNSUPPORTED_VERSION
+                )
+            }
+            val cardTypes = cardsContainer.cards.asSequence().map { it.type }.toSet()
+            if (cardTypes.size != 1 || cardTypes.first() != CardType.TRANSLATION) {
+                throw MemoryRefreshException(
+                    msg = "Unsupported card type: ${cardTypes.first()}",
+                    errCode = ErrorCode.IMPORT_TRANSLATE_CARDS_UNSUPPORTED_CARD_TYPE
+                )
+            }
+            cardsContainer
         }
     }
 

@@ -306,13 +306,6 @@ function createFeBeBridgeForUiTestMode() {
         return okResponse(12)
     }
 
-    mockedBeFunctions.getImportTranslateCardsInfo = () => {
-        return okResponse({
-            numberOfCards: 27,
-            newTags: ['aa','bbb']
-        })
-    }
-
     mockedBeFunctions.shareFile = ({fileType, fileName}) => {
         return okResponse({})
     }
@@ -326,6 +319,10 @@ function createFeBeBridgeForUiTestMode() {
             name: 'shared-file-name-111',
             uri: 'file://shared-file-name-111',
             type: 'EXPORTED_CARDS',
+            importTranslateCardsInfo: {
+                numberOfCards: 27,
+                newTags: ['aa','bbb']
+            }
         })
     }
 
