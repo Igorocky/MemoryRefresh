@@ -284,6 +284,7 @@ const RepeatTranslateCardCmp = ({allTags, allTagsMap, controlsContainer, cardToR
                             validateAnswer()
                         }
                     },
+                    style: {marginLeft: card?.direction === 'FOREIGN_NATIVE'?'140px':null},
                     iconStyle: {color: 'blue'}
                 })
             }
