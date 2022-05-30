@@ -548,7 +548,6 @@ class DataManager(
                     TranslateCardContainerExpImpDto(
                         version = 1,
                         cards = cards.map { TranslateCardExpImpDto(
-                            paused = it.paused,
                             textToTranslate = it.textToTranslate,
                             translation = it.translation,
                             direction = it.direction,
