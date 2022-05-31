@@ -72,8 +72,15 @@ const ImportTranslateCardsCmp = ({fileUri, numberOfCards, newTags, onImport, onC
 
     function renderImportDialog() {
         return RE.Container.col.top.left({},{style:{marginTop: '15px'}},
+            RE.span({style: {fontSize:'20px', fontWeight:'bold'}}, `Importing cards:`),
             RE.span({}, `Number of cards being imported: ${numberOfCards}`),
-            RE.If(newTags.length, () => RE.span({}, `New tags: ${newTags.join(', ')}`,)),
+            RE.If(newTags.length, () => RE.span({},
+                `New tags: `,
+                renderListOfTags({
+                    tags: newTags.map((t,idx)=>({id:idx,name:t})),
+                    color:'blue'
+                })
+            )),
             renderActivenessControls(),
             renderTagsToAddControls(),
             renderButtons()

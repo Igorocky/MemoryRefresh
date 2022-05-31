@@ -10,6 +10,7 @@ const SharedFileReceiver = ({}) => {
     const [fileName, setFileName] = useState(null)
     const [fileUri, setFileUri] = useState(null)
     const [fileType, setFileType] = useState(null)
+    const [importTranslateCardsInfo, setImportTranslateCardsInfo] = useState(null)
 
     useEffect(async () => {
         const res = await be.getSharedFileInfo()
@@ -21,10 +22,7 @@ const SharedFileReceiver = ({}) => {
             const fileUri = res.data.uri;
             setFileUri(fileUri)
             setFileType(res.data.type)
-            const importTranslateCardsInfo = res.data.importTranslateCardsInfo
-            if (importTranslateCardsInfo != null) {
-                await importCards({fileUri, ...importTranslateCardsInfo})
-            }
+            setImportTranslateCardsInfo(res.data.importTranslateCardsInfo)
         }
     }, [])
 
@@ -58,39 +56,38 @@ const SharedFileReceiver = ({}) => {
         closeActivity()
     }
 
-    async function importCards({fileUri, numberOfCards, newTags}) {
-        const importOptions = await showDialog({
-            title: `Importing cards`,
-            contentRenderer: resolve => {
-                return re(ImportTranslateCardsCmp, {
-                    fileUri,
-                    numberOfCards,
-                    newTags,
-                    onImport: importOptions => resolve(importOptions),
-                    onCancelled: () => resolve(null),
-                })
-            }
+    function renderImportCardsDialogue({fileUri, numberOfCards, newTags}) {
+        return re(ImportTranslateCardsCmp, {
+            fileUri,
+            numberOfCards,
+            newTags,
+            onImport: async importOptions => {
+                await importCards(importOptions)
+                closeActivity()
+            },
+            onCancelled: async () => {
+                await showMessage({text: 'Import was cancelled.'})
+                closeActivity()
+            },
         })
-        if (hasNoValue(importOptions)) {
-            await showMessage({text: 'Import was cancelled.'})
+    }
+
+    async function importCards(importOptions) {
+        const closeProgressIndicator = showMessageWithProgress({text: 'Importing cards...'})
+        const res = await be.importTranslateCards(importOptions)
+        closeProgressIndicator()
+        if (res.err) {
+            await showError(res.err)
         } else {
-            const closeProgressIndicator = showMessageWithProgress({text: 'Importing cards...'})
-            const res = await be.importTranslateCards(importOptions)
-            closeProgressIndicator()
-            if (res.err) {
-                await showError(res.err)
-            } else {
-                await showMessage({text:`Successfully imported ${res.data} new cards.`})
-            }
+            await showMessage({text:`Successfully imported ${res.data} new cards.`})
         }
-        closeActivity()
     }
 
     function renderPageContent() {
         if (hasNoValue(fileUri)) {
             return "Waiting for the file..."
         } else if (fileType === EXPORTED_CARDS) {
-            return ''
+            return renderImportCardsDialogue({fileUri, ...importTranslateCardsInfo})
         } else {
             return RE.Container.col.top.left({}, {style: {margin: '10px'}},
                 `Received the file '${fileName}'`,
