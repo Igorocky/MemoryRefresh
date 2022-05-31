@@ -19,6 +19,7 @@ import org.igye.memoryrefresh.manager.DataManager
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
+import java.net.URLDecoder
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.atomic.AtomicReference
 import java.util.zip.ZipInputStream
@@ -82,9 +83,12 @@ class SharedFileReceiverViewModel(appContext: Context, beThreadPool: ExecutorSer
             if (uriAndCards == null) {
                 throw MemoryRefreshException(msg = "uriAndCards", errCode = NO_CARDS_TO_IMPORT)
             }
-            val (actualUri, cardsCollection) = uriAndCards
-            if (actualUri != args.fileUri) {
-                throw MemoryRefreshException(msg = "actualUri != args.fileUri", errCode = STALE_CARDS_TO_IMPORT)
+            val (actualUri: String, cardsCollection: TranslateCardContainerExpImpDto) = uriAndCards
+            if (URLDecoder.decode(actualUri, "UTF-8") != args.fileUri) {
+                throw MemoryRefreshException(
+                    msg = "actualUri != args.fileUri; actual='$actualUri', args.uri='${args.fileUri}'",
+                    errCode = STALE_CARDS_TO_IMPORT
+                )
             } else {
                 cardsToImport.set(null)
             }
