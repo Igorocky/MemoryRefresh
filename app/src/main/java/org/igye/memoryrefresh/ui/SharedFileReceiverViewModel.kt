@@ -46,15 +46,16 @@ class SharedFileReceiverViewModel(appContext: Context, beThreadPool: ExecutorSer
         return BeRespose(ErrorCode.GET_SHARED_FILE_INFO) {
             val fileName = getFileName(sharedFileUri)
             val fileType = getFileType(fileName)
-            val cardsCollection = parseImportCardsCollection(sharedFileUri)
-            cardsToImport.set(sharedFileUri to cardsCollection)
+            if (fileType == EXPORTED_CARDS) {
+                cardsToImport.set(sharedFileUri to parseImportCardsCollection(sharedFileUri))
+            }
             mapOf(
                 "uri" to sharedFileUri,
                 "name" to fileName,
                 "type" to fileType,
                 "importTranslateCardsInfo" to when (fileType) {
                     EXPORTED_CARDS -> {
-                        dataManager.getImportTranslateCardsInfo(cardsCollection)
+                        dataManager.getImportTranslateCardsInfo(cardsToImport.get()!!.second)
                     }
                     else -> null
                 }
