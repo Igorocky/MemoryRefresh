@@ -4,6 +4,8 @@ import android.content.Context
 import android.net.Uri
 import android.provider.OpenableColumns
 import org.igye.memoryrefresh.ErrorCode
+import org.igye.memoryrefresh.ErrorCode.NO_CARDS_TO_IMPORT
+import org.igye.memoryrefresh.ErrorCode.STALE_CARDS_TO_IMPORT
 import org.igye.memoryrefresh.common.BeMethod
 import org.igye.memoryrefresh.common.MemoryRefreshException
 import org.igye.memoryrefresh.common.Utils
@@ -18,6 +20,7 @@ import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.util.concurrent.ExecutorService
+import java.util.concurrent.atomic.AtomicReference
 import java.util.zip.ZipInputStream
 
 class SharedFileReceiverViewModel(appContext: Context, beThreadPool: ExecutorService, val dataManager: DataManager): WebViewViewModel(
@@ -29,6 +32,8 @@ class SharedFileReceiverViewModel(appContext: Context, beThreadPool: ExecutorSer
     @Volatile lateinit var sharedFileUri: String
     @Volatile lateinit var onClose: () -> Unit
 
+    private val cardsToImport = AtomicReference<Pair<String, TranslateCardContainerExpImpDto>?>()
+
     @BeMethod
     fun closeSharedFileReceiver(): BeRespose<Boolean> {
         onClose()
@@ -36,16 +41,21 @@ class SharedFileReceiverViewModel(appContext: Context, beThreadPool: ExecutorSer
     }
 
     @BeMethod
+    @Synchronized
     fun getSharedFileInfo(): BeRespose<Map<String, Any?>> {
         return BeRespose(ErrorCode.GET_SHARED_FILE_INFO) {
             val fileName = getFileName(sharedFileUri)
             val fileType = getFileType(fileName)
+            val cardsCollection = parseImportCardsCollection(sharedFileUri)
+            cardsToImport.set(sharedFileUri to cardsCollection)
             mapOf(
                 "uri" to sharedFileUri,
                 "name" to fileName,
                 "type" to fileType,
                 "importTranslateCardsInfo" to when (fileType) {
-                    EXPORTED_CARDS -> dataManager.getImportTranslateCardsInfo(parseImportCardsCollection(sharedFileUri))
+                    EXPORTED_CARDS -> {
+                        dataManager.getImportTranslateCardsInfo(cardsCollection)
+                    }
                     else -> null
                 }
             )
@@ -67,8 +77,18 @@ class SharedFileReceiverViewModel(appContext: Context, beThreadPool: ExecutorSer
     @Synchronized
     fun importTranslateCards(args: ImportTranslateCardsArgs): BeRespose<Int> {
         return BeRespose(ErrorCode.IMPORT_TRANSLATE_CARDS) {
+            val uriAndCards = cardsToImport.get()
+            if (uriAndCards == null) {
+                throw MemoryRefreshException(msg = "uriAndCards", errCode = NO_CARDS_TO_IMPORT)
+            }
+            val (actualUri, cardsCollection) = uriAndCards
+            if (actualUri != args.fileUri) {
+                throw MemoryRefreshException(msg = "actualUri != args.fileUri", errCode = STALE_CARDS_TO_IMPORT)
+            } else {
+                cardsToImport.set(null)
+            }
             dataManager.importTranslateCards(
-                cardsContainer = parseImportCardsCollection(args.fileUri),
+                cardsContainer = cardsCollection,
                 paused = args.paused,
                 additionalTags = args.additionalTags
             )
