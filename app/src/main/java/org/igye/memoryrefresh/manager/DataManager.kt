@@ -541,7 +541,7 @@ class DataManager(
                 )
             }
             val exportDir = Utils.getExportDir(context)
-            val zipFileName = fileName + ".mrz"
+            val zipFileName = fileName + ".mrx"
             val exportFile = File(exportDir, zipFileName)
             val cards = args.cardIds.asSequence()
                 .map { readTranslateCardById(ReadTranslateCardByIdArgs(cardId = it)).data!! }

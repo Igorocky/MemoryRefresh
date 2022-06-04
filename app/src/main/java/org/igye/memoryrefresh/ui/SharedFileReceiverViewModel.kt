@@ -113,7 +113,7 @@ class SharedFileReceiverViewModel(appContext: Context, beThreadPool: ExecutorSer
             KEYSTORE
         } else if (fileName.endsWith(".zip")) {
             BACKUP
-        } else if (fileName.endsWith(".mrz")) {
+        } else if (fileName.endsWith(".mrx")) {
             EXPORTED_CARDS
         } else {
             throw MemoryRefreshException(msg = "unsupported file type.", errCode = ErrorCode.UNSUPPORTED_FILE_TYPE)
