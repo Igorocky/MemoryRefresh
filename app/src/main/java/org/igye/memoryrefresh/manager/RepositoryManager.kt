@@ -118,7 +118,7 @@ class RepositoryManager(
         return BeRespose(ErrorCode.SHARE_FILE) {
             val fileUri: Uri = FileProvider.getUriForFile(
                 context,
-                "org.igye.memoryrefresh.fileprovider",
+                "org.igye.memoryrefresh.fileprovider.dev",
                 File(
                     when (args.fileType) {
                         SharedFileType.BACKUP -> backupDir

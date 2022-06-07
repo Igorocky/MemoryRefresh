@@ -20,7 +20,7 @@ class AppContainer(
     val dbName: String = "memory-refresh-db"
 ) {
     companion object {
-        val appVersion = "3.1"
+        val appVersion = "3.2"
         val appVersionUrlPrefix = "v$appVersion"
     }
 
