@@ -8,10 +8,7 @@ import org.igye.memoryrefresh.common.Utils.MILLIS_IN_SECOND
 import org.igye.memoryrefresh.database.TranslationCardDirection.FOREIGN_NATIVE
 import org.igye.memoryrefresh.database.TranslationCardDirection.NATIVE_FOREIGN
 import org.igye.memoryrefresh.dto.common.BeRespose
-import org.igye.memoryrefresh.dto.domain.ReadTranslateCardsByFilterResp
-import org.igye.memoryrefresh.dto.domain.SortDirection
-import org.igye.memoryrefresh.dto.domain.TranslateCard
-import org.igye.memoryrefresh.dto.domain.TranslateCardSortBy
+import org.igye.memoryrefresh.dto.domain.*
 import org.igye.memoryrefresh.manager.DataManager.*
 import org.igye.memoryrefresh.testutils.InstrumentedTestBase
 import org.junit.Assert.*
@@ -1579,6 +1576,37 @@ class ReadTranslateCardInstrumentedUnitTest: InstrumentedTestBase() {
                 rowsLimit = 1
             )),
             matchOrder = true
+        )
+    }
+
+    @Test
+    fun excludeExistingCards_excludes_existing_cards() {
+        //given
+        dm.createTranslateCard(CreateTranslateCardArgs(textToTranslate = "a", translation = "A", direction = FOREIGN_NATIVE))
+        dm.createTranslateCard(CreateTranslateCardArgs(textToTranslate = "...", translation = "C", direction = FOREIGN_NATIVE))
+        dm.createTranslateCard(CreateTranslateCardArgs(textToTranslate = "d", translation = "D", direction = NATIVE_FOREIGN))
+        dm.createTranslateCard(CreateTranslateCardArgs(textToTranslate = "f", translation = "...", direction = NATIVE_FOREIGN))
+
+        //when
+        val filteredCards = dm.excludeExistingCards(
+            TranslateCardContainerExpImpDto(
+                version = 1,
+                cards = listOf(
+                    TranslateCardExpImpDto(tags = emptySet(), textToTranslate = "a", translation = "A", direction = FOREIGN_NATIVE),
+                    TranslateCardExpImpDto(tags = emptySet(), textToTranslate = "b", translation = "B", direction = NATIVE_FOREIGN),
+                    TranslateCardExpImpDto(tags = emptySet(), textToTranslate = "c", translation = "C", direction = FOREIGN_NATIVE),
+                    TranslateCardExpImpDto(tags = emptySet(), textToTranslate = "d", translation = "D", direction = NATIVE_FOREIGN),
+                    TranslateCardExpImpDto(tags = emptySet(), textToTranslate = "e", translation = "E", direction = FOREIGN_NATIVE),
+                    TranslateCardExpImpDto(tags = emptySet(), textToTranslate = "f", translation = "F", direction = NATIVE_FOREIGN),
+                )
+            )
+        )
+
+        //then
+        assertEquals(2, filteredCards.cards.size)
+        assertEquals(
+            setOf("b", "e"),
+            filteredCards.cards.asSequence().map { it.textToTranslate }.toSet()
         )
     }
 

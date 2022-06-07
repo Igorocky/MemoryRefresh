@@ -48,7 +48,9 @@ class SharedFileReceiverViewModel(appContext: Context, beThreadPool: ExecutorSer
             val fileName = getFileName(sharedFileUri)
             val fileType = getFileType(fileName)
             if (fileType == EXPORTED_CARDS) {
-                cardsToImport.set(sharedFileUri to parseImportCardsCollection(sharedFileUri))
+                cardsToImport.set(
+                    sharedFileUri to dataManager.excludeExistingCards(parseImportCardsCollection(sharedFileUri))
+                )
             }
             mapOf(
                 "uri" to sharedFileUri,

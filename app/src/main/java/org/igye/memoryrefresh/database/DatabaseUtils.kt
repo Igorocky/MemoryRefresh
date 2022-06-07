@@ -42,7 +42,7 @@ fun <T> SQLiteDatabase.select(
         val result = ArrayList<T>()
         if (cursor.moveToFirst()) {
             val selectedRow = if (columnNames != null) {
-                val columnIndexes = columnNames.map { cursor.getColumnIndexOrThrow(it) }
+                val columnIndexes: List<Int> = columnNames.map { cursor.getColumnIndexOrThrow(it) }
                 object : SelectedRowInner {
                     override fun reset() {
                         curColumn = 0

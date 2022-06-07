@@ -8,12 +8,9 @@ import org.igye.memoryrefresh.common.MemoryRefreshException
 import org.igye.memoryrefresh.common.Utils
 import org.igye.memoryrefresh.common.Utils.delayStrToMillis
 import org.igye.memoryrefresh.common.Utils.multiplyDelay
-import org.igye.memoryrefresh.database.CardType
-import org.igye.memoryrefresh.database.TranslationCardDirection
+import org.igye.memoryrefresh.database.*
 import org.igye.memoryrefresh.database.TranslationCardDirection.FOREIGN_NATIVE
 import org.igye.memoryrefresh.database.TranslationCardDirection.NATIVE_FOREIGN
-import org.igye.memoryrefresh.database.doInTransaction
-import org.igye.memoryrefresh.database.select
 import org.igye.memoryrefresh.dto.common.BeErr
 import org.igye.memoryrefresh.dto.common.BeRespose
 import org.igye.memoryrefresh.dto.domain.*
@@ -570,6 +567,29 @@ class DataManager(
                 zipFileName
             }
         }
+    }
+
+    fun excludeExistingCards(cardsCollection: TranslateCardContainerExpImpDto): TranslateCardContainerExpImpDto {
+        val existingNativeCards = HashSet<String>()
+        val existingForeignCards = HashSet<String>()
+        getRepo().readableDatabase.doInTransaction {
+            select("select ${t.direction}, ${t.textToTranslate}, ${t.translation} from $t") {
+                listOf(
+                    when (TranslationCardDirection.fromInt(it.getLong())) {
+                        NATIVE_FOREIGN -> existingNativeCards.add(it.getString())
+                        FOREIGN_NATIVE -> {
+                            it.getString()
+                            existingForeignCards.add(it.getString())
+                        }
+                    }
+                )
+            }
+        }
+        fun cardMayBeImported(card: TranslateCardExpImpDto): Boolean = when(card.direction) {
+            NATIVE_FOREIGN -> !existingNativeCards.contains(card.textToTranslate)
+            FOREIGN_NATIVE -> !existingForeignCards.contains(card.translation)
+        }
+        return cardsCollection.copy(cards = cardsCollection.cards.filter { cardMayBeImported(it) })
     }
 
     fun getImportTranslateCardsInfo(cardsCollection: TranslateCardContainerExpImpDto): ImportTranslateCardsInfoDto {
