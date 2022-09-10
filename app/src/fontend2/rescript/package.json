@@ -20,8 +20,8 @@
     "web-vitals": "^2.1.4"
   },
   "scripts": {
-    "rescript-build": "rescript",
-    "rescript-build-with-deps": "rescript build -with-deps",
+    "compile": "rescript",
+    "compile-with-deps": "rescript build -with-deps",
     "rescript-start": "rescript build -w",
     "rescript-clean": "rescript clean -with-deps",
     "start": "react-scripts start",
