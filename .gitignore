@@ -9,3 +9,10 @@
 .cxx
 local.properties
 /.idea/.gitignore
+
+### Frontend ###
+/app/src/fontend2/rescript/src/*.bs.js
+/app/src/fontend2/rescript/.merlin
+/app/src/fontend2/rescript/node_modules/
+/app/src/fontend2/rescript/assets/
+/app/src/fontend2/rescript/lib/
