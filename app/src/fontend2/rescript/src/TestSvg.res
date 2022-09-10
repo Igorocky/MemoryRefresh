@@ -14,14 +14,14 @@ let ints = Belt.Array.range
 
 let makePoint = (x,y) => ex->vecMult(x)->vecAdd(ey->vecMult(-.y))->vecEnd
 
-let p = BE_functions.getData({id:34}) -> promiseMap(r => {
-  open BE_utils
-  if (r->beRespIsErr) {
-    log3(">>> The BE responded with an error: ", r->beRespErrCode, r->beRespErrMsg)
-  } else {
-    log2(">>> The BE responded with: ", r->beRespData)
-  }
-})
+//let p = BE_functions.getData({id:34}) -> promiseMap(r => {
+  //open BE_utils
+  //if (r->beRespIsErr) {
+    //log3(">>> The BE responded with an error: ", r->beRespErrCode, r->beRespErrMsg)
+  //} else {
+    //log2(">>> The BE responded with: ", r->beRespData)
+  //}
+//})
 
 let svgOnClick = (~mouseEvent, ~viewWidth, ~viewHeight, ~boundaries, ~customHandler) => {
   let target = ref(ReactEvent.Mouse.target(mouseEvent))
