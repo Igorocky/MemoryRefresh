@@ -34,15 +34,15 @@ android {
             signingConfig signingConfigs.release
         }
     }
-//    flavorDimensions "frontend"
-//    productFlavors {
-//        fontend1 {
-//            dimention "frontend"
-//        }
-//        fontend2 {
-//            dimention "frontend"
-//        }
-//    }
+    flavorDimensions "frontend"
+    productFlavors {
+        fontend1 {
+            dimension "frontend"
+        }
+        fontend2 {
+            dimension "frontend"
+        }
+    }
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
